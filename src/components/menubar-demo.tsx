@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Menubar,
   MenubarCheckboxItem,
@@ -14,8 +15,24 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from "@/components/ui/menubar"
+import { getCurrentTheme, setTheme } from "@/actions/theme";
+import type { ThemeMode } from "@/types/theme-mode";
 
 export function MenubarDemo() {
+  const [theme, setThemeState] = useState<ThemeMode>("light");
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      const { local } = await getCurrentTheme();
+      setThemeState(local || "light");
+    };
+    loadTheme();
+  }, []);
+
+  const handleThemeChange = async (newTheme: ThemeMode) => {
+    setThemeState(newTheme);
+    await setTheme(newTheme);
+  };
   return (
     <Menubar className="w-full">
       <MenubarMenu>
@@ -128,6 +145,25 @@ export function MenubarDemo() {
           <MenubarSeparator />
           <MenubarGroup>
             <MenubarItem inset>Add Profile...</MenubarItem>
+          </MenubarGroup>
+        </MenubarContent>
+      </MenubarMenu>
+      <MenubarMenu>
+        <MenubarTrigger>Theme</MenubarTrigger>
+        <MenubarContent>
+          <MenubarGroup>
+            <MenubarCheckboxItem 
+              checked={theme === "light"} 
+              onClick={() => handleThemeChange("light")}
+            >
+              Light
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem 
+              checked={theme === "dark"} 
+              onClick={() => handleThemeChange("dark")}
+            >
+              Dark
+            </MenubarCheckboxItem>
           </MenubarGroup>
         </MenubarContent>
       </MenubarMenu>
