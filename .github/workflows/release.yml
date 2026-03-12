@@ -8,6 +8,8 @@ on:
 jobs:
   detect-platform:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     outputs:
       linux: ${{ steps.check.outputs.linux }}
       windows: ${{ steps.check.outputs.windows }}
@@ -67,6 +69,8 @@ jobs:
     needs: detect-platform
     if: needs.detect-platform.outputs.linux == 'true'
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,7 +78,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '21'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -91,7 +95,13 @@ jobs:
           pwd
           echo ""
           echo "🔨 Starting build process..."
-          npm run make -- --platform=linux --arch=x64
+          npm run make -- --platform=linux --arch=x64 || {
+            echo "❌ Platform-specific build failed, trying generic build..."
+            npm run make || {
+              echo "❌ All build methods failed"
+              exit 1
+            }
+          }
           
       - name: List build outputs
         run: |
