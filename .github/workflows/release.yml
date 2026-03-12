@@ -88,13 +88,25 @@ jobs:
       - name: List build outputs
         run: |
           echo "📁 Build outputs:"
-          find out -type f -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" | head -20 || echo "❌ No Linux packages found"
+          find out -type f | head -20 || echo "❌ No files found in out/"
+          echo ""
+          echo "📦 Root directory:"
+          find . -maxdepth 3 -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" | head -10 || echo "❌ No Linux packages found"
+          echo ""
+          echo "📋 Entire out directory structure:"
+          tree out/ 2>/dev/null || find out/ -type f 2>/dev/null || echo "❌ Cannot read out directory"
 
       - name: Upload Ubuntu artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-packages
-          path: out/**/*.AppImage
+          path: |
+            out/**/*.AppImage
+            out/**/*.deb
+            out/**/*.rpm
+            **/*.AppImage
+            **/*.deb
+            **/*.rpm
           retention-days: 30
         continue-on-error: true
 
@@ -164,13 +176,23 @@ jobs:
       - name: List build outputs
         run: |
           echo "📁 Build outputs:"
-          find out -type f -name "*.dmg" -o -name "*.zip" | head -20 || echo "❌ No macOS packages found"
+          find out -type f | head -20 || echo "❌ No files found in out/"
+          echo ""
+          echo "📦 Root directory:"
+          find . -maxdepth 3 -name "*.dmg" -o -name "*.zip" | head -10 || echo "❌ No macOS packages found"
+          echo ""
+          echo "📋 Entire out directory structure:"
+          tree out/ 2>/dev/null || find out/ -type f 2>/dev/null || echo "❌ Cannot read out directory"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-packages
-          path: out/**/*.dmg
+          path: |
+            out/**/*.dmg
+            out/**/*.zip
+            **/*.dmg
+            **/*.zip
           retention-days: 30
         continue-on-error: true
 
