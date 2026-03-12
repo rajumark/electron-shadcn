@@ -249,11 +249,11 @@ jobs:
             
             | Platform | File Name |
             | -------- | --------- |
-            ${{ needs.detect-platform.outputs.windows == 'true' && '| 🪟 Windows | `Pilotfish-${{ needs.detect-platform.outputs.release_tag }}-Windows-Setup.exe` |' || '' }}
-            ${{ needs.detect-platform.outputs.macos == 'true' && '| 🍎 macOS (Intel) | `Pilotfish-${{ needs.detect-platform.outputs.release_tag }}-macOS-Intel.dmg` |' || '' }}
-            ${{ needs.detect-platform.outputs.macos == 'true' && '| 🍎 macOS (Apple Silicon) | `Pilotfish-${{ needs.detect-platform.outputs.release_tag }}-macOS-AppleSilicon.dmg` |' || '' }}
-            ${{ needs.detect-platform.outputs.linux == 'true' && '| 🐧 Linux (Debian/Ubuntu) | `Pilotfish-${{ needs.detect-platform.outputs.release_tag }}-Linux.deb` |' || '' }}
-            ${{ needs.detect-platform.outputs.linux == 'true' && '| 🐧 Linux (Fedora/RHEL) | `Pilotfish-${{ needs.detect-platform.outputs.release_tag }}-Linux.rpm` |' || '' }}
+            ${{ needs.detect-platform.outputs.windows == 'true' && '| 🪟 Windows | `Pilotfish-Setup-Windows.exe` |' || '' }}
+            ${{ needs.detect-platform.outputs.macos == 'true' && '| 🍎 macOS (Intel) | `Pilotfish-darwin-x64.zip` |' || '' }}
+            ${{ needs.detect-platform.outputs.macos == 'true' && '| 🍎 macOS (Apple Silicon) | `Pilotfish-darwin-arm64.zip` |' || '' }}
+            ${{ needs.detect-platform.outputs.linux == 'true' && '| 🐧 Linux (Debian/Ubuntu) | `pilotfish_1.3.2_amd64.deb` |' || '' }}
+            ${{ needs.detect-platform.outputs.linux == 'true' && '| 🐧 Linux (Fedora/RHEL) | `pilotfish-1.3.2-1.x86_64.rpm` |' || '' }}
             
             🤖 Automated release via CI/CD.
           files: |
