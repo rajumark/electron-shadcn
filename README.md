@@ -4,6 +4,39 @@ Electron in all its glory. Everything you will need to develop your beautiful de
 
 ![Demo GIF](https://github.com/LuanRoger/electron-shadcn/blob/main/images/demo.png)
 
+## 🚀 Release Instructions
+
+This project includes automated CI/CD workflows for building and releasing across multiple platforms.
+
+### Quick Release Options
+
+**Individual Platform Releases** - Use commit message triggers:
+```bash
+git commit -m "l"     # Linux (.AppImage)
+git commit -m "w"     # Windows (.exe)
+git commit -m "m1"    # macOS M1 (.dmg)
+git commit -m "m2"    # macOS M2 (.dmg)
+git commit -m "#go"   # All platforms
+```
+
+**Full Release** - Tag-based (builds all platforms):
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**Manual Publishing** - Use GitHub Actions → Publish Release workflow
+
+### Platform Matrix
+| Platform | Architecture | File | Trigger |
+| -------- | -------------- | ---- | ------- |
+| Ubuntu | Linux x64 | `.AppImage` | `l`, `#go` |
+| Windows | x64 | `.exe` | `w`, `#go` |
+| macOS | Apple Silicon | `.dmg` | `m1`, `m2`, `#go` |
+| macOS | Intel x64 | `.dmg` | `m1`, `m2`, `#go` |
+
+📖 **Full documentation:** [`.github/workflows/README.md`](.github/workflows/README.md)
+
 ## Libs and tools
 
 To develop a Electron app, you probably will need some UI, test, formatter, style or other kind of library or framework, so let me install and configure some of them to you.
