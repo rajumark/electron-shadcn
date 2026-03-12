@@ -1,3 +1,4 @@
+import { adb } from "./adb";
 import { app } from "./app";
 import { shell } from "./shell";
 import { theme } from "./theme";
@@ -8,4 +9,5 @@ export const router = {
   window,
   app,
   shell,
+  adb,
 };

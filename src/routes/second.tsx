@@ -11,8 +11,8 @@ function SecondPage() {
 
   return (
     <div className="flex h-full flex-col">
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <h1 className="font-bold text-4xl">{t("titleSecondPage")}</h1>
+      <div className="flex flex-1 flex-col items-center justify-center gap-2">
+        <h1 className="font-bold text-4xl">{t("titleSecondPage")}</h1>
       </div>
     </div>
   );

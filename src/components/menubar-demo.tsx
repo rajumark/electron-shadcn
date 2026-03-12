@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
 import { useRouter } from "@tanstack/react-router";
+import { Code, FileText, Home, Settings, Terminal } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getCurrentTheme, setTheme } from "@/actions/theme";
 import {
   Menubar,
   MenubarCheckboxItem,
@@ -15,10 +17,8 @@ import {
   MenubarSubContent,
   MenubarSubTrigger,
   MenubarTrigger,
-} from "@/components/ui/menubar"
-import { getCurrentTheme, setTheme } from "@/actions/theme";
+} from "@/components/ui/menubar";
 import type { ThemeMode } from "@/types/theme-mode";
-import { Home, FileText, Settings, Terminal, Code } from "lucide-react";
 
 export function MenubarDemo() {
   const [theme, setThemeState] = useState<ThemeMode>("light");
@@ -31,7 +31,7 @@ export function MenubarDemo() {
       setThemeState(local || "light");
     };
     loadTheme();
-    
+
     // Set current route from router
     setCurrentRoute(router.state.location.pathname);
   }, [router.state.location.pathname]);
@@ -46,48 +46,48 @@ export function MenubarDemo() {
     router.navigate({ to: path });
   };
   return (
-    <Menubar className="w-full ml-2 mt-2">
+    <Menubar className="mt-2 ml-2 w-full">
       <MenubarMenu>
         <MenubarTrigger>Navigation</MenubarTrigger>
         <MenubarContent>
           <MenubarGroup>
-            <MenubarCheckboxItem 
-              checked={currentRoute === "/"} 
+            <MenubarCheckboxItem
+              checked={currentRoute === "/"}
               onClick={() => handleNavigation("/")}
             >
               <Home className="mr-2 h-4 w-4" />
               Home page
             </MenubarCheckboxItem>
-            <MenubarCheckboxItem 
-              checked={currentRoute === "/second"} 
+            <MenubarCheckboxItem
+              checked={currentRoute === "/second"}
               onClick={() => handleNavigation("/second")}
             >
               <FileText className="mr-2 h-4 w-4" />
               Second page
             </MenubarCheckboxItem>
-            <MenubarCheckboxItem 
-              checked={currentRoute === "/apps"} 
+            <MenubarCheckboxItem
+              checked={currentRoute === "/apps"}
               onClick={() => handleNavigation("/apps")}
             >
               <Code className="mr-2 h-4 w-4" />
               Apps
             </MenubarCheckboxItem>
-            <MenubarCheckboxItem 
-              checked={currentRoute === "/settings"} 
+            <MenubarCheckboxItem
+              checked={currentRoute === "/settings"}
               onClick={() => handleNavigation("/settings")}
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </MenubarCheckboxItem>
-            <MenubarCheckboxItem 
-              checked={currentRoute === "/terminal"} 
+            <MenubarCheckboxItem
+              checked={currentRoute === "/terminal"}
               onClick={() => handleNavigation("/terminal")}
             >
               <Terminal className="mr-2 h-4 w-4" />
               Terminal
             </MenubarCheckboxItem>
-            <MenubarCheckboxItem 
-              checked={currentRoute === "/fordev"} 
+            <MenubarCheckboxItem
+              checked={currentRoute === "/fordev"}
               onClick={() => handleNavigation("/fordev")}
             >
               <Code className="mr-2 h-4 w-4" />
@@ -213,14 +213,14 @@ export function MenubarDemo() {
         <MenubarTrigger>Theme</MenubarTrigger>
         <MenubarContent>
           <MenubarGroup>
-            <MenubarCheckboxItem 
-              checked={theme === "light"} 
+            <MenubarCheckboxItem
+              checked={theme === "light"}
               onClick={() => handleThemeChange("light")}
             >
               Light
             </MenubarCheckboxItem>
-            <MenubarCheckboxItem 
-              checked={theme === "dark"} 
+            <MenubarCheckboxItem
+              checked={theme === "dark"}
               onClick={() => handleThemeChange("dark")}
             >
               Dark
@@ -229,5 +229,5 @@ export function MenubarDemo() {
         </MenubarContent>
       </MenubarMenu>
     </Menubar>
-  )
+  );
 }
