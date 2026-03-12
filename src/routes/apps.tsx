@@ -47,7 +47,7 @@ function AppsPage() {
       >
         {/* Left Section */}
         <div 
-          className="p-4 rounded-lg bg-orange-100 shadow-sm border border-orange-200 ml-2 mr-1 mb-2 min-h-full"
+          className="p-4 rounded-lg bg-orange-100 shadow-sm border border-orange-200 ml-2 mr-0 mb-2 min-h-full"
           style={{ width: `${leftWidth}%` }}
         >
           <h2 className="text-lg font-semibold mb-2">Left Section</h2>
@@ -58,17 +58,17 @@ function AppsPage() {
         
         {/* Resizable Divider */}
         <div 
-          className="w-px bg-gray-200 hover:bg-gray-400 transition-colors cursor-col-resize relative"
+          className="w-2 hover:w-2 transition-all cursor-col-resize relative group"
           onMouseDown={() => setIsDragging(true)}
         >
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className={`w-1 h-8 bg-gray-400 rounded-full transition-opacity ${isDragging ? 'opacity-100' : 'opacity-0'}`} />
+            <div className={`w-1 h-8 bg-gray-400 rounded-full transition-opacity opacity-0 group-hover:opacity-60 ${isDragging ? 'opacity-100' : ''}`} />
           </div>
         </div>
         
         {/* Right Section */}
         <div 
-          className="flex-1 p-4 rounded-lg bg-blue-100 shadow-sm border border-blue-200 ml-1 mr-2 mb-2 min-h-full"
+          className="flex-1 p-4 rounded-lg bg-blue-100 shadow-sm border border-blue-200 ml-0 mr-2 mb-2 min-h-full"
         >
           <h2 className="text-lg font-semibold mb-2">Right Section</h2>
           <p className="text-sm text-muted-foreground">
