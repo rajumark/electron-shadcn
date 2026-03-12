@@ -99,7 +99,7 @@ jobs:
       - name: Upload Ubuntu artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ubuntu-packages
+          name: pilotfish-linux-packages
           path: |
             out/**/*.AppImage
             out/**/*.deb
@@ -141,7 +141,7 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-packages
+          name: pilotfish-windows-packages
           path: out/**/*.exe
           retention-days: 30
         continue-on-error: true
@@ -187,7 +187,7 @@ jobs:
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-packages
+          name: pilotfish-macos-packages
           path: |
             out/**/*.dmg
             out/**/*.zip
@@ -221,17 +221,17 @@ jobs:
           tag_name: ${{ needs.detect-platform.outputs.release_tag }}
           name: "Release ${{ needs.detect-platform.outputs.release_tag }}"
           body: |
-            ## 🚀 Release ${{ needs.detect-platform.outputs.release_tag }}
+            ## 🚀 Pilotfish Release ${{ needs.detect-platform.outputs.release_tag }}
             
             ### 📦 Available Downloads:
             
-            ${{ needs.detect-platform.outputs.linux == 'true' && '### 🐧 Linux\n- Ubuntu: `.AppImage` files\n' || '' }}
-            ${{ needs.detect-platform.outputs.windows == 'true' && '### 🪟 Windows\n- Windows: `.exe` installer\n' || '' }}
-            ${{ needs.detect-platform.outputs.macos == 'true' && '### 🍎 macOS\n- Intel Mac: `.dmg`\n- Apple Silicon (M1/M2): `.dmg`\n' || '' }}
+            ${{ needs.detect-platform.outputs.linux == 'true' && '### 🐧 Linux\n- Ubuntu: `Pilotfish-Linux-deb.deb`\n- Fedora/RHEL: `Pilotfish-Linux-rpm.rpm`\n' || '' }}
+            ${{ needs.detect-platform.outputs.windows == 'true' && '### 🪟 Windows\n- Main executable: `Pilotfish-Windows.exe`\n- Installer: `Pilotfish-Setup-Windows.exe`\n' || '' }}
+            ${{ needs.detect-platform.outputs.macos == 'true' && '### 🍎 macOS\n- Intel Mac: `Pilotfish-macOS-Intel.zip`\n- Apple Silicon: `Pilotfish-macOS-AppleSilicon.zip`\n' || '' }}
             
             ---
             
-            🤖 *This release was automatically created by CI/CD*
+            🤖 *This release was automatically created by Pilotfish CI/CD*
           files: |
             artifacts/**/*.AppImage
             artifacts/**/*.exe

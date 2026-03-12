@@ -1,6 +1,6 @@
-# electron-shadcn
+# Pilotfish
 
-Electron in all its glory. Everything you will need to develop your beautiful desktop application.
+Pilotfish - A beautiful desktop application built with Electron and shadcn-ui. Everything you need to develop stunning desktop apps.
 
 ![Demo GIF](https://github.com/LuanRoger/electron-shadcn/blob/main/images/demo.png)
 

@@ -9,9 +9,9 @@ export default function BaseLayout({
 }) {
   return (
     <>
-      <DragWindowRegion title="electron-shadcn" />
+      <DragWindowRegion title="Pilotfish" />
       <MenubarDemo />
-      <main className="h-screen mb-2">{children}</main>
+      <main className="h-screen">{children}</main>
     </>
   );
 }

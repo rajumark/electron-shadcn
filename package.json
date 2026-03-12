@@ -1,8 +1,8 @@
 {
-  "name": "electron-shadcn",
-  "productName": "electron-shadcn Template",
+  "name": "pilotfish",
+  "productName": "Pilotfish",
   "version": "1.3.2",
-  "description": "Electron Forge with shadcn-ui (Vite + Typescript)",
+  "description": "Pilotfish - Beautiful desktop application built with Electron and shadcn-ui",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {

@@ -10,11 +10,14 @@ import type { ForgeConfig } from "@electron-forge/shared-types";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    executableName: "electron-shadcn",
+    name: "Pilotfish",
+    executableName: "Pilotfish",
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}, ["win32"]),
+    new MakerSquirrel({
+      setupExe: "Pilotfish-Setup-Windows.exe"
+    }, ["win32"]),
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({}, ["linux"]),
     new MakerDeb({}, ["linux"]),
