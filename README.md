@@ -12,10 +12,9 @@ This project includes automated CI/CD workflows for building and releasing acros
 
 **Individual Platform Releases** - Use commit message triggers:
 ```bash
-git commit -m "l"     # Linux (.AppImage)
+git commit -m "l"     # Ubuntu (.AppImage)
 git commit -m "w"     # Windows (.exe)
-git commit -m "m1"    # macOS M1 (.dmg)
-git commit -m "m2"    # macOS M2 (.dmg)
+git commit -m "m"     # macOS (Intel + M-series) (.dmg)
 git commit -m "#go"   # All platforms
 ```
 
@@ -32,8 +31,7 @@ git push origin v1.0.0
 | -------- | -------------- | ---- | ------- |
 | Ubuntu | Linux x64 | `.AppImage` | `l`, `#go` |
 | Windows | x64 | `.exe` | `w`, `#go` |
-| macOS | Apple Silicon | `.dmg` | `m1`, `m2`, `#go` |
-| macOS | Intel x64 | `.dmg` | `m1`, `m2`, `#go` |
+| macOS | Intel + M-series | `.dmg` | `m`, `#go` |
 
 📖 **Full documentation:** [`.github/workflows/README.md`](.github/workflows/README.md)
 

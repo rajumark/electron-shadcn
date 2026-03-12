@@ -11,8 +11,7 @@ jobs:
     outputs:
       linux: ${{ steps.check.outputs.linux }}
       windows: ${{ steps.check.outputs.windows }}
-      mac-m1: ${{ steps.check.outputs.mac-m1 }}
-      mac-m2: ${{ steps.check.outputs.mac-m2 }}
+      macos: ${{ steps.check.outputs.macos }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,19 +32,14 @@ jobs:
             echo "windows=true" >> $GITHUB_OUTPUT
           fi
           
-          if echo "$COMMIT_MSG" | grep -q '\bm1\b'; then
-            echo "mac-m1=true" >> $GITHUB_OUTPUT
-          fi
-          
-          if echo "$COMMIT_MSG" | grep -q '\bm2\b'; then
-            echo "mac-m2=true" >> $GITHUB_OUTPUT
+          if echo "$COMMIT_MSG" | grep -q '\bm\b'; then
+            echo "macos=true" >> $GITHUB_OUTPUT
           fi
           
           if echo "$COMMIT_MSG" | grep -q '#go'; then
             echo "linux=true" >> $GITHUB_OUTPUT
             echo "windows=true" >> $GITHUB_OUTPUT
-            echo "mac-m1=true" >> $GITHUB_OUTPUT
-            echo "mac-m2=true" >> $GITHUB_OUTPUT
+            echo "macos=true" >> $GITHUB_OUTPUT
           fi
 
   release-linux:
@@ -65,13 +59,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build for Linux
+      - name: Build for Ubuntu
         run: npm run make -- --platform=linux --arch=x64
 
-      - name: Upload Linux artifact
+      - name: Upload Ubuntu artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-appimage
+          name: ubuntu-appimage
           path: out/make/**/*.AppImage
           retention-days: 30
 
@@ -102,63 +96,9 @@ jobs:
           path: out/make/**/*.exe
           retention-days: 30
 
-  release-mac-m1:
+  release-macos:
     needs: detect-platform
-    if: needs.detect-platform.outputs.mac-m1 == 'true'
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for macOS M1 (arm64)
-        run: npm run make -- --platform=darwin --arch=arm64
-
-      - name: Upload macOS M1 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-m1-dmg
-          path: out/make/**/*.dmg
-          retention-days: 30
-
-  release-mac-m2:
-    needs: detect-platform
-    if: needs.detect-platform.outputs.mac-m2 == 'true'
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for macOS M2 (arm64)
-        run: npm run make -- --platform=darwin --arch=arm64
-
-      - name: Upload macOS M2 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-m2-dmg
-          path: out/make/**/*.dmg
-          retention-days: 30
-
-  release-mac-intel:
-    needs: detect-platform
-    if: needs.detect-platform.outputs.mac-m1 == 'true' || needs.detect-platform.outputs.mac-m2 == 'true'
+    if: needs.detect-platform.outputs.macos == 'true'
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -176,9 +116,12 @@ jobs:
       - name: Build for macOS Intel (x64)
         run: npm run make -- --platform=darwin --arch=x64
 
-      - name: Upload macOS Intel artifact
+      - name: Build for macOS M-series (arm64)
+        run: npm run make -- --platform=darwin --arch=arm64
+
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-intel-dmg
+          name: macos-dmg
           path: out/make/**/*.dmg
           retention-days: 30
