@@ -7,6 +7,22 @@ import { app } from "electron";
 
 const execAsync = promisify(exec);
 
+// Cache for ADB commands to avoid repeated calls
+const commandCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30000; // 30 seconds
+
+// Debounce function to prevent rapid successive calls
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
 const PLATFORM_TOOLS_URL = {
   win32:
     "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",
@@ -204,10 +220,24 @@ export const ADBHelper = {
   },
 
   executeADBCommand(args: string[]): Promise<string> {
+    const cacheKey = JSON.stringify(args);
+    const now = Date.now();
+    
+    // Check cache first
+    const cached = commandCache.get(cacheKey);
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      return Promise.resolve(cached.data);
+    }
+
     const adbPath = this.getADBPath();
 
     return new Promise((resolve, reject) => {
-      const adb = spawn(adbPath, args, { stdio: "pipe" });
+      const adb = spawn(adbPath, args, { 
+        stdio: "pipe",
+        // Add timeout to prevent hanging
+        timeout: 30000 
+      });
+      
       let stdout = "";
       let stderr = "";
 
@@ -221,6 +251,19 @@ export const ADBHelper = {
 
       adb.on("close", (code) => {
         if (code === 0) {
+          // Cache successful results
+          commandCache.set(cacheKey, { data: stdout, timestamp: now });
+          
+          // Clean up old cache entries periodically
+          if (commandCache.size > 100) {
+            const cutoff = now - CACHE_DURATION;
+            for (const [key, value] of commandCache.entries()) {
+              if (value.timestamp < cutoff) {
+                commandCache.delete(key);
+              }
+            }
+          }
+          
           resolve(stdout);
         } else {
           reject(new Error(`ADB command failed with code ${code}: ${stderr}`));
@@ -230,6 +273,27 @@ export const ADBHelper = {
       adb.on("error", (error) => {
         reject(new Error(`Failed to execute ADB command: ${error.message}`));
       });
+
+      // Handle timeout
+      adb.on("timeout", () => {
+        adb.kill();
+        reject(new Error("ADB command timed out after 30 seconds"));
+      });
     });
+  },
+
+  // Debounced version for package listing to prevent rapid calls
+  executeADBCommandDebounced: debounce(function(this: any, args: string[]) {
+    return this.executeADBCommand(args);
+  }, 500),
+
+  // Clear cache method
+  clearCache(): void {
+    commandCache.clear();
+  },
+
+  // Get cache size for monitoring
+  getCacheSize(): number {
+    return commandCache.size;
   },
 };
