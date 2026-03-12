@@ -11,7 +11,6 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     name: "Pilotfish",
-    executableName: "Pilotfish",
   },
   rebuildConfig: {},
   makers: [
