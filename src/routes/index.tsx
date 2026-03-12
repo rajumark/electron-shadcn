@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { getAppVersion } from "@/actions/app";
 import ExternalLink from "@/components/external-link";
 import LangToggle from "@/components/lang-toggle";
-import NavigationMenu from "@/components/navigation-menu";
 import ToggleTheme from "@/components/toggle-theme";
 
 /*
@@ -26,9 +25,7 @@ function HomePage() {
   );
 
   return (
-    <>
-      <NavigationMenu />
-      <div className="flex h-full flex-col items-center justify-center">
+    <div className="flex h-full flex-col items-center justify-center">
         <div className="flex flex-col items-end justify-center gap-0.5">
           <div className="inline-flex gap-2">
             <SiReact size={iconSize} />
@@ -51,9 +48,8 @@ function HomePage() {
               <ToggleTheme />
             </div>
           </div>
-        </div>
       </div>
-    </>
+    </div>
   );
 }
 
