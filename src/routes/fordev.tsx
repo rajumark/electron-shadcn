@@ -12,10 +12,10 @@ function ForDevPage() {
     const fetchADBPath = async () => {
       try {
         const path = await ipc.client.adb.getADBPath();
-        setAdbPath(path);
+        setAdbPath(path || "ADB not found");
       } catch (error) {
         console.error("Failed to get ADB path:", error);
-        setAdbPath("Not available");
+        setAdbPath("Error getting ADB path");
       } finally {
         setLoading(false);
       }
@@ -39,7 +39,7 @@ function ForDevPage() {
                 <span className="text-sm text-muted-foreground">Loading...</span>
               ) : (
                 <span className="text-sm font-mono bg-background px-2 py-1 rounded border">
-                  {adbPath || "Not found"}
+                  {adbPath}
                 </span>
               )}
             </div>
