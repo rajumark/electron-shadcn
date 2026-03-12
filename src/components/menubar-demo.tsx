@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/menubar"
 import { getCurrentTheme, setTheme } from "@/actions/theme";
 import type { ThemeMode } from "@/types/theme-mode";
+import { Home, FileText, Settings, Terminal, Code } from "lucide-react";
 
 export function MenubarDemo() {
   const [theme, setThemeState] = useState<ThemeMode>("light");
@@ -54,36 +55,42 @@ export function MenubarDemo() {
               checked={currentRoute === "/"} 
               onClick={() => handleNavigation("/")}
             >
+              <Home className="mr-2 h-4 w-4" />
               Home page
             </MenubarCheckboxItem>
             <MenubarCheckboxItem 
               checked={currentRoute === "/second"} 
               onClick={() => handleNavigation("/second")}
             >
+              <FileText className="mr-2 h-4 w-4" />
               Second page
             </MenubarCheckboxItem>
             <MenubarCheckboxItem 
               checked={currentRoute === "/apps"} 
               onClick={() => handleNavigation("/apps")}
             >
+              <Code className="mr-2 h-4 w-4" />
               Apps
             </MenubarCheckboxItem>
             <MenubarCheckboxItem 
               checked={currentRoute === "/settings"} 
               onClick={() => handleNavigation("/settings")}
             >
+              <Settings className="mr-2 h-4 w-4" />
               Settings
             </MenubarCheckboxItem>
             <MenubarCheckboxItem 
               checked={currentRoute === "/terminal"} 
               onClick={() => handleNavigation("/terminal")}
             >
+              <Terminal className="mr-2 h-4 w-4" />
               Terminal
             </MenubarCheckboxItem>
             <MenubarCheckboxItem 
               checked={currentRoute === "/fordev"} 
               onClick={() => handleNavigation("/fordev")}
             >
+              <Code className="mr-2 h-4 w-4" />
               ForDev
             </MenubarCheckboxItem>
           </MenubarGroup>
