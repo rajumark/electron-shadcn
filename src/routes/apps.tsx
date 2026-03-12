@@ -40,42 +40,40 @@ function AppsPage() {
   }, [isDragging]);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-1 flex-col p-4">
+    <div className="flex min-h-full mb-2">
+      <div 
+        ref={containerRef}
+        className="flex flex-1 relative"
+      >
+        {/* Left Section */}
         <div 
-          ref={containerRef}
-          className="flex flex-1 relative"
+          className="p-4 rounded-lg bg-orange-100 shadow-sm border border-orange-200 ml-2 mr-1 mb-2 min-h-full"
+          style={{ width: `${leftWidth}%` }}
         >
-          {/* Left Section */}
-          <div 
-            className="p-4 bg-muted/20 rounded-lg"
-            style={{ width: `${leftWidth}%` }}
-          >
-            <h2 className="text-lg font-semibold mb-2">Left Section</h2>
-            <p className="text-sm text-muted-foreground">
-              This is the left panel taking {Math.round(leftWidth)}% of the space. You can resize it by dragging the divider.
-            </p>
+          <h2 className="text-lg font-semibold mb-2">Left Section</h2>
+          <p className="text-sm text-muted-foreground">
+            This is the left panel taking {Math.round(leftWidth)}% of the space. You can resize it by dragging the divider.
+          </p>
+        </div>
+        
+        {/* Resizable Divider */}
+        <div 
+          className="w-px bg-gray-200 hover:bg-gray-400 transition-colors cursor-col-resize relative"
+          onMouseDown={() => setIsDragging(true)}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className={`w-1 h-8 bg-gray-400 rounded-full transition-opacity ${isDragging ? 'opacity-100' : 'opacity-0'}`} />
           </div>
-          
-          {/* Resizable Divider */}
-          <div 
-            className="w-1 bg-border hover:bg-accent transition-colors cursor-col-resize relative"
-            onMouseDown={() => setIsDragging(true)}
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className={`w-1 h-8 bg-accent rounded-full transition-opacity ${isDragging ? 'opacity-100' : 'opacity-0'}`} />
-            </div>
-          </div>
-          
-          {/* Right Section */}
-          <div 
-            className="flex-1 p-4 bg-muted/20 rounded-lg ml-1"
-          >
-            <h2 className="text-lg font-semibold mb-2">Right Section</h2>
-            <p className="text-sm text-muted-foreground">
-              This is the right panel taking {Math.round(100 - leftWidth)}% of the space. You can resize it by dragging the divider.
-            </p>
-          </div>
+        </div>
+        
+        {/* Right Section */}
+        <div 
+          className="flex-1 p-4 rounded-lg bg-blue-100 shadow-sm border border-blue-200 ml-1 mr-2 mb-2 min-h-full"
+        >
+          <h2 className="text-lg font-semibold mb-2">Right Section</h2>
+          <p className="text-sm text-muted-foreground">
+            This is the right panel taking {Math.round(100 - leftWidth)}% of the space. You can resize it by dragging the divider.
+          </p>
         </div>
       </div>
     </div>
