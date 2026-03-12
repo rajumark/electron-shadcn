@@ -47,7 +47,7 @@ function AppsPage() {
       >
         {/* Left Section */}
         <div 
-          className="p-4 rounded-lg bg-orange-100 shadow-sm border border-orange-200 ml-2 mr-0 mb-2 min-h-full"
+          className="p-4 rounded-lg bg-white shadow-sm border border-gray-200 ml-2 mr-0 mb-2 min-h-full"
           style={{ width: `${leftWidth}%` }}
         >
           <h2 className="text-lg font-semibold mb-2">Left Section</h2>
@@ -68,7 +68,7 @@ function AppsPage() {
         
         {/* Right Section */}
         <div 
-          className="flex-1 p-4 rounded-lg bg-blue-100 shadow-sm border border-blue-200 ml-0 mr-2 mb-2 min-h-full"
+          className="flex-1 p-4 rounded-lg bg-white shadow-sm border border-gray-200 ml-0 mr-2 mb-2 min-h-full"
         >
           <h2 className="text-lg font-semibold mb-2">Right Section</h2>
           <p className="text-sm text-muted-foreground">
