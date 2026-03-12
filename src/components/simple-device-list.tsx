@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Smartphone, X } from "lucide-react";
 import { ipc } from "@/ipc/manager";
+import { useSelectedDevice } from "@/hooks/use-selected-device";;
 
 interface Device {
   id: string;
@@ -9,9 +10,9 @@ interface Device {
 
 export function SimpleDeviceList() {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { selectedDevice, setSelectedDevice } = useSelectedDevice();
 
   const getDeviceName = useCallback(async (deviceId: string): Promise<string> => {
     // Cache device names to avoid repeated ADB calls
@@ -65,19 +66,32 @@ export function SimpleDeviceList() {
             .map((line) => line.split("\t")[0]?.trim())
             .filter((device) => device !== "");
 
-          // Fetch device names asynchronously
+          // Add fake devices for testing
+          const fakeDevices = [
+            { id: "FAKE12345", name: "Test Device 1" },
+            { id: "FAKE67890", name: "Test Device 2" },
+            { id: "FAKEABCDE", name: "Test Device 3" }
+          ];
+
+          // Combine real and fake devices
+          const allDevices = [...parsedDevices, ...fakeDevices.map(device => device.id)];
+
+          // Fetch device names asynchronously for real devices only
           const devicesWithNames = await Promise.all(
             parsedDevices.map(async (device) => ({
-              ...device,
+              id: device,
               name: await getDeviceName(device),
             }))
           );
 
-          setDevices(devicesWithNames);
+          // Add fake devices with their names
+          const finalDevices = [...devicesWithNames, ...fakeDevices];
+
+          setDevices(finalDevices);
           
           // Auto-select first device if none selected
-          if (devicesWithNames.length > 0 && !selectedDevice) {
-            setSelectedDevice(devicesWithNames[0].id);
+          if (finalDevices.length > 0 && !selectedDevice) {
+            setSelectedDevice(finalDevices[0]);
           }
           
           setError(null);
@@ -102,7 +116,7 @@ export function SimpleDeviceList() {
         clearInterval(pollInterval);
       }
     };
-  }, [selectedDevice]);
+  }, [selectedDevice, setSelectedDevice]);
 
   if (loading) {
     return (
@@ -140,10 +154,10 @@ export function SimpleDeviceList() {
         {devices.map((device) => (
           <button
             key={device.id}
-            onClick={() => setSelectedDevice(device.id)}
+            onClick={() => setSelectedDevice(device)}
             type="button"
             className={`px-3 py-1 text-sm rounded-md border transition-all whitespace-nowrap ${
-              selectedDevice === device.id
+              selectedDevice?.id === device.id
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-background hover:bg-muted border-border hover:text-foreground"
             }`}

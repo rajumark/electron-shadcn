@@ -2,11 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { ipc } from "@/ipc/manager";
+import { useSelectedDevice } from "@/hooks/use-selected-device";
 
 function ForDevPage() {
   const { t } = useTranslation();
   const [adbPath, setAdbPath] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const { selectedDevice } = useSelectedDevice();
 
   useEffect(() => {
     const fetchADBPath = async () => {
@@ -44,6 +46,26 @@ function ForDevPage() {
               )}
             </div>
           </div>
+          
+          {selectedDevice && (
+            <div className="mt-4 p-4 bg-background rounded border">
+              <h3 className="text-md font-semibold mb-2">Selected Device</h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Device ID:</span>
+                  <span className="font-mono bg-muted px-2 py-1 rounded border">
+                    {selectedDevice.id}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Device Name:</span>
+                  <span className="font-mono bg-muted px-2 py-1 rounded border">
+                    {selectedDevice.name}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
