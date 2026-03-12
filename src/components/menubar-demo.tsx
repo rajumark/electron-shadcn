@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "@tanstack/react-router";
 import {
   Menubar,
   MenubarCheckboxItem,
@@ -20,6 +21,8 @@ import type { ThemeMode } from "@/types/theme-mode";
 
 export function MenubarDemo() {
   const [theme, setThemeState] = useState<ThemeMode>("light");
+  const router = useRouter();
+  const [currentRoute, setCurrentRoute] = useState("/");
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -27,14 +30,41 @@ export function MenubarDemo() {
       setThemeState(local || "light");
     };
     loadTheme();
-  }, []);
+    
+    // Set current route from router
+    setCurrentRoute(router.state.location.pathname);
+  }, [router.state.location.pathname]);
 
   const handleThemeChange = async (newTheme: ThemeMode) => {
     setThemeState(newTheme);
     await setTheme(newTheme);
   };
+
+  const handleNavigation = (path: string) => {
+    setCurrentRoute(path);
+    router.navigate({ to: path });
+  };
   return (
     <Menubar className="w-full">
+      <MenubarMenu>
+        <MenubarTrigger>Navigation</MenubarTrigger>
+        <MenubarContent>
+          <MenubarGroup>
+            <MenubarCheckboxItem 
+              checked={currentRoute === "/"} 
+              onClick={() => handleNavigation("/")}
+            >
+              Home page
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem 
+              checked={currentRoute === "/second"} 
+              onClick={() => handleNavigation("/second")}
+            >
+              Second page
+            </MenubarCheckboxItem>
+          </MenubarGroup>
+        </MenubarContent>
+      </MenubarMenu>
       <MenubarMenu>
         <MenubarTrigger>File</MenubarTrigger>
         <MenubarContent>
