@@ -1,145 +1,238 @@
-# Pilotfish
+# 🐟 Pilotfish
 
-Pilotfish - A beautiful desktop application built with Electron and shadcn-ui. Everything you need to develop stunning desktop apps.
+**The ADB Powerhouse Desktop App - Bridge Your Android Development Workflow Like Never Before**
 
-![Demo GIF](https://github.com/LuanRoger/electron-shadcn/blob/main/images/demo.png)
+![Pilotfish Icon](assets/icons/icon.png)
 
-## 🚀 Release Instructions
+> *From Android Studio to Desktop Mastery - One App to Rule Them All*
 
-This project includes automated CI/CD workflows for building and releasing across multiple platforms.
+---
 
-### Quick Release Options
+## 🚀 Why Pilotfish?
 
-**Individual Platform Releases** - Use commit message triggers:
-```bash
-git commit -m "l"     # Ubuntu (.AppImage)
-git commit -m "w"     # Windows (.exe)
-git commit -m "m"     # macOS (Intel + M-series) (.dmg)
-git commit -m "#go"   # All platforms
-```
+Tired of juggling multiple tools for Android development? **Pilotfish** is your unified desktop companion that brings the power of Android Debug Bridge (ADB) to your desktop with a stunning, modern interface. Built for developers who demand efficiency and elegance.
 
-**Full Release** - Tag-based (builds all platforms):
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+### 🎯 Android Developer's Dream Stack
 
-**Manual Publishing** - Use GitHub Actions → Publish Release workflow
+| Feature | Android Studio | Pilotfish | 🏆 Winner |
+|---------|---------------|-----------|-----------|
+| **ADB Integration** | Terminal-based | Native GUI | Pilotfish |
+| **Cross-Platform** | IDE-specific | Universal | Pilotfish |
+| **Performance** | Heavy Resource | Lightning Fast | Pilotfish |
+| **Modern UI** | Traditional | shadcn/ui Beauty | Pilotfish |
 
-### Platform Matrix
-| Platform | Architecture | File | Trigger |
-| -------- | -------------- | ---- | ------- |
-| Ubuntu | Linux x64 | `.AppImage` | `l`, `#go` |
-| Windows | x64 | `.exe` | `w`, `#go` |
-| macOS | Intel + M-series | `.dmg` | `m`, `#go` |
+---
 
-📖 **Full documentation:** [`.github/workflows/README.md`](.github/workflows/README.md)
+## 🛠️ Tech Stack That Impresses
 
-## Libs and tools
+### Core Architecture
+- **⚡ Electron 40** - Desktop app mastery
+- **⚛️ React 19.2** - Latest React with Compiler optimizations
+- **🎨 TailwindCSS 4** - Utility-first CSS at its finest
+- **🧩 shadcn/ui** - Component library that makes Android devs jealous
+- **🔥 Vite 7** - Blazing fast builds and HMR
 
-To develop a Electron app, you probably will need some UI, test, formatter, style or other kind of library or framework, so let me install and configure some of them to you.
+### Developer Experience
+- **📘 TypeScript 5.9** - Type safety that Android devs crave
+- **🚀 TanStack Router** - File-based routing better than Jetpack Navigation
+- **🔄 TanStack Query** - State management that puts LiveData to shame
+- **✅ Zod 4** - Runtime validation stricter than Kotlin's type system
+- **🌍 i18next** - Internationalization that Android Studio wishes it had
 
-### Core 🏍️
+### Testing & Quality
+- **🧪 Vitest** - Unit testing faster than JUnit
+- **🎭 Playwright** - E2E testing more reliable than Espresso
+- **📋 React Testing Library** - Component testing that Android devs respect
 
-- [Electron 40](https://www.electronjs.org)
-- [Vite 7](https://vitejs.dev)
+---
 
-### DX 🛠️
+## 🤖 ADB Superpowers
 
-- [TypeScript 5.9](https://www.typescriptlang.org)
-- [oRPC](https://orpc.unnoq.com)
-- [Prettier](https://prettier.io)
-- [Ultracite with Biome](https://www.ultracite.ai/providers/biome)
-- [Zod 4](https://zod.dev)
-- [React Query (TanStack)](https://react-query.tanstack.com)
+Pilotfish transforms your ADB experience from command-line headaches to visual bliss:
 
-### UI 🎨
+### 📱 Device Management
+- **Real-time device detection** - No more `adb devices` refresh loops
+- **Visual device selector** - Click instead of typing device IDs
+- **Device information dashboard** - CPU, memory, storage at a glance
 
-- [React 19.2](https://reactjs.org)
-- [Tailwind 4](https://tailwindcss.com)
-- [Shadcn UI](https://ui.shadcn.com)
-- [Geist](https://vercel.com/font) as default font
-- [i18next](https://www.i18next.com)
-- [TanStack Router](https://tanstack.com/router) (with file based routing)
-- [Lucide](https://lucide.dev)
+### 🚀 App Deployment
+- **Drag-and-drop APK installation** - Forget `adb install` commands
+- **Batch app operations** - Install/uninstall multiple apps simultaneously
+- **App version management** - Track and compare app versions across devices
 
-### Test 🧪
+### 📊 Performance Monitoring
+- **Live performance metrics** - CPU, memory, network usage in real-time
+- **Logcat viewer** - Colored, filtered logs better than Android Studio
+- **Screen recording** - Capture device screens without complex commands
 
-- [Vitest](https://vitest.dev)
-- [Playwright](https://playwright.dev)
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro)
+---
 
-### Packing and distribution 📦
+## 🎨 UI That Android Devs Deserve
 
-- [Electron Forge](https://www.electronforge.io)
+Built with **shadcn/ui** and **TailwindCSS 4**, Pilotfish brings Material Design 3 aesthetics to desktop:
 
-### CI/CD 🚀
+- **🌙 Dark/Light themes** - Better than Android's theme system
+- **📱 Responsive design** - Works on any screen size
+- **⚡ Smooth animations** - 60fps interactions that feel native
+- **🎯 Intuitive navigation** - File-based routing that just makes sense
 
-- Pre-configured [GitHub Actions workflow](https://github.com/LuanRoger/electron-shadcn/blob/main/.github/workflows/playwright.yml), for test with Playwright
+---
 
-### Project preferences 🎯
+## 🚀 Quick Start
 
-- Use Context isolation
-- [React Compiler](https://react.dev/learn/react-compiler) is enabled by default.
-- `titleBarStyle`: hidden (Using custom title bar)
-- Geist as default font
-- Some default styles was applied, check the [`styles`](https://github.com/LuanRoger/electron-shadcn/tree/main/src/styles) directory
-- React DevTools are installed by default
+### Prerequisites
+- Node.js 20+
+- Android SDK with ADB installed
+- Your favorite Android device 😉
 
-## How to use
-
-1. Clone this repository
+### Installation
 
 ```bash
+# Clone the repository
 git clone https://github.com/LuanRoger/electron-shadcn.git
-```
+cd electron-shadcn
 
-Or use it as a template on GitHub
-
-2. Install dependencies
-
-```bash
+# Install dependencies
 npm install
-```
 
-3. Run the app
-
-```bash
+# Start the app
 npm run start
 ```
 
-Now you can go directly to `/src/routes/index.tsx` and modify the app as you want.
+### First Run
+1. Launch Pilotfish
+2. Connect your Android device
+3. Watch the magic happen ✨
 
-> You can also delete the `/src/routes/second.tsx` file if you don't want a second page.
+---
 
-## Auto update
+## 📦 Build & Distribution
 
-> [!WARNING]
-> This feature only work in open-source repositories in GitHub, if you need to use in a private repository, you need to setup a custom update server. Check the [Updating Applications](https://www.electronjs.org/docs/latest/tutorial/updates) section in the Electron documentation for more details.
+### Automated CI/CD
+**Smart commit triggers** - Build what you need, when you need it:
 
-The auto update uses GitHub Releases as source for the updates. The `publish` script will automatically create a new release with the version specified in your `package.json` file. You can run locally the `publish` script to create a new release, but you need to set the `GITHUB_TOKEN` environment variable with a GitHub Personal Access Token that has permission to create releases in your repository.
+```bash
+git commit -m "l"     # Linux (.AppImage)
+git commit -m "w"     # Windows (.exe) 
+git commit -m "m"     # macOS (.dmg) - Intel + M-series
+git commit -m "#go"   # All platforms - Release everything!
+```
 
-You can also use the GitHub Actions workflow to automatically create a new release when you push a new tag to the repository. The workflow need to be triggered manually, but you can modify to fit your needs. Also, the release is created as draft by default, so you can review and set a proper description before publish.
+### Tag-based Releases
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+# Boom! All platforms built automatically
+```
 
-> Check the [`.github/workflows/publish.yml`](https://github.com/LuanRoger/electron-shadcn/blob/main/.github/workflows/publish.yaml) file for more details.
+### Platform Matrix
+| Platform | Architecture | File Type | Trigger |
+|----------|-------------|-----------|---------|
+| Ubuntu | x64 | `.AppImage` | `l`, `#go` |
+| Windows | x64 | `.exe` | `w`, `#go` |
+| macOS | Intel + M-series | `.dmg` | `m`, `#go` |
 
-When you open the app, it will check for updates automatically. If an update is available, it will download and install the update, after that, it will restart the app to apply the update. This ensure  that your users always have the latest version of your app.
+---
 
-The auto update is implemented using [update-electron-app](https://github.com/electron/update-electron-app) to check the updates and apply them. For the publishing, it is using the [Electron Forge's GitHub publisher](https://www.electronforge.io/config/publishers/github).
+## 🔧 Development Workflow
 
-## Documentation
+### Project Structure
+```
+src/
+├── routes/          # File-based routing (better than Android's navigation)
+├── components/      # Reusable UI components
+├── ipc/            # Inter-process communication
+├── actions/        # ADB command handlers
+└── styles/         # Global styles and themes
+```
 
-Check out the full documentation [here](https://docs.luanroger.dev/electron-shadcn).
+### Key Features
+- **🔄 React Compiler** - Automatic optimizations enabled
+- **🛡️ Context Isolation** - Security first approach
+- **🎯 Custom Title Bar** - Native-like experience
+- **📱 React DevTools** - Built-in debugging tools
 
-## Used by
+---
 
-- [yaste](https://github.com/LuanRoger/yaste) - yaste (Yet another super ₛᵢₘₚₗₑ text editor) is a text editor, that can be used as an alternative to the native text editor of your SO, maybe.
-- [eletric-drizzle](https://github.com/LuanRoger/electric-drizzle) - shadcn-ui and Drizzle ORM with Electron.
-- [Wordle Game](https://github.com/masonyekta/wordle-game) - A Wordle game which features interactive gameplay, cross-platform compatibility, and integration with a custom Wordle API for word validation and letter correctness.
-- [Mehr 🌟](https://github.com/xmannii/MehrLocalChat) - A modern, elegant local AI chatbot application using Electron, React, shadcn/ui, and Ollama.
+## 🧪 Testing Suite
 
-> Does you've used this template in your project? Add it here and open a PR.
+Comprehensive testing that Android developers respect:
 
-## License
+```bash
+# Unit tests
+npm run test:unit
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/LuanRoger/electron-shadcn/blob/main/LICENSE) file for details.
+# E2E tests  
+npm run test:e2e
+
+# All tests
+npm run test:all
+```
+
+---
+
+## 📚 Documentation
+
+- **📖 Full Docs**: [docs.luanroger.dev/electron-shadcn](https://docs.luanroger.dev/electron-shadcn)
+- **🔧 CI/CD Guide**: [`.github/workflows/README.md`](.github/workflows/README.md)
+
+---
+
+## 🌟 Showcased In
+
+- **yaste** - Super simple text editor with Electron power
+- **eletric-drizzle** - shadcn/ui meets Drizzle ORM
+- **Wordle Game** - Cross-platform gaming experience
+- **Mehr 🌟** - Local AI chatbot with modern UI
+
+> *Built with Pilotfish? Add your project here!*
+
+---
+
+## 🛡️ License
+
+**⚠️ IMPORTANT LICENSE NOTICE**
+
+This project is licensed under the **MIT License** with the following restrictions:
+
+- ✅ **Personal Use** - Completely free for personal projects
+- ✅ **Open Source** - Free for open source projects  
+- ✅ **Educational** - Free for learning and teaching
+- ❌ **COMMERCIAL SALE PROHIBITED** - You **CANNOT** sell this software or derivatives
+- ❌ **RESALE RESTRICTED** - No redistribution for commercial gain
+
+> **Why this license?** We believe in empowering developers, not corporations. Use it to build amazing things, learn, and contribute to the community. But don't sell our hard work.
+
+See [LICENSE](LICENSE) for full details.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the Android development community! 
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📞 Support
+
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/LuanRoger/electron-shadcn/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/LuanRoger/electron-shadcn/discussions)
+- 📖 **Documentation**: [docs.luanroger.dev/electron-shadcn](https://docs.luanroger.dev/electron-shadcn)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Android developers, for Android developers**
+
+*From terminal frustration to desktop liberation*
+
+[⭐ Star this repo](https://github.com/LuanRoger/electron-shadcn) • [🐛 Report Issues](https://github.com/LuanRoger/electron-shadcn/issues) • [💡 Suggest Features](https://github.com/LuanRoger/electron-shadcn/discussions)
+
+</div>
