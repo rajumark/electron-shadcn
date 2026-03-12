@@ -1,0 +1,67 @@
+name: Debug Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug-build:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Forge config
+        run: |
+          echo "📋 Forge configuration:"
+          cat forge.config.ts || echo "❌ No forge.config.ts found"
+          echo ""
+          echo "📦 Package.json:"
+          cat package.json | grep -A 10 -B 5 "scripts" || echo "❌ No scripts found"
+
+      - name: Test make command
+        run: |
+          echo "🔨 Testing make command..."
+          npm run make -- --help || echo "❌ Make help failed"
+          echo ""
+          echo "📁 Current directory contents:"
+          ls -la || echo "❌ ls failed"
+
+      - name: Build for platform
+        run: |
+          echo "🔨 Building for ${{ matrix.platform }}..."
+          if [[ "${{ matrix.platform }}" == "ubuntu-latest" ]]; then
+            npm run make -- --platform=linux --arch=x64
+          elif [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+            npm run make -- --platform=win32 --arch=x64
+          elif [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            npm run make -- --platform=darwin --arch=x64
+            npm run make -- --platform=darwin --arch=arm64
+          fi
+
+      - name: List all outputs
+        run: |
+          echo "📁 All build outputs:"
+          find out -type f 2>/dev/null || echo "❌ No out directory found"
+          echo ""
+          echo "📦 Root directory:"
+          find . -maxdepth 2 -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" 2>/dev/null || echo "❌ No packages found in root"
+
+      - name: Upload debug artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-${{ matrix.platform }}
+          path: out/
+          retention-days: 7
+        continue-on-error: true
