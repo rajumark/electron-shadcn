@@ -10,16 +10,16 @@
 
 ## 🚀 Why Pilotfish?
 
-Tired of juggling multiple tools for Android development? **Pilotfish** is your unified desktop companion that brings the power of Android Debug Bridge (ADB) to your desktop with a stunning, modern interface. Built for developers who demand efficiency and elegance.
+**Pilotfish** is your unified desktop companion that brings the power of Android Debug Bridge (ADB) to your desktop with a stunning, modern interface. Built for developers who demand efficiency and elegance in their development workflow.
 
-### 🎯 Android Developer's Dream Stack
+### 🎯 What Makes Pilotfish Special
 
-| Feature | Android Studio | Pilotfish | 🏆 Winner |
-|---------|---------------|-----------|-----------|
-| **ADB Integration** | Terminal-based | Native GUI | Pilotfish |
-| **Cross-Platform** | IDE-specific | Universal | Pilotfish |
-| **Performance** | Heavy Resource | Lightning Fast | Pilotfish |
-| **Modern UI** | Traditional | shadcn/ui Beauty | Pilotfish |
+| Feature | Traditional Approach | Pilotfish | 🏆 Advantage |
+|---------|-------------------|-----------|------------|
+| **ADB Integration** | Terminal commands | Visual GUI | Intuitive control |
+| **Device Management** | Manual tracking | Auto-detection | Effortless setup |
+| **Performance** | Multiple tools | Single app | Streamlined workflow |
+| **User Experience** | Complex commands | Click interface | User-friendly |
 
 ---
 
@@ -29,20 +29,20 @@ Tired of juggling multiple tools for Android development? **Pilotfish** is your 
 - **⚡ Electron 40** - Desktop app mastery
 - **⚛️ React 19.2** - Latest React with Compiler optimizations
 - **🎨 TailwindCSS 4** - Utility-first CSS at its finest
-- **🧩 shadcn/ui** - Component library that makes Android devs jealous
+- **🧩 shadcn/ui** - Beautiful and accessible component library
 - **🔥 Vite 7** - Blazing fast builds and HMR
 
 ### Developer Experience
-- **📘 TypeScript 5.9** - Type safety that Android devs crave
-- **🚀 TanStack Router** - File-based routing better than Jetpack Navigation
-- **🔄 TanStack Query** - State management that puts LiveData to shame
-- **✅ Zod 4** - Runtime validation stricter than Kotlin's type system
-- **🌍 i18next** - Internationalization that Android Studio wishes it had
+- **📘 TypeScript 5.9** - Type safety for robust development
+- **🚀 TanStack Router** - Intuitive file-based routing system
+- **🔄 TanStack Query** - Powerful state management
+- **✅ Zod 4** - Runtime validation for data integrity
+- **🌍 i18next** - Built-in internationalization support
 
 ### Testing & Quality
-- **🧪 Vitest** - Unit testing faster than JUnit
-- **🎭 Playwright** - E2E testing more reliable than Espresso
-- **📋 React Testing Library** - Component testing that Android devs respect
+- **🧪 Vitest** - Fast and reliable unit testing
+- **🎭 Playwright** - Comprehensive end-to-end testing
+- **📋 React Testing Library** - Component testing excellence
 
 ---
 
@@ -62,16 +62,16 @@ Pilotfish transforms your ADB experience from command-line headaches to visual b
 
 ### 📊 Performance Monitoring
 - **Live performance metrics** - CPU, memory, network usage in real-time
-- **Logcat viewer** - Colored, filtered logs better than Android Studio
+- **Logcat viewer** - Colored, filtered logs for easy debugging
 - **Screen recording** - Capture device screens without complex commands
 
 ---
 
-## 🎨 UI That Android Devs Deserve
+## 🎨 Modern User Interface
 
-Built with **shadcn/ui** and **TailwindCSS 4**, Pilotfish brings Material Design 3 aesthetics to desktop:
+Built with **shadcn/ui** and **TailwindCSS 4**, Pilotfish delivers a stunning desktop experience:
 
-- **🌙 Dark/Light themes** - Better than Android's theme system
+- **🌙 Dark/Light themes** - Comfortable viewing in any environment
 - **📱 Responsive design** - Works on any screen size
 - **⚡ Smooth animations** - 60fps interactions that feel native
 - **🎯 Intuitive navigation** - File-based routing that just makes sense
@@ -139,7 +139,7 @@ git push origin v1.0.0
 ### Project Structure
 ```
 src/
-├── routes/          # File-based routing (better than Android's navigation)
+├── routes/          # File-based routing system
 ├── components/      # Reusable UI components
 ├── ipc/            # Inter-process communication
 ├── actions/        # ADB command handlers
@@ -156,7 +156,7 @@ src/
 
 ## 🧪 Testing Suite
 
-Comprehensive testing that Android developers respect:
+Comprehensive testing for reliable applications:
 
 ```bash
 # Unit tests
@@ -209,7 +209,7 @@ See [LICENSE](LICENSE) for full details.
 
 ## 🤝 Contributing
 
-We welcome contributions from the Android development community! 
+We welcome contributions from the development community! 
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
@@ -229,9 +229,9 @@ We welcome contributions from the Android development community!
 
 <div align="center">
 
-**Made with ❤️ by Android developers, for Android developers**
+**Made with ❤️ by developers, for developers**
 
-*From terminal frustration to desktop liberation*
+*Empowering your development workflow*
 
 [⭐ Star this repo](https://github.com/LuanRoger/electron-shadcn) • [🐛 Report Issues](https://github.com/LuanRoger/electron-shadcn/issues) • [💡 Suggest Features](https://github.com/LuanRoger/electron-shadcn/discussions)
 
