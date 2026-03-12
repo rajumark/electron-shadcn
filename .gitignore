@@ -102,3 +102,5 @@ out/
 
 # Tanstack
 .tanstack/
+
+/learning_project_only/
