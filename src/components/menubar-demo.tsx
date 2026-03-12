@@ -45,7 +45,7 @@ export function MenubarDemo() {
     router.navigate({ to: path });
   };
   return (
-    <Menubar className="w-full">
+    <Menubar className="w-full ml-2">
       <MenubarMenu>
         <MenubarTrigger>Navigation</MenubarTrigger>
         <MenubarContent>
