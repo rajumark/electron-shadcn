@@ -62,6 +62,30 @@ export function MenubarDemo() {
             >
               Second page
             </MenubarCheckboxItem>
+            <MenubarCheckboxItem 
+              checked={currentRoute === "/apps"} 
+              onClick={() => handleNavigation("/apps")}
+            >
+              Apps
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem 
+              checked={currentRoute === "/settings"} 
+              onClick={() => handleNavigation("/settings")}
+            >
+              Settings
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem 
+              checked={currentRoute === "/terminal"} 
+              onClick={() => handleNavigation("/terminal")}
+            >
+              Terminal
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem 
+              checked={currentRoute === "/fordev"} 
+              onClick={() => handleNavigation("/fordev")}
+            >
+              ForDev
+            </MenubarCheckboxItem>
           </MenubarGroup>
         </MenubarContent>
       </MenubarMenu>
