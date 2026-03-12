@@ -3,7 +3,7 @@
 This repository contains automated CI/CD workflows for building and releasing Electron applications across multiple platforms.
 
 ## Workflows
-
+ 
 ### 1. Release Workflow (`release.yml`)
 Triggers on push to main/master branches and checks commit messages for platform-specific releases.
 
