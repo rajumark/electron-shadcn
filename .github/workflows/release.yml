@@ -74,7 +74,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '21'
           cache: 'npm'
 
       - name: Install dependencies
@@ -83,6 +83,14 @@ jobs:
       - name: Build for Ubuntu
         run: |
           echo "🔨 Building for Ubuntu..."
+          echo "📋 Node version:"
+          node --version
+          echo "📋 NPM version:"
+          npm --version
+          echo "📋 Current directory:"
+          pwd
+          echo ""
+          echo "🔨 Starting build process..."
           npm run make -- --platform=linux --arch=x64
           
       - name: List build outputs
@@ -121,7 +129,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '21'
           cache: 'npm'
 
       - name: Install dependencies
@@ -157,7 +165,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '21'
           cache: 'npm'
 
       - name: Install dependencies
