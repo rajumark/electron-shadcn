@@ -7,7 +7,7 @@ export default function BaseLayout({
 }: {
   children: React.ReactNode;
 }) { 
-  return (
+  return ( 
     <>
       <DragWindowRegion title="Pilotfish" />
       <MenubarDemo />
