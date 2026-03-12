@@ -1,19 +1,18 @@
-import { exec, spawn } from "node:child_process";
-import { createWriteStream } from "node:fs";
-import { access, chmod, mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { promisify } from "node:util";
+import { spawn } from "node:child_process";
 import { app } from "electron";
+import { createWriteStream, createReadStream } from "node:fs";
+import { access, chmod, mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { pipeline } from "node:stream/promises";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 
 const execAsync = promisify(exec);
 
 const PLATFORM_TOOLS_URL = {
-  win32:
-    "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",
-  darwin:
-    "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip",
-  linux:
-    "https://dl.google.com/android/repository/platform-tools-latest-linux.zip",
+  win32: "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",
+  darwin: "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip",
+  linux: "https://dl.google.com/android/repository/platform-tools-latest-linux.zip",
 } as const;
 
 const platformToolsPath = join(app.getPath("userData"), "platform-tools");
@@ -38,9 +37,7 @@ export const ADBHelper = {
     }
   },
 
-  async downloadADB(
-    progressCallback?: (progress: number) => void
-  ): Promise<void> {
+  async downloadADB(progressCallback?: (progress: number) => void): Promise<void> {
     const platform = process.platform as keyof typeof PLATFORM_TOOLS_URL;
     const url = PLATFORM_TOOLS_URL[platform];
 
@@ -48,20 +45,25 @@ export const ADBHelper = {
       throw new Error(`Unsupported platform: ${platform}`);
     }
 
+    const tempDir = join(app.getPath("temp"), "platform-tools-temp");
+    
     try {
+      // Clean up any existing temp directory
+      await this.cleanupTempDir(tempDir);
+      
+      // Create fresh temp directory
+      await mkdir(tempDir, { recursive: true });
       await mkdir(platformToolsPath, { recursive: true });
 
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(
-          `Failed to download platform-tools: ${response.statusText}`
-        );
+        throw new Error(`Failed to download platform-tools: ${response.statusText}`);
       }
 
       const totalSize = Number(response.headers.get("content-length")) || 0;
       let downloadedSize = 0;
 
-      const zipPath = join(platformToolsPath, "platform-tools.zip");
+      const zipPath = join(tempDir, "platform-tools.zip");
       const writeStream = createWriteStream(zipPath);
 
       const reader = response.body?.getReader();
@@ -71,9 +73,7 @@ export const ADBHelper = {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
+        if (done) break;
 
         downloadedSize += value.length;
         const progress = totalSize > 0 ? (downloadedSize / totalSize) * 100 : 0;
@@ -89,54 +89,84 @@ export const ADBHelper = {
         writeStream.on("error", reject);
       });
 
-      await this.extractZip(zipPath);
+      // Extract to temp directory first
+      await this.extractToTemp(zipPath, tempDir);
+      
+      // Move files to final location
+      await this.moveFromTempToFinal(tempDir, platformToolsPath);
 
+      // Set executable permissions
       if (platform === "darwin" || platform === "linux") {
         await this.setExecutablePermissions();
       }
     } catch (error) {
-      throw new Error(
-        `ADB download failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
+      throw new Error(`ADB download failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      // Always clean up temp directory
+      await this.cleanupTempDir(tempDir);
     }
   },
 
-  async extractZip(zipPath: string): Promise<void> {
+  async cleanupTempDir(tempDir: string): Promise<void> {
+    try {
+      await rm(tempDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+  },
+
+  async extractToTemp(zipPath: string, tempDir: string): Promise<void> {
     const platform = process.platform;
 
     if (platform === "win32") {
       try {
         await execAsync("where powershell");
         await execAsync(
-          `Expand-Archive -Path "${zipPath}" -DestinationPath "${platformToolsPath}" -Force`,
-          { shell: "powershell.exe" }
+          `Expand-Archive -Path "${zipPath}" -DestinationPath "${tempDir}" -Force`,
+          { shell: "powershell.exe" },
         );
-
-        // Move files from nested platform-tools directory
-        const nestedPath = join(platformToolsPath, "platform-tools");
-        try {
-          await execAsync(`move "${nestedPath}\\*" "${platformToolsPath}"`, { shell: "cmd.exe" });
-          await execAsync(`rmdir "${nestedPath}"`, { shell: "cmd.exe" });
-        } catch (moveError) {
-          console.warn("Failed to move files from nested directory:", moveError);
-        }
       } catch {
         throw new Error("Failed to extract ZIP file. PowerShell is required on Windows.");
       }
     } else {
       try {
-        await execAsync(`unzip -o "${zipPath}" -d "${platformToolsPath}"`);
-
-        // Move files from nested platform-tools directory
-        const nestedPath = join(platformToolsPath, "platform-tools");
-        try {
-          await execAsync(`mv "${nestedPath}"/* "${platformToolsPath}/"`);
-          await execAsync(`rmdir "${nestedPath}"`);
-        } catch (moveError) {
-          console.warn("Failed to move files from nested directory:", moveError);
-        }
+        await execAsync(`unzip -o "${zipPath}" -d "${tempDir}"`);
       } catch {
         throw new Error("Failed to extract ZIP file. unzip command is required on macOS/Linux.");
+      }
+    }
+  },
+
+  async moveFromTempToFinal(tempDir: string, finalDir: string): Promise<void> {
+    const platform = process.platform;
+    const extractedPath = join(tempDir, "platform-tools");
+    
+    try {
+      // Check if platform-tools directory exists in temp
+      await access(extractedPath);
+      
+      if (platform === "win32") {
+        // Windows: Use robocopy for reliable file operations
+        await execAsync(`robocopy "${extractedPath}" "${finalDir}" /E /MOVE`, { shell: "cmd.exe" });
+      } else {
+        // macOS/Linux: Use standard mv command
+        await execAsync(`mv "${extractedPath}"/* "${finalDir}/"`);
+      }
+      
+      // Remove empty platform-tools directory from temp
+      await rm(extractedPath, { recursive: true, force: true });
+    } catch (error) {
+      // If the nested directory doesn't exist, files might be directly in tempDir
+      try {
+        // Move all files from tempDir to finalDir
+        if (platform === "win32") {
+          await execAsync(`robocopy "${tempDir}" "${finalDir}" /E /MOVE`, { shell: "cmd.exe" });
+        } else {
+          await execAsync(`mv "${tempDir}"/* "${finalDir}/"`);
+        }
+      } catch (moveError) {
+        console.warn("Failed to move files from temp directory:", moveError);
+        throw new Error("Failed to organize extracted files");
       }
     }
   },
