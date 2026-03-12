@@ -12,6 +12,7 @@ const config: ForgeConfig = {
     asar: true,
     name: "Pilotfish",
     executableName: "pilotfish",
+    icon: "./assets/icons/icon",
   },
   rebuildConfig: {},
   makers: [
