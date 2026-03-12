@@ -13,10 +13,10 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({}, ["win32"]),
     new MakerZIP({}, ["darwin"]),
-    new MakerRpm({}),
-    new MakerDeb({}),
+    new MakerRpm({}, ["linux"]),
+    new MakerDeb({}, ["linux"]),
   ],
   publishers: [
     {
