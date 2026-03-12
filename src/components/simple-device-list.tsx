@@ -89,8 +89,8 @@ export function SimpleDeviceList() {
 
           setDevices(finalDevices);
           
-          // Auto-select first device if none selected
-          if (finalDevices.length > 0 && !selectedDevice) {
+          // Auto-select first device if none selected, or if selected device is no longer available
+          if (finalDevices.length > 0 && (!selectedDevice || !finalDevices.some(d => d.id === selectedDevice.id))) {
             setSelectedDevice(finalDevices[0]);
           }
           
