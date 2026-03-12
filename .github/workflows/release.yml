@@ -94,7 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-packages
-          path: out/**/*.{AppImage,deb,rpm}
+          path: out/**/*.AppImage
           retention-days: 30
         continue-on-error: true
 
@@ -170,7 +170,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-packages
-          path: out/**/*.{dmg,zip}
+          path: out/**/*.dmg
           retention-days: 30
         continue-on-error: true
 
@@ -219,7 +219,7 @@ jobs:
             artifacts/**/*.rpm
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
