@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UidemoRouteImport } from './routes/uidemo'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SecondRouteImport } from './routes/second'
@@ -16,6 +17,11 @@ import { Route as FordevRouteImport } from './routes/fordev'
 import { Route as AppsRouteImport } from './routes/apps'
 import { Route as IndexRouteImport } from './routes/index'
 
+const UidemoRoute = UidemoRouteImport.update({
+  id: '/uidemo',
+  path: '/uidemo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TerminalRoute = TerminalRouteImport.update({
   id: '/terminal',
   path: '/terminal',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
+  '/uidemo': typeof UidemoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
+  '/uidemo': typeof UidemoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,12 +79,27 @@ export interface FileRoutesById {
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
+  '/uidemo': typeof UidemoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/apps' | '/fordev' | '/second' | '/settings' | '/terminal'
+  fullPaths:
+    | '/'
+    | '/apps'
+    | '/fordev'
+    | '/second'
+    | '/settings'
+    | '/terminal'
+    | '/uidemo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/apps' | '/fordev' | '/second' | '/settings' | '/terminal'
+  to:
+    | '/'
+    | '/apps'
+    | '/fordev'
+    | '/second'
+    | '/settings'
+    | '/terminal'
+    | '/uidemo'
   id:
     | '__root__'
     | '/'
@@ -85,6 +108,7 @@ export interface FileRouteTypes {
     | '/second'
     | '/settings'
     | '/terminal'
+    | '/uidemo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,10 +118,18 @@ export interface RootRouteChildren {
   SecondRoute: typeof SecondRoute
   SettingsRoute: typeof SettingsRoute
   TerminalRoute: typeof TerminalRoute
+  UidemoRoute: typeof UidemoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/uidemo': {
+      id: '/uidemo'
+      path: '/uidemo'
+      fullPath: '/uidemo'
+      preLoaderRoute: typeof UidemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terminal': {
       id: '/terminal'
       path: '/terminal'
@@ -150,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecondRoute: SecondRoute,
   SettingsRoute: SettingsRoute,
   TerminalRoute: TerminalRoute,
+  UidemoRoute: UidemoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -93,6 +93,13 @@ export function MenubarDemo() {
               <Code className="mr-2 h-4 w-4" />
               ForDev
             </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/uidemo"}
+              onClick={() => handleNavigation("/uidemo")}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              UI Demo
+            </MenubarCheckboxItem>
           </MenubarGroup>
         </MenubarContent>
       </MenubarMenu>

@@ -1,9 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Filter } from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function AppsPage() {
   const { t } = useTranslation();
@@ -20,6 +26,17 @@ function AppsPage() {
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   
+  // Filter state
+  const [filterType, setFilterType] = useState<string>("all"); // all, user, system, disabled
+  
+  // Filter options
+  const filterOptions = [
+    { id: "all", label: "All apps", command: "pm list packages" },
+    { id: "user", label: "User apps", command: "pm list packages -3" },
+    { id: "system", label: "System apps", command: "pm list packages -s" },
+    { id: "disabled", label: "Disabled apps", command: "pm list packages -d" },
+  ];
+  
   const { selectedDevice } = useSelectedDevice();
 
   // Fetch packages when device is selected or refresh is triggered
@@ -35,8 +52,18 @@ function AppsPage() {
       setError("");
       
       try {
+        let command = "pm list packages";
+        if (filterType === "user") {
+          command = "pm list packages -3";
+        } else if (filterType === "system") {
+          command = "pm list packages -s";
+        } else if (filterType === "disabled") {
+          command = "pm list packages -d";
+        }
+        
         const packageList = await ipc.client.adb.getInstalledPackages({
           deviceId: selectedDevice.id,
+          command,
         });
         setPackages(packageList);
         setFilteredPackages(packageList);
@@ -51,7 +78,7 @@ function AppsPage() {
     };
 
     fetchPackages();
-  }, [selectedDevice, refreshKey]);
+  }, [selectedDevice, refreshKey, filterType]);
 
   // Filter packages based on search query
   useEffect(() => {
@@ -108,7 +135,7 @@ function AppsPage() {
   }, [isDragging]);
 
   return (
-    <div className="mb-2 flex min-h-full">
+    <div className="mb-2 flex h-[calc(100vh-8rem)]">
       <div className="relative flex flex-1" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
@@ -118,21 +145,55 @@ function AppsPage() {
           <div className="p-4 flex flex-col h-full">
             {/* Header with Title and Filter */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Apps</h2>
-              <button className="p-2 hover:bg-muted rounded-md transition-colors">
-                <Filter className="h-4 w-4" />
-              </button>
+              <h2 className="text-lg font-medium">
+                {filterOptions.find(option => option.id === filterType)?.label || "Apps"}
+              </h2>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="p-2 hover:bg-muted rounded-md transition-colors relative">
+                    <Filter className="h-4 w-4" />
+                    {filterType !== "all" && (
+                      <div className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></div>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {filterOptions.map((option) => (
+                    <DropdownMenuItem
+                      key={option.id}
+                      onClick={() => setFilterType(option.id)}
+                      className="flex items-center justify-between"
+                    >
+                      <span>{option.label}</span>
+                      {filterType === option.id && (
+                        <div className="h-2 w-2 bg-primary rounded-full"></div>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Search Input */}
-            <div className="mb-4">
+            <div className="mb-4 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </div>
               <input
                 type="text"
                 placeholder={`Search in ${packages.length} items`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-10 pr-10 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
             </div>
 
             {/* Error Display */}

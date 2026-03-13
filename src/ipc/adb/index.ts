@@ -28,17 +28,19 @@ export const getInstalledPackages = os
   .input(
     z.object({
       deviceId: z.string(),
+      command: z.string().optional(),
     })
   )
   .handler(async ({ input }) => {
     try {
+      const command = input.command || "pm list packages";
+      const commandParts = command.split(" ");
+      
       const packages = await ADBHelper.executeADBCommand([
         "-s",
         input.deviceId,
         "shell",
-        "pm",
-        "list",
-        "packages",
+        ...commandParts,
       ]);
       
       // Parse the output and return clean package names
