@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Filter } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 
@@ -111,15 +112,23 @@ function AppsPage() {
       <div className="relative flex flex-1" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
-          className="mr-0 mb-2 ml-2 min-h-full rounded-lg border border-gray-200 bg-white shadow-sm"
+          className="mr-0 mb-2 ml-2 h-full rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col"
           style={{ width: `${leftWidth}%` }}
         >
-          <div className="p-4">
+          <div className="p-4 flex flex-col h-full">
+            {/* Header with Title and Filter */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Apps</h2>
+              <button className="p-2 hover:bg-muted rounded-md transition-colors">
+                <Filter className="h-4 w-4" />
+              </button>
+            </div>
+
             {/* Search Input */}
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="Search packages..."
+                placeholder={`Search in ${packages.length} items`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -134,7 +143,7 @@ function AppsPage() {
             )}
 
             {/* Package List */}
-            <div className="space-y-2">
+            <div className="flex-1 flex flex-col min-h-0">
               {loadingPackages ? (
                 <div className="text-center py-4">
                   <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -142,13 +151,7 @@ function AppsPage() {
                 </div>
               ) : filteredPackages.length > 0 ? (
                 <>
-                  <p className="text-xs text-muted-foreground">
-                    {searchQuery.trim() 
-                      ? `Found ${filteredPackages.length} of ${packages.length} packages`
-                      : `Found ${packages.length} packages`
-                    }
-                  </p>
-                  <div className="max-h-96 overflow-y-auto space-y-1">
+                  <div className="flex-1 overflow-y-auto space-y-1">
                     {filteredPackages.map((pkg, index) => (
                       <div
                         key={index}
