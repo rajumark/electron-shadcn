@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+ 
 function AppsPage() {
   const { t } = useTranslation();
   const [leftWidth, setLeftWidth] = useState(30);
