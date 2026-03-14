@@ -139,7 +139,7 @@ function AppsPage() {
       <div className="relative flex flex-1" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
-          className="mr-0 mb-2 ml-2 h-full rounded-lg border border-gray-200 bg-white shadow-sm flex flex-col"
+          className="mr-0 mb-2 ml-2 h-full flex flex-col"
           style={{ width: `${leftWidth}%` }}
         >
           <div className="p-4 flex flex-col h-full">
@@ -243,18 +243,13 @@ function AppsPage() {
 
         {/* Resizable Divider */}
         <div
-          className="group relative w-2 cursor-col-resize transition-all hover:w-2"
+          className="relative cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors"
+          style={{ width: '0.5px' }}
           onMouseDown={() => setIsDragging(true)}
-        >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div
-              className={`h-8 w-1 rounded-full bg-gray-400 opacity-0 transition-opacity group-hover:opacity-60 ${isDragging ? "opacity-100" : ""}`}
-            />
-          </div>
-        </div>
+        />
 
         {/* Right Section - App Details */}
-        <div className="mr-2 mb-2 ml-0 min-h-full flex-1 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mr-2 mb-2 ml-0 min-h-full flex-1 p-4">
           <h2 className="mb-2 font-semibold text-lg">App Details</h2>
           {selectedPackage ? (
             <div className="space-y-4">
