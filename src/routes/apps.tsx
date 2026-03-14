@@ -144,7 +144,7 @@ function AppsPage() {
         >
           <div className="flex flex-col h-full min-h-0">
             {/* Header with Title and Filter */}
-            <div className="flex items-center justify-between mx-2 pt-4 pb-2">
+            <div className="flex items-center justify-between mx-2 pt-2 pb-2">
               <h2 className="text-sm font-medium">
                 {filterOptions.find(option => option.id === filterType)?.label || "Apps"}
               </h2>
