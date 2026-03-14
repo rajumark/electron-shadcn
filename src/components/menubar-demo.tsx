@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { Code, FileText, Home, Settings, Terminal, Eye } from "lucide-react";
+import { Code, FileText, Home, Settings, Terminal, Eye, Phone, Users, MessageSquare, Image, Activity, Calendar, Info, Battery, Bell, Cpu, Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCurrentTheme, setTheme } from "@/actions/theme";
 import {
@@ -106,6 +106,83 @@ export function MenubarDemo() {
             >
               <Eye className="mr-2 h-4 w-4" />
               UI Inspector
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/call-logs"}
+              onClick={() => handleNavigation("/call-logs")}
+            >
+              <Phone className="mr-2 h-4 w-4" />
+              Call Logs
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/contacts"}
+              onClick={() => handleNavigation("/contacts")}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Contacts
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/messages"}
+              onClick={() => handleNavigation("/messages")}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Messages
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/medias"}
+              onClick={() => handleNavigation("/medias")}
+            >
+              <Image className="mr-2 h-4 w-4" />
+              Medias
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/lifecycle"}
+              onClick={() => handleNavigation("/lifecycle")}
+            >
+              <Activity className="mr-2 h-4 w-4" />
+              Lifecycle
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/calendar"}
+              onClick={() => handleNavigation("/calendar")}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Calendar
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/properties"}
+              onClick={() => handleNavigation("/properties")}
+            >
+              <Info className="mr-2 h-4 w-4" />
+              Properties
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/batteries"}
+              onClick={() => handleNavigation("/batteries")}
+            >
+              <Battery className="mr-2 h-4 w-4" />
+              Batteries
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/notifications"}
+              onClick={() => handleNavigation("/notifications")}
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              Notifications
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/cpu-usage"}
+              onClick={() => handleNavigation("/cpu-usage")}
+            >
+              <Cpu className="mr-2 h-4 w-4" />
+              CPU Usage
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem
+              checked={currentRoute === "/file-explorer"}
+              onClick={() => handleNavigation("/file-explorer")}
+            >
+              <Folder className="mr-2 h-4 w-4" />
+              File Explorer
             </MenubarCheckboxItem>
           </MenubarGroup>
         </MenubarContent>

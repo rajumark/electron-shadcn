@@ -14,7 +14,18 @@ import { Route as UiInspectorRouteImport } from './routes/ui-inspector'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SecondRouteImport } from './routes/second'
+import { Route as PropertiesRouteImport } from './routes/properties'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MessagesRouteImport } from './routes/messages'
+import { Route as MediasRouteImport } from './routes/medias'
+import { Route as LifecycleRouteImport } from './routes/lifecycle'
 import { Route as FordevRouteImport } from './routes/fordev'
+import { Route as FileExplorerRouteImport } from './routes/file-explorer'
+import { Route as CpuUsageRouteImport } from './routes/cpu-usage'
+import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as CallLogsRouteImport } from './routes/call-logs'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as BatteriesRouteImport } from './routes/batteries'
 import { Route as AppsRouteImport } from './routes/apps'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -43,9 +54,64 @@ const SecondRoute = SecondRouteImport.update({
   path: '/second',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropertiesRoute = PropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediasRoute = MediasRouteImport.update({
+  id: '/medias',
+  path: '/medias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LifecycleRoute = LifecycleRouteImport.update({
+  id: '/lifecycle',
+  path: '/lifecycle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FordevRoute = FordevRouteImport.update({
   id: '/fordev',
   path: '/fordev',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FileExplorerRoute = FileExplorerRouteImport.update({
+  id: '/file-explorer',
+  path: '/file-explorer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CpuUsageRoute = CpuUsageRouteImport.update({
+  id: '/cpu-usage',
+  path: '/cpu-usage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallLogsRoute = CallLogsRouteImport.update({
+  id: '/call-logs',
+  path: '/call-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BatteriesRoute = BatteriesRouteImport.update({
+  id: '/batteries',
+  path: '/batteries',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppsRoute = AppsRouteImport.update({
@@ -62,7 +128,18 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
+  '/batteries': typeof BatteriesRoute
+  '/calendar': typeof CalendarRoute
+  '/call-logs': typeof CallLogsRoute
+  '/contacts': typeof ContactsRoute
+  '/cpu-usage': typeof CpuUsageRoute
+  '/file-explorer': typeof FileExplorerRoute
   '/fordev': typeof FordevRoute
+  '/lifecycle': typeof LifecycleRoute
+  '/medias': typeof MediasRoute
+  '/messages': typeof MessagesRoute
+  '/notifications': typeof NotificationsRoute
+  '/properties': typeof PropertiesRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
@@ -72,7 +149,18 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
+  '/batteries': typeof BatteriesRoute
+  '/calendar': typeof CalendarRoute
+  '/call-logs': typeof CallLogsRoute
+  '/contacts': typeof ContactsRoute
+  '/cpu-usage': typeof CpuUsageRoute
+  '/file-explorer': typeof FileExplorerRoute
   '/fordev': typeof FordevRoute
+  '/lifecycle': typeof LifecycleRoute
+  '/medias': typeof MediasRoute
+  '/messages': typeof MessagesRoute
+  '/notifications': typeof NotificationsRoute
+  '/properties': typeof PropertiesRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
@@ -83,7 +171,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/apps': typeof AppsRoute
+  '/batteries': typeof BatteriesRoute
+  '/calendar': typeof CalendarRoute
+  '/call-logs': typeof CallLogsRoute
+  '/contacts': typeof ContactsRoute
+  '/cpu-usage': typeof CpuUsageRoute
+  '/file-explorer': typeof FileExplorerRoute
   '/fordev': typeof FordevRoute
+  '/lifecycle': typeof LifecycleRoute
+  '/medias': typeof MediasRoute
+  '/messages': typeof MessagesRoute
+  '/notifications': typeof NotificationsRoute
+  '/properties': typeof PropertiesRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
@@ -95,7 +194,18 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/apps'
+    | '/batteries'
+    | '/calendar'
+    | '/call-logs'
+    | '/contacts'
+    | '/cpu-usage'
+    | '/file-explorer'
     | '/fordev'
+    | '/lifecycle'
+    | '/medias'
+    | '/messages'
+    | '/notifications'
+    | '/properties'
     | '/second'
     | '/settings'
     | '/terminal'
@@ -105,7 +215,18 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/apps'
+    | '/batteries'
+    | '/calendar'
+    | '/call-logs'
+    | '/contacts'
+    | '/cpu-usage'
+    | '/file-explorer'
     | '/fordev'
+    | '/lifecycle'
+    | '/medias'
+    | '/messages'
+    | '/notifications'
+    | '/properties'
     | '/second'
     | '/settings'
     | '/terminal'
@@ -115,7 +236,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/apps'
+    | '/batteries'
+    | '/calendar'
+    | '/call-logs'
+    | '/contacts'
+    | '/cpu-usage'
+    | '/file-explorer'
     | '/fordev'
+    | '/lifecycle'
+    | '/medias'
+    | '/messages'
+    | '/notifications'
+    | '/properties'
     | '/second'
     | '/settings'
     | '/terminal'
@@ -126,7 +258,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppsRoute: typeof AppsRoute
+  BatteriesRoute: typeof BatteriesRoute
+  CalendarRoute: typeof CalendarRoute
+  CallLogsRoute: typeof CallLogsRoute
+  ContactsRoute: typeof ContactsRoute
+  CpuUsageRoute: typeof CpuUsageRoute
+  FileExplorerRoute: typeof FileExplorerRoute
   FordevRoute: typeof FordevRoute
+  LifecycleRoute: typeof LifecycleRoute
+  MediasRoute: typeof MediasRoute
+  MessagesRoute: typeof MessagesRoute
+  NotificationsRoute: typeof NotificationsRoute
+  PropertiesRoute: typeof PropertiesRoute
   SecondRoute: typeof SecondRoute
   SettingsRoute: typeof SettingsRoute
   TerminalRoute: typeof TerminalRoute
@@ -171,11 +314,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecondRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/properties': {
+      id: '/properties'
+      path: '/properties'
+      fullPath: '/properties'
+      preLoaderRoute: typeof PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/medias': {
+      id: '/medias'
+      path: '/medias'
+      fullPath: '/medias'
+      preLoaderRoute: typeof MediasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lifecycle': {
+      id: '/lifecycle'
+      path: '/lifecycle'
+      fullPath: '/lifecycle'
+      preLoaderRoute: typeof LifecycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fordev': {
       id: '/fordev'
       path: '/fordev'
       fullPath: '/fordev'
       preLoaderRoute: typeof FordevRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file-explorer': {
+      id: '/file-explorer'
+      path: '/file-explorer'
+      fullPath: '/file-explorer'
+      preLoaderRoute: typeof FileExplorerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cpu-usage': {
+      id: '/cpu-usage'
+      path: '/cpu-usage'
+      fullPath: '/cpu-usage'
+      preLoaderRoute: typeof CpuUsageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/call-logs': {
+      id: '/call-logs'
+      path: '/call-logs'
+      fullPath: '/call-logs'
+      preLoaderRoute: typeof CallLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/batteries': {
+      id: '/batteries'
+      path: '/batteries'
+      fullPath: '/batteries'
+      preLoaderRoute: typeof BatteriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apps': {
@@ -198,7 +418,18 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppsRoute: AppsRoute,
+  BatteriesRoute: BatteriesRoute,
+  CalendarRoute: CalendarRoute,
+  CallLogsRoute: CallLogsRoute,
+  ContactsRoute: ContactsRoute,
+  CpuUsageRoute: CpuUsageRoute,
+  FileExplorerRoute: FileExplorerRoute,
   FordevRoute: FordevRoute,
+  LifecycleRoute: LifecycleRoute,
+  MediasRoute: MediasRoute,
+  MessagesRoute: MessagesRoute,
+  NotificationsRoute: NotificationsRoute,
+  PropertiesRoute: PropertiesRoute,
   SecondRoute: SecondRoute,
   SettingsRoute: SettingsRoute,
   TerminalRoute: TerminalRoute,
