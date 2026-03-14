@@ -6,17 +6,25 @@ interface PackageListProps {
   selectedPackage: string;
   onPackageClick: (pkg: string) => void;
   onContextMenuAction: (action: string, pkg: string) => void;
+  pinnedPackages: string[];
 }
 
 const ITEM_HEIGHT = 28; // Height of each package item
 const VISIBLE_ITEMS = 50; // Number of items to render at once
 const BUFFER_SIZE = 10; // Extra items above/below visible area
 
-const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAction }: {
+const PackageListHeader = ({ title }: { title: string }) => (
+  <div className="sticky top-0 z-10 bg-background border-b border-border/50 px-2 py-1">
+    <span className="text-xs font-medium text-muted-foreground">{title}</span>
+  </div>
+);
+
+const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAction, isPinned }: {
   pkg: string;
   isSelected: boolean;
   onClick: () => void;
   onContextMenuAction: (action: string, pkg: string) => void;
+  isPinned: boolean;
 }) => (
   <ContextMenu>
     <ContextMenuTrigger asChild>
@@ -51,7 +59,7 @@ const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAct
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem onClick={() => onContextMenuAction("pin_app", pkg)}>
-        Pin app
+        {isPinned ? "Unpin app" : "Pin app"}
       </ContextMenuItem>
     </ContextMenuContent>
   </ContextMenu>
@@ -59,19 +67,45 @@ const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAct
 
 PackageListItem.displayName = "PackageListItem";
 
-export const PackageList = React.memo(function PackageList({ packages, selectedPackage, onPackageClick, onContextMenuAction }: PackageListProps) {
+export const PackageList = React.memo(function PackageList({ packages, selectedPackage, onPackageClick, onContextMenuAction, pinnedPackages }: PackageListProps) {
   const [scrollTop, setScrollTop] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Separate pinned and unpinned packages with memoization
+  const { pinnedItems, unpinnedItems } = useMemo(() => {
+    const pinned = packages.filter(pkg => pinnedPackages.includes(pkg));
+    const unpinned = packages.filter(pkg => !pinnedPackages.includes(pkg));
+    return { pinnedItems: pinned, unpinnedItems: unpinned };
+  }, [packages, pinnedPackages]);
+
+  // Combine items with headers for virtualization
+  const allItems = useMemo(() => {
+    const items: Array<{ type: 'header' | 'item'; data?: string; title?: string }> = [];
+    
+    if (pinnedItems.length > 0) {
+      items.push({ type: 'header', title: 'Pinned Apps' });
+      items.push(...pinnedItems.map(pkg => ({ type: 'item' as const, data: pkg })));
+    }
+    
+    if (unpinnedItems.length > 0) {
+      if (pinnedItems.length > 0) {
+        items.push({ type: 'header', title: 'All Apps' });
+      }
+      items.push(...unpinnedItems.map(pkg => ({ type: 'item' as const, data: pkg })));
+    }
+    
+    return items;
+  }, [pinnedItems, unpinnedItems]);
 
   // Calculate visible range
   const visibleRange = useMemo(() => {
     const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER_SIZE);
     const endIndex = Math.min(
-      packages.length,
+      allItems.length,
       startIndex + VISIBLE_ITEMS + BUFFER_SIZE * 2
     );
     return { startIndex, endIndex };
-  }, [scrollTop, packages.length]);
+  }, [scrollTop, allItems.length]);
 
   // Handle scroll events
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -80,21 +114,32 @@ export const PackageList = React.memo(function PackageList({ packages, selectedP
 
   // Render only visible items
   const visibleItems = useMemo(() => {
-    return packages.slice(visibleRange.startIndex, visibleRange.endIndex).map((pkg, index) => {
+    return allItems.slice(visibleRange.startIndex, visibleRange.endIndex).map((item, index) => {
       const actualIndex = visibleRange.startIndex + index;
+      
+      if (item.type === 'header') {
+        return (
+          <PackageListHeader 
+            key={`header-${actualIndex}`} 
+            title={item.title!} 
+          />
+        );
+      }
+      
       return (
         <PackageListItem
-          key={pkg}
-          pkg={pkg}
-          isSelected={selectedPackage === pkg}
-          onClick={() => onPackageClick(pkg)}
+          key={item.data}
+          pkg={item.data!}
+          isSelected={selectedPackage === item.data}
+          onClick={() => onPackageClick(item.data!)}
           onContextMenuAction={onContextMenuAction}
+          isPinned={pinnedPackages.includes(item.data!)}
         />
       );
     });
-  }, [packages, visibleRange, selectedPackage, onPackageClick, onContextMenuAction]);
+  }, [allItems, visibleRange, selectedPackage, onPackageClick, onContextMenuAction]);
 
-  const totalHeight = packages.length * ITEM_HEIGHT;
+  const totalHeight = allItems.length * ITEM_HEIGHT;
   const offsetY = visibleRange.startIndex * ITEM_HEIGHT;
 
   return (

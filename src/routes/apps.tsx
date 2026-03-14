@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Filter, Search, X } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { packageStore } from "@/utils/store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ function AppsPage() {
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [pinnedPackages, setPinnedPackages] = useState<string[]>([]);
   const packageListRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   
@@ -101,6 +103,15 @@ function AppsPage() {
     };
   }, [searchQuery]);
 
+  // Load pinned packages on mount
+  useEffect(() => {
+    const loadPinnedPackages = async () => {
+      const pinned = await packageStore.getPinnedPackages();
+      setPinnedPackages(pinned);
+    };
+    loadPinnedPackages();
+  }, []);
+
   // Memoized filtered packages for performance
   const memoizedFilteredPackages = useMemo(() => {
     if (!debouncedSearchQuery.trim()) {
@@ -129,10 +140,22 @@ function AppsPage() {
     setSelectedPackage(pkg);
   }, []);
 
-  const handleContextMenuAction = (action: string, pkg: string) => {
+  const handleContextMenuAction = useCallback(async (action: string, pkg: string) => {
     console.log(`Action: ${action}, Package: ${pkg}`);
-    // TODO: Implement actual functionality for each action
-  };
+    
+    if (action === 'pin_app') {
+      const isCurrentlyPinned = await packageStore.isPinned(pkg);
+      if (isCurrentlyPinned) {
+        await packageStore.unpinPackage(pkg);
+      } else {
+        await packageStore.pinPackage(pkg);
+      }
+      // Update state to trigger re-render
+      const updatedPinned = await packageStore.getPinnedPackages();
+      setPinnedPackages(updatedPinned);
+      setRefreshKey(prev => prev + 1); // Refresh list
+    }
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -251,6 +274,7 @@ function AppsPage() {
                     selectedPackage={selectedPackage}
                     onPackageClick={handlePackageClick}
                     onContextMenuAction={handleContextMenuAction}
+                    pinnedPackages={pinnedPackages}
                   />
                 </div>
               ) : selectedDevice ? (
