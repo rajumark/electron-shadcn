@@ -494,12 +494,8 @@ export const UIInspector: React.FC = () => {
         {/* Right Section - Screenshot */}
         <div className="flex flex-col h-full flex-1">
           <div className="flex items-center justify-between p-3 border-b">
-            <div className="flex items-center gap-2">
-              <Monitor className="h-4 w-4" />
-              <h3 className="font-medium text-sm">Screenshot</h3>
-            </div>
             {xmlData && maxDepth > 0 ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full">
                 <span className="text-xs text-muted-foreground">Depth</span>
                 <Slider
                   value={[currentDepth]}
@@ -507,7 +503,7 @@ export const UIInspector: React.FC = () => {
                   max={maxDepth}
                   min={0}
                   step={1}
-                  className="w-24"
+                  className="flex-1"
                 />
                 <span className="text-xs text-muted-foreground w-4">{currentDepth}</span>
               </div>
