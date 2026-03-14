@@ -99,14 +99,14 @@ export function RightSideQuickPanel() {
   );
 
   return (
-    <div className="w-[30px] bg-gray-100 dark:bg-gray-800 flex flex-col items-center py-1 gap-1 overflow-y-auto border-l border-gray-200 dark:border-gray-700">
+    <div className="w-[30px] h-full bg-gray-100 dark:bg-gray-800 flex flex-col items-center py-1 gap-1 overflow-y-auto overflow-x-hidden border-l border-gray-200 dark:border-gray-700 scrollbar-hide">
       {/* Navigation */}
       <IconButton emoji="⬅️" tooltip="Back Key" onClick={handleBack} isLoading={isLoading === "back"} />
       <IconButton emoji="🏠" tooltip="Home Key" onClick={handleHome} isLoading={isLoading === "home"} />
       <IconButton emoji="⬜" tooltip="Recent Apps Key" onClick={handleRecent} isLoading={isLoading === "recent"} />
       
       {/* Divider */}
-      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1" />
+      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1 flex-shrink-0" />
       
       {/* Volume */}
       <IconButton emoji="🔊" tooltip="Volume Up" onClick={handleVolumeUp} isLoading={isLoading === "volume_up"} />
@@ -118,7 +118,7 @@ export function RightSideQuickPanel() {
       <IconButton emoji="⏸️" tooltip="Media Pause" onClick={handleMediaPause} isLoading={isLoading === "media_pause"} />
       
       {/* Divider */}
-      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1" />
+      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1 flex-shrink-0" />
       
       {/* Power */}
       <IconButton emoji="🔋" tooltip="Screen Lock/Unlock (Power)" onClick={handlePower} isLoading={isLoading === "power"} />
@@ -126,7 +126,7 @@ export function RightSideQuickPanel() {
       <IconButton emoji="📸" tooltip="Screenshot to Desktop" onClick={handleScreenshot} isLoading={isLoading === "screenshot"} />
       
       {/* Divider */}
-      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1" />
+      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1 flex-shrink-0" />
       
       {/* System */}
       <IconButton emoji="📱" tooltip="Quick Settings" onClick={handleQuickSettings} isLoading={isLoading === "quick_settings"} />
@@ -135,7 +135,7 @@ export function RightSideQuickPanel() {
       <IconButton emoji="🔓" tooltip="Unlock Menu" onClick={handleUnlockMenu} isLoading={isLoading === "unlock_menu"} />
       
       {/* Divider */}
-      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1" />
+      <div className="w-4 h-px bg-gray-300 dark:bg-gray-600 my-1 flex-shrink-0" />
       
       {/* Advanced */}
       <IconButton emoji="👨‍💻" tooltip="Developer Settings" onClick={handleDeveloperSettings} isLoading={isLoading === "developer_settings"} />
@@ -146,7 +146,7 @@ export function RightSideQuickPanel() {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="w-full h-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 flex-shrink-0"
             disabled={!selectedDevice?.id}
             title="Show Tap Options"
           >
