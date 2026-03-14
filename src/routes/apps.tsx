@@ -135,8 +135,8 @@ function AppsPage() {
   }, [isDragging]);
 
   return (
-    <div className="mb-2 flex h-[calc(100vh-4rem)]">
-      <div className="relative flex flex-1" ref={containerRef}>
+    <div className="mb-2 flex h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="relative flex flex-1 min-w-0" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
           className="h-full flex flex-col"
@@ -217,11 +217,12 @@ function AppsPage() {
                       <div
                         key={index}
                         onClick={() => handlePackageClick(pkg)}
-                        className={`p-2 text-xs font-mono cursor-pointer transition-colors ${
+                        className={`p-2 text-xs font-mono cursor-pointer transition-colors truncate ${
                           selectedPackage === pkg
                             ? "bg-primary text-primary-foreground"
                             : "bg-background hover:bg-muted"
                         }`}
+                        title={pkg}
                       >
                         {pkg}
                       </div>
@@ -249,7 +250,7 @@ function AppsPage() {
         />
 
         {/* Right Section - App Details */}
-        <div className="mr-2 mb-2 ml-0 min-h-full flex-1 p-4">
+        <div className="mr-2 mb-2 ml-0 min-h-full flex-1 p-4 min-w-0">
           <h2 className="mb-2 font-semibold text-sm">App Details</h2>
           {selectedPackage ? (
             <div className="space-y-4">
