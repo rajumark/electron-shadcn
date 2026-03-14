@@ -9,10 +9,10 @@ export function DeviceList() {
     // Initial fetch
     useDeviceStore.getState().fetchDevices();
     
-    // Poll every 5 seconds
+    // Poll every 3 seconds
     const pollInterval = setInterval(() => {
       useDeviceStore.getState().fetchDevices();
-    }, 5000);
+    }, 3000);
 
     return () => {
       if (pollInterval) {

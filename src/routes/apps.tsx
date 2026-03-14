@@ -124,7 +124,7 @@ function AppsPage() {
     };
   }, [searchQuery]);
 
-  // Auto-refresh packages every 5 seconds while a valid device is selected
+  // Auto-refresh packages every 3 seconds while a valid device is selected
   useEffect(() => {
     if (!selectedDevice || !selectedDevice.id?.trim()) {
       return;
@@ -132,7 +132,7 @@ function AppsPage() {
 
     const interval = setInterval(() => {
       setRefreshKey((prev) => prev + 1);
-    }, 5000);
+    }, 3000);
 
     return () => {
       clearInterval(interval);

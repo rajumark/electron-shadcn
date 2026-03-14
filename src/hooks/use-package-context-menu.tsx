@@ -160,6 +160,8 @@ export function usePackageContextMenu({
             if (onAppUninstalled) {
               onAppUninstalled(pkg);
             }
+            // Wait 1 extra second after uninstall completes before refreshing
+            await new Promise(resolve => setTimeout(resolve, 3000));
             setRefreshKey((prev) => prev + 1);
             toast.success(`Uninstalled ${pkg}`);
             break;

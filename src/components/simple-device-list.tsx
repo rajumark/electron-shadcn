@@ -109,8 +109,8 @@ export function SimpleDeviceList() {
     // Initial fetch
     fetchDevices();
 
-    // Poll every 5 seconds
-    pollInterval = setInterval(fetchDevices, 5000);
+    // Poll every 3 seconds
+    pollInterval = setInterval(fetchDevices, 3000);
 
     return () => {
       if (pollInterval) {
