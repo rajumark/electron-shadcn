@@ -145,7 +145,7 @@ function AppsPage() {
           <div className="pb-4 flex flex-col h-full">
             {/* Header with Title and Filter */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-medium">
+              <h2 className="text-sm font-medium pl-1">
                 {filterOptions.find(option => option.id === filterType)?.label || "Apps"}
               </h2>
               <DropdownMenu>
