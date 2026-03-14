@@ -300,10 +300,25 @@ export const UIInspector: React.FC = () => {
     // Clear existing overlay
     overlay.innerHTML = "";
 
-    // Get screenshot dimensions
-    const rect = screenshot.getBoundingClientRect();
-    const scaleX = rect.width / (screenshot.naturalWidth || 1080);
-    const scaleY = rect.height / (screenshot.naturalHeight || 1920);
+    // Get screenshot dimensions and position
+    const screenshotRect = screenshot.getBoundingClientRect();
+    const containerRect = overlay.parentElement?.getBoundingClientRect();
+    
+    if (!containerRect) return;
+
+    // Calculate screenshot position relative to container
+    const screenshotLeft = screenshotRect.left - containerRect.left;
+    const screenshotTop = screenshotRect.top - containerRect.top;
+    
+    const scaleX = screenshotRect.width / (screenshot.naturalWidth || 1080);
+    const scaleY = screenshotRect.height / (screenshot.naturalHeight || 1920);
+
+    // Position overlay to exactly match screenshot
+    overlay.style.position = 'absolute';
+    overlay.style.left = `${screenshotLeft}px`;
+    overlay.style.top = `${screenshotTop}px`;
+    overlay.style.width = `${screenshotRect.width}px`;
+    overlay.style.height = `${screenshotRect.height}px`;
 
     // Function to draw rectangles for nodes
     const drawRectanglesForNode = (node: XMLNode) => {
@@ -340,6 +355,65 @@ export const UIInspector: React.FC = () => {
   useEffect(() => {
     drawOverlay();
   }, [drawOverlay]);
+
+  // Redraw overlay when divider is being dragged
+  useEffect(() => {
+    if (isDragging) {
+      const interval = setInterval(() => {
+        drawOverlay();
+      }, 16); // ~60fps
+      
+      return () => clearInterval(interval);
+    }
+  }, [isDragging, drawOverlay]);
+
+  // Add resize observer to detect container size changes
+  useEffect(() => {
+    if (!overlayRef.current?.parentElement) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      drawOverlay();
+    });
+
+    resizeObserver.observe(overlayRef.current.parentElement);
+
+    return () => resizeObserver.disconnect();
+  }, [drawOverlay]);
+
+  // Handle image load and scroll events
+  useEffect(() => {
+    const handleScroll = () => drawOverlay();
+    const handleResize = () => drawOverlay();
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [drawOverlay]);
+
+  // Handle image load
+  useEffect(() => {
+    const img = screenshotRef.current;
+    if (!img) return;
+
+    const handleImageLoad = () => {
+      drawOverlay();
+    };
+
+    img.addEventListener('load', handleImageLoad);
+    
+    // If image is already loaded
+    if (img.complete) {
+      handleImageLoad();
+    }
+
+    return () => {
+      img.removeEventListener('load', handleImageLoad);
+    };
+  }, [screenshotUrl, drawOverlay]);
 
   useEffect(() => {
     // Initial data fetch
@@ -414,8 +488,7 @@ export const UIInspector: React.FC = () => {
                 />
                 <div
                   ref={overlayRef}
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ padding: "16px" }}
+                  className="absolute pointer-events-none"
                 />
               </div>
             ) : (
