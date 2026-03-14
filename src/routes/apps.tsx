@@ -26,6 +26,7 @@ function AppsPage() {
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const packageListRef = useRef<HTMLDivElement>(null);
   
   // Filter state
   const [filterType, setFilterType] = useState<string>("all"); // all, user, system, disabled
@@ -90,6 +91,11 @@ function AppsPage() {
         pkg.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredPackages(filtered);
+    }
+    
+    // Scroll to top instantly on any search change
+    if (packageListRef.current) {
+      packageListRef.current.scrollTop = 0;
     }
   }, [packages, searchQuery]);
 
@@ -217,12 +223,14 @@ function AppsPage() {
                   <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
                 </div>
               ) : filteredPackages.length > 0 ? (
-                <PackageList
-                  packages={filteredPackages}
-                  selectedPackage={selectedPackage}
-                  onPackageClick={handlePackageClick}
-                  onContextMenuAction={handleContextMenuAction}
-                />
+                <div ref={packageListRef} className="flex-1 overflow-hidden">
+                  <PackageList
+                    packages={filteredPackages}
+                    selectedPackage={selectedPackage}
+                    onPackageClick={handlePackageClick}
+                    onContextMenuAction={handleContextMenuAction}
+                  />
+                </div>
               ) : selectedDevice ? (
                 <div className="flex flex-col items-center justify-center mx-2">
                   <p className="text-xs text-muted-foreground text-center py-4">
