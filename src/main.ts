@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, globalShortcut } from "electron";
 import { ipcMain } from "electron/main";
 import {
   installExtension,
@@ -32,6 +32,26 @@ function createWindow() {
       process.platform === "darwin" ? { x: 5, y: 5 } : undefined,
   });
   ipcContext.setMainWindow(mainWindow);
+
+  // Register DevTools shortcut
+  if (inDevelopment) {
+    globalShortcut.register('F12', () => {
+      if (mainWindow.webContents.isDevToolsOpened()) {
+        mainWindow.webContents.closeDevTools();
+      } else {
+        mainWindow.webContents.openDevTools();
+      }
+    });
+    
+    // Also register Cmd+Option+I for macOS
+    globalShortcut.register('CommandOrControl+Alt+I', () => {
+      if (mainWindow.webContents.isDevToolsOpened()) {
+        mainWindow.webContents.closeDevTools();
+      } else {
+        mainWindow.webContents.openDevTools();
+      }
+    });
+  }
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -84,6 +104,8 @@ app.whenReady().then(async () => {
 
 //osX only
 app.on("window-all-closed", () => {
+  // Clean up shortcuts
+  globalShortcut.unregisterAll();
   if (process.platform !== "darwin") {
     app.quit();
   }
@@ -93,5 +115,10 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+app.on('will-quit', () => {
+  // Clean up shortcuts
+  globalShortcut.unregisterAll();
 });
 //osX only ends
