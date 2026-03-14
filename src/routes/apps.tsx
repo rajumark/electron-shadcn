@@ -142,7 +142,7 @@ function AppsPage() {
           className="h-full flex flex-col"
           style={{ width: `${leftWidth}%` }}
         >
-          <div className="px-4 pb-4 flex flex-col h-full">
+          <div className="px-2 pb-4 flex flex-col h-full">
             {/* Header with Title and Filter */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-medium">
