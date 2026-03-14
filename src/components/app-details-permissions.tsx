@@ -12,6 +12,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 interface Permission {
   section: string;
@@ -345,18 +351,20 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
       </div>
 
       {/* Filter Chips */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-        {permissionTypes.map((type) => (
-          <Button
-            key={type}
-            variant={selectedFilter === type ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedFilter(type)}
-            className="whitespace-nowrap text-xs"
-          >
-            {type.charAt(0).toUpperCase() + type.slice(1).replace(" permissions", "")}
-          </Button>
-        ))}
+      <div className="mb-4">
+        <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
+          <TabsList variant="line" className="w-fit">
+            {permissionTypes.map((type) => (
+              <TabsTrigger
+                key={type}
+                value={type}
+                className="text-xs"
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1).replace(" permissions", "")}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Action Buttons */}
