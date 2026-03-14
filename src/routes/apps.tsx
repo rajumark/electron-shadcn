@@ -211,7 +211,7 @@ function AppsPage() {
                   <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
                 </div>
               ) : filteredPackages.length > 0 ? (
-                <div className="h-full overflow-y-auto space-y-1 border border-border rounded-lg bg-background">
+                <div className="h-full overflow-y-auto space-y-1 bg-background">
                   {filteredPackages.map((pkg, index) => (
                     <div
                       key={index}
