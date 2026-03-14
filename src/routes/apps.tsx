@@ -363,7 +363,7 @@ function AppsPage() {
           {selectedPackage ? (
             <div className="h-full flex flex-col">
               {/* Package Name */}
-              <div className="p-4">
+              <div className="p-4 pb-2">
                 <p className="text-sm text-muted-foreground font-mono break-all">
                   {selectedPackage}
                 </p>
@@ -372,7 +372,7 @@ function AppsPage() {
               {/* Tabs */}
               <div className="flex-1 overflow-hidden">
                 <Tabs defaultValue="basics" className="h-full flex flex-col">
-                  <TabsList variant="line" className="mx-4 mt-4">
+                  <TabsList variant="line" className="mx-4 mt-0">
                     <TabsTrigger value="basics">Basics</TabsTrigger>
                     <TabsTrigger value="permissions">Permissions</TabsTrigger>
                     <TabsTrigger value="apk-files">APK Files</TabsTrigger>
