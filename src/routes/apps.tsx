@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Filter, Search, X } from "lucide-react";
 import { ipc } from "@/ipc/manager";
@@ -97,9 +97,9 @@ function AppsPage() {
     setRefreshKey(prev => prev + 1);
   };
 
-  const handlePackageClick = (pkg: string) => {
+  const handlePackageClick = useCallback((pkg: string) => {
     setSelectedPackage(pkg);
-  };
+  }, []);
 
   const handleContextMenuAction = (action: string, pkg: string) => {
     console.log(`Action: ${action}, Package: ${pkg}`);
