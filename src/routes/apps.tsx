@@ -11,8 +11,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { PackageList } from "@/components/package-list";
 import { usePackageContextMenu } from "@/hooks/use-package-context-menu";
+import { AppDetailsBasics } from "@/components/app-details-basics";
+import { AppDetailsPermissions } from "@/components/app-details-permissions";
+import { AppDetailsApkFiles } from "@/components/app-details-apk-files";
+import { AppDetailsStorage } from "@/components/app-details-storage";
  
 function AppsPage() {
   const { t } = useTranslation();
@@ -349,18 +359,50 @@ function AppsPage() {
         />
 
         {/* Right Section - App Details */}
-        <div className="mr-2 mb-2 ml-0 min-h-full flex-1 p-4 min-w-0">
+        <div className="mr-2 mb-2 ml-0 min-h-full flex-1 min-w-0">
           {selectedPackage ? (
-            <div className="p-3 bg-muted rounded-lg border">
-              <h3 className="text-xs font-semibold mb-2">Selected Package</h3>
-              <div className="text-xs font-mono bg-background px-2 py-1 rounded border break-all">
-                {selectedPackage}
+            <div className="h-full flex flex-col">
+              {/* Package Name */}
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold">Package Name</h3>
+                <p className="text-sm text-muted-foreground font-mono break-all mt-1">
+                  {selectedPackage}
+                </p>
+              </div>
+              
+              {/* Tabs */}
+              <div className="flex-1 overflow-hidden">
+                <Tabs defaultValue="basics" className="h-full flex flex-col">
+                  <TabsList variant="line" className="mx-4 mt-4">
+                    <TabsTrigger value="basics">Basics</TabsTrigger>
+                    <TabsTrigger value="permissions">Permissions</TabsTrigger>
+                    <TabsTrigger value="apk-files">APK Files</TabsTrigger>
+                    <TabsTrigger value="storage">Storage</TabsTrigger>
+                  </TabsList>
+                  
+                  <div className="flex-1 overflow-auto">
+                    <TabsContent value="basics" className="mt-0">
+                      <AppDetailsBasics />
+                    </TabsContent>
+                    <TabsContent value="permissions" className="mt-0">
+                      <AppDetailsPermissions />
+                    </TabsContent>
+                    <TabsContent value="apk-files" className="mt-0">
+                      <AppDetailsApkFiles />
+                    </TabsContent>
+                    <TabsContent value="storage" className="mt-0">
+                      <AppDetailsStorage />
+                    </TabsContent>
+                  </div>
+                </Tabs>
               </div>
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">
-              Select an app from the left panel to view details here.
-            </p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground text-sm">
+                Select an app from the left panel to view details here.
+              </p>
+            </div>
           )}
         </div>
       </div>
