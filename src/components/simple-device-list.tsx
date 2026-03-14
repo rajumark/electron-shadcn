@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Smartphone, X } from "lucide-react";
 import { ipc } from "@/ipc/manager";
-import { useSelectedDevice } from "@/hooks/use-selected-device";;
+import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Device {
   id: string;
@@ -148,24 +149,23 @@ export function SimpleDeviceList() {
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b overflow-x-auto">
-      <Smartphone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-      <div className="flex gap-1">
-        {devices.map((device) => (
-          <button
-            key={device.id}
-            onClick={() => setSelectedDevice(device)}
-            type="button"
-            className={`px-3 py-1 text-sm rounded-md border transition-all whitespace-nowrap ${
-              selectedDevice?.id === device.id
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background hover:bg-muted border-border hover:text-foreground"
-            }`}
-          >
-            {device.name}
-          </button>
-        ))}
-      </div>
-    </div>
+     
+      <Tabs value={selectedDevice?.id || ""} onValueChange={(value) => {
+        const device = devices.find(d => d.id === value);
+        if (device) setSelectedDevice(device);
+      }} className="w-full">
+        <TabsList className="inline-flex justify-start px-4 h-auto flex-wrap gap-1 bg-transparent border-0">
+          {devices.map((device) => (
+            <TabsTrigger
+              key={device.id}
+              value={device.id}
+              className="px-3 py-1 text-sm rounded-md border transition-all whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary bg-background hover:bg-muted border-border hover:text-foreground"
+            >
+              {device.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+   
   );
 }
