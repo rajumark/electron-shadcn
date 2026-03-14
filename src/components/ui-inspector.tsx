@@ -346,12 +346,12 @@ export const UIInspector: React.FC = () => {
     overlay.style.width = `${screenshotRect.width}px`;
     overlay.style.height = `${screenshotRect.height}px`;
 
-    // Function to draw rectangles for nodes
-    const drawRectanglesForNode = (node: XMLNode) => {
+    // Function to draw rectangles for nodes at specific depth
+    const drawRectanglesForNode = (node: XMLNode, depth: number = 0) => {
       const bounds = node.attributes["bounds"];
       if (bounds) {
         const parsedBounds = parseBounds(bounds);
-        if (parsedBounds) {
+        if (parsedBounds && depth === currentDepth) {
           const rect = document.createElement("div");
           rect.className = "absolute border border-white box-shadow-[0_0_0_2px_black]";
           rect.style.left = `${parsedBounds.x * scaleX}px`;
@@ -372,11 +372,11 @@ export const UIInspector: React.FC = () => {
       }
       
       // Recursively draw for children
-      node.children.forEach(child => drawRectanglesForNode(child));
+      node.children.forEach(child => drawRectanglesForNode(child, depth + 1));
     };
 
     drawRectanglesForNode(xmlData);
-  }, [xmlData, selectedNode]);
+  }, [xmlData, selectedNode, currentDepth]);
 
   useEffect(() => {
     drawOverlay();
@@ -391,7 +391,7 @@ export const UIInspector: React.FC = () => {
       
       return () => clearInterval(interval);
     }
-  }, [isDragging, drawOverlay]);
+  }, [isDragging, drawOverlay, currentDepth]);
 
   // Add resize observer to detect container size changes
   useEffect(() => {
@@ -404,7 +404,7 @@ export const UIInspector: React.FC = () => {
     resizeObserver.observe(overlayRef.current.parentElement);
 
     return () => resizeObserver.disconnect();
-  }, [drawOverlay]);
+  }, [drawOverlay, currentDepth]);
 
   // Handle image load and scroll events
   useEffect(() => {
@@ -418,7 +418,7 @@ export const UIInspector: React.FC = () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, [drawOverlay]);
+  }, [drawOverlay, currentDepth]);
 
   // Handle image load
   useEffect(() => {
@@ -439,7 +439,7 @@ export const UIInspector: React.FC = () => {
     return () => {
       img.removeEventListener('load', handleImageLoad);
     };
-  }, [screenshotUrl, drawOverlay]);
+  }, [screenshotUrl, drawOverlay, currentDepth]);
 
   useEffect(() => {
     // Initial data fetch
