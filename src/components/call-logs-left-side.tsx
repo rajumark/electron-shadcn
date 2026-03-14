@@ -1,20 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Search, X, Filter, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
+import { Search, X, Filter, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-interface CallLog {
-  id: string;
-  phoneNumber: string;
-  contactName?: string;
-  timestamp: Date;
-  duration: number; // in seconds
-  type: "incoming" | "outgoing" | "missed";
-}
+import { ipc } from "@/ipc/manager";
+import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { parseCallLogData, CallLog, formatDuration, formatTime, formatDate } from "@/utils/call-log-parser";
 
 interface CallLogsLeftSideProps {
   leftWidth: number;
@@ -22,73 +16,9 @@ interface CallLogsLeftSideProps {
   onCallSelect: (callId: string) => void;
   isDragging: boolean;
   onDragStart: () => void;
+  onCallLogsUpdate: (callLogs: CallLog[]) => void;
 }
 
-// Dummy data for call logs
-const dummyCallLogs: CallLog[] = [
-  {
-    id: "1",
-    phoneNumber: "+1 234-567-8901",
-    contactName: "John Doe",
-    timestamp: new Date("2024-03-14T10:30:00"),
-    duration: 120,
-    type: "incoming"
-  },
-  {
-    id: "2", 
-    phoneNumber: "+1 234-567-8902",
-    contactName: "Jane Smith",
-    timestamp: new Date("2024-03-14T09:15:00"),
-    duration: 300,
-    type: "outgoing"
-  },
-  {
-    id: "3",
-    phoneNumber: "+1 234-567-8903",
-    timestamp: new Date("2024-03-14T08:45:00"),
-    duration: 0,
-    type: "missed"
-  },
-  {
-    id: "4",
-    phoneNumber: "+1 234-567-8904",
-    contactName: "Bob Johnson",
-    timestamp: new Date("2024-03-13T18:20:00"),
-    duration: 180,
-    type: "incoming"
-  },
-  {
-    id: "5",
-    phoneNumber: "+1 234-567-8905",
-    contactName: "Alice Brown",
-    timestamp: new Date("2024-03-13T15:10:00"),
-    duration: 45,
-    type: "outgoing"
-  },
-  {
-    id: "6",
-    phoneNumber: "+1 234-567-8906",
-    timestamp: new Date("2024-03-13T12:30:00"),
-    duration: 0,
-    type: "missed"
-  },
-  {
-    id: "7",
-    phoneNumber: "+1 234-567-8907",
-    contactName: "Charlie Wilson",
-    timestamp: new Date("2024-03-12T20:15:00"),
-    duration: 600,
-    type: "incoming"
-  },
-  {
-    id: "8",
-    phoneNumber: "+1 234-567-8908",
-    contactName: "Diana Davis",
-    timestamp: new Date("2024-03-12T16:45:00"),
-    duration: 240,
-    type: "outgoing"
-  }
-];
 
 export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
   leftWidth,
@@ -96,13 +26,19 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
   onCallSelect,
   isDragging,
   onDragStart,
+  onCallLogsUpdate,
 }) => {
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [filteredCallLogs, setFilteredCallLogs] = useState<CallLog[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
   
+  const { selectedDevice } = useSelectedDevice();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const callListRef = useRef<HTMLDivElement>(null);
   
   // Filter options
@@ -113,16 +49,64 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
     { id: "missed", label: "Missed" },
   ];
 
-  // Load dummy data on mount
+  // Fetch call logs when device is selected or refresh is triggered
   useEffect(() => {
-    setLoading(true);
-    // Simulate loading delay
-    setTimeout(() => {
-      setCallLogs(dummyCallLogs);
-      setFilteredCallLogs(dummyCallLogs);
-      setLoading(false);
-    }, 500);
-  }, []);
+    if (!selectedDevice || !selectedDevice.id?.trim()) {
+      setCallLogs([]);
+      setFilteredCallLogs([]);
+      setHasLoadedOnce(false);
+      return;
+    }
+
+    const fetchCallLogs = async () => {
+      // Show loading state only for the first visible load on this device
+      if (!hasLoadedOnce) {
+        setLoading(true);
+      }
+      setError("");
+
+      try {
+        const response = await ipc.client.adb.getCallLogs({
+          deviceId: selectedDevice.id,
+        });
+
+        if (response.success && response.data) {
+          const parsedCallLogs = parseCallLogData(response.data);
+          
+          // Check if data has changed
+          const isSameLength = callLogs.length === parsedCallLogs.length;
+          const isSame = isSameLength && callLogs.every((call, index) => 
+            call.id === parsedCallLogs[index]?.id
+          );
+
+          if (!isSame) {
+            setCallLogs(parsedCallLogs);
+            setFilteredCallLogs(parsedCallLogs);
+            setHasLoadedOnce(true);
+            onCallLogsUpdate(parsedCallLogs);
+          }
+        } else {
+          throw new Error(response.data || 'Failed to fetch call logs');
+        }
+      } catch (error) {
+        console.error("Failed to fetch call logs:", error);
+        setError(
+          `Failed to fetch call logs: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
+        setCallLogs([]);
+        setFilteredCallLogs([]);
+        onCallLogsUpdate([]);
+      } finally {
+        if (!hasLoadedOnce) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCallLogs();
+  }, [selectedDevice, refreshKey, callLogs, hasLoadedOnce]);
 
   // Filter call logs based on type and search
   const memoizedFilteredCallLogs = useMemo(() => {
@@ -154,37 +138,19 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
     }
   }, [memoizedFilteredCallLogs]);
 
+  const handleRefreshCallLogs = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setRefreshKey(prev => prev + 1);
+    // Reset refreshing state after a short delay to show the animation
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
   const handleCallClick = useCallback((callId: string) => {
     onCallSelect(callId);
   }, [onCallSelect]);
 
-  const formatDuration = (seconds: number): string => {
-    if (seconds === 0) return "";
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
-  };
-
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDate = (date: Date): string => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === today.toDateString()) {
-      return "Today";
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
-
-  const getCallIcon = (type: "incoming" | "outgoing" | "missed") => {
+  const getCallIcon = (type: CallLog['type']) => {
     switch (type) {
       case "incoming":
         return <PhoneIncoming className="h-4 w-4 text-green-500" />;
@@ -192,6 +158,14 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
         return <PhoneOutgoing className="h-4 w-4 text-blue-500" />;
       case "missed":
         return <PhoneMissed className="h-4 w-4 text-red-500" />;
+      case "rejected":
+        return <PhoneMissed className="h-4 w-4 text-orange-500" />;
+      case "blocked":
+        return <PhoneMissed className="h-4 w-4 text-gray-500" />;
+      case "voicemail":
+        return <PhoneIncoming className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Phone className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -206,30 +180,43 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
           <h2 className="text-sm font-medium">
             {filterOptions.find(option => option.id === filterType)?.label || "Call Logs"}
           </h2>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1.5 hover:bg-muted rounded-md transition-colors relative">
-                <Filter className="h-3.5 w-3.5" />
-                {filterType !== "all" && (
-                  <div className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></div>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {filterOptions.map((option) => (
-                <DropdownMenuItem
-                  key={option.id}
-                  onClick={() => setFilterType(option.id)}
-                  className="flex items-center justify-between"
-                >
-                  <span>{option.label}</span>
-                  {filterType === option.id && (
-                    <div className="h-2 w-2 bg-primary rounded-full"></div>
+          <div className="flex items-center gap-1">
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefreshCallLogs}
+              disabled={isRefreshing || !selectedDevice}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh call logs"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+            
+            {/* Filter Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-1.5 hover:bg-muted rounded-md transition-colors relative">
+                  <Filter className="h-3.5 w-3.5" />
+                  {filterType !== "all" && (
+                    <div className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></div>
                   )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {filterOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    onClick={() => setFilterType(option.id)}
+                    className="flex items-center justify-between"
+                  >
+                    <span>{option.label}</span>
+                    {filterType === option.id && (
+                      <div className="h-2 w-2 bg-primary rounded-full"></div>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Search Input */}

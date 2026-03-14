@@ -4,124 +4,43 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info } from "lucide-react";
-
-interface CallLog {
-  id: string;
-  phoneNumber: string;
-  contactName?: string;
-  timestamp: Date;
-  duration: number; // in seconds
-  type: "incoming" | "outgoing" | "missed";
-}
+import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, Settings } from "lucide-react";
+import { CallLog, formatDuration, formatDateTime } from "@/utils/call-log-parser";
 
 interface CallLogsRightSideProps {
   selectedCall: string;
+  callLogs: CallLog[];
 }
 
-// Dummy data - in a real app this would come from the left side or a store
-const dummyCallLogs: CallLog[] = [
-  {
-    id: "1",
-    phoneNumber: "+1 234-567-8901",
-    contactName: "John Doe",
-    timestamp: new Date("2024-03-14T10:30:00"),
-    duration: 120,
-    type: "incoming"
-  },
-  {
-    id: "2", 
-    phoneNumber: "+1 234-567-8902",
-    contactName: "Jane Smith",
-    timestamp: new Date("2024-03-14T09:15:00"),
-    duration: 300,
-    type: "outgoing"
-  },
-  {
-    id: "3",
-    phoneNumber: "+1 234-567-8903",
-    timestamp: new Date("2024-03-14T08:45:00"),
-    duration: 0,
-    type: "missed"
-  },
-  {
-    id: "4",
-    phoneNumber: "+1 234-567-8904",
-    contactName: "Bob Johnson",
-    timestamp: new Date("2024-03-13T18:20:00"),
-    duration: 180,
-    type: "incoming"
-  },
-  {
-    id: "5",
-    phoneNumber: "+1 234-567-8905",
-    contactName: "Alice Brown",
-    timestamp: new Date("2024-03-13T15:10:00"),
-    duration: 45,
-    type: "outgoing"
-  },
-  {
-    id: "6",
-    phoneNumber: "+1 234-567-8906",
-    timestamp: new Date("2024-03-13T12:30:00"),
-    duration: 0,
-    type: "missed"
-  },
-  {
-    id: "7",
-    phoneNumber: "+1 234-567-8907",
-    contactName: "Charlie Wilson",
-    timestamp: new Date("2024-03-12T20:15:00"),
-    duration: 600,
-    type: "incoming"
-  },
-  {
-    id: "8",
-    phoneNumber: "+1 234-567-8908",
-    contactName: "Diana Davis",
-    timestamp: new Date("2024-03-12T16:45:00"),
-    duration: 240,
-    type: "outgoing"
-  }
-];
 
 export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
   selectedCall,
+  callLogs,
 }) => {
-  const selectedCallData = dummyCallLogs.find(call => call.id === selectedCall);
+  const selectedCallData = callLogs.find(call => call.id === selectedCall);
 
-  const formatDuration = (seconds: number): string => {
-    if (seconds === 0) return "Missed";
-    if (seconds < 60) return `${seconds} seconds`;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes} minutes`;
-  };
 
-  const formatDateTime = (date: Date): string => {
-    return date.toLocaleString([], {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getCallIcon = (type: "incoming" | "outgoing" | "missed", size: number = 20) => {
-    const iconClass = type === "missed" ? "text-red-500" : type === "incoming" ? "text-green-500" : "text-blue-500";
+  const getCallIcon = (type: CallLog['type'], size: number = 20) => {
+    const iconClass = type === "missed" ? "text-red-500" : type === "incoming" ? "text-green-500" : type === "outgoing" ? "text-blue-500" : type === "rejected" ? "text-orange-500" : type === "blocked" ? "text-gray-500" : type === "voicemail" ? "text-purple-500" : "text-muted-foreground";
     switch (type) {
       case "incoming":
-        return <PhoneIncoming className={`h-${size/5} w-${size/5} ${iconClass}`} />;
+        return <PhoneIncoming className={`h-4 w-4 ${iconClass}`} />;
       case "outgoing":
-        return <PhoneOutgoing className={`h-${size/5} w-${size/5} ${iconClass}`} />;
+        return <PhoneOutgoing className={`h-4 w-4 ${iconClass}`} />;
       case "missed":
-        return <PhoneMissed className={`h-${size/5} w-${size/5} ${iconClass}`} />;
+        return <PhoneMissed className={`h-4 w-4 ${iconClass}`} />;
+      case "rejected":
+        return <PhoneMissed className={`h-4 w-4 ${iconClass}`} />;
+      case "blocked":
+        return <PhoneMissed className={`h-4 w-4 ${iconClass}`} />;
+      case "voicemail":
+        return <PhoneIncoming className={`h-4 w-4 ${iconClass}`} />;
+      default:
+        return <Phone className={`h-4 w-4 ${iconClass}`} />;
     }
   };
 
-  const getCallTypeLabel = (type: "incoming" | "outgoing" | "missed"): string => {
+  const getCallTypeLabel = (type: CallLog['type']): string => {
     switch (type) {
       case "incoming":
         return "Incoming Call";
@@ -129,6 +48,14 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
         return "Outgoing Call";
       case "missed":
         return "Missed Call";
+      case "rejected":
+        return "Rejected Call";
+      case "blocked":
+        return "Blocked Call";
+      case "voicemail":
+        return "Voicemail Call";
+      default:
+        return "Unknown Call Type";
     }
   };
 
@@ -159,15 +86,17 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
           
           {/* Tabs */}
           <div className="flex-1 overflow-hidden">
-            <Tabs defaultValue="details" className="h-full flex flex-col">
+            <Tabs defaultValue="basics" className="h-full flex flex-col">
               <TabsList variant="line" className="mx-4 mt-0">
-                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="basics">Basics</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="history">History</TabsTrigger>
+                <TabsTrigger value="technical">Technical</TabsTrigger>
+                <TabsTrigger value="raw">Raw Data</TabsTrigger>
               </TabsList>
               
               <div className="flex-1 overflow-auto">
-                <TabsContent value="details" className="mt-0 p-4">
+                <TabsContent value="basics" className="mt-0 p-4">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -255,12 +184,154 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                   </div>
                 </TabsContent>
                 
+                <TabsContent value="technical" className="mt-0 p-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Settings className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">Technical Details</p>
+                        <p className="text-sm text-muted-foreground">
+                          Advanced call information and system data
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Call ID</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw._id || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Subscription ID</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw.subscription_id || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Phone Account</p>
+                        <p className="text-sm font-mono text-xs break-all">{selectedCallData.raw.phone_account_address || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Presentation</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw.presentation || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Features</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw.features || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Data Usage</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw.data_usage || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Last Modified</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw.last_modified || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Transcription State</p>
+                        <p className="text-sm font-mono">{selectedCallData.raw.transcription_state || 'N/A'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t border-border">
+                      <p className="text-sm font-medium mb-2">Additional Fields</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {selectedCallData.raw.via_number && (
+                          <div>
+                            <span className="font-medium text-muted-foreground">Via Number:</span>
+                            <span className="ml-2 font-mono">{selectedCallData.raw.via_number}</span>
+                          </div>
+                        )}
+                        {selectedCallData.raw.normalized_number && (
+                          <div>
+                            <span className="font-medium text-muted-foreground">Normalized:</span>
+                            <span className="ml-2 font-mono">{selectedCallData.raw.normalized_number}</span>
+                          </div>
+                        )}
+                        {selectedCallData.raw.formatted_number && selectedCallData.raw.formatted_number !== 'NULL' && (
+                          <div>
+                            <span className="font-medium text-muted-foreground">Formatted:</span>
+                            <span className="ml-2 font-mono">{selectedCallData.raw.formatted_number}</span>
+                          </div>
+                        )}
+                        {selectedCallData.raw.numberlabel && selectedCallData.raw.numberlabel !== 'NULL' && (
+                          <div>
+                            <span className="font-medium text-muted-foreground">Number Label:</span>
+                            <span className="ml-2 font-mono">{selectedCallData.raw.numberlabel}</span>
+                          </div>
+                        )}
+                        {selectedCallData.raw.numbertype && selectedCallData.raw.numbertype !== 'NULL' && (
+                          <div>
+                            <span className="font-medium text-muted-foreground">Number Type:</span>
+                            <span className="ml-2 font-mono">{selectedCallData.raw.numbertype}</span>
+                          </div>
+                        )}
+                        {selectedCallData.raw.post_dial_digits && (
+                          <div>
+                            <span className="font-medium text-muted-foreground">Post Dial:</span>
+                            <span className="ml-2 font-mono">{selectedCallData.raw.post_dial_digits}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="raw" className="mt-0 p-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Database className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">Raw ADB Data</p>
+                        <p className="text-sm text-muted-foreground">
+                          Complete data from Android call log database
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-muted rounded-lg p-3">
+                      <div className="max-h-96 overflow-auto">
+                        <div className="space-y-2">
+                          {Object.entries(selectedCallData.raw)
+                            .sort(([a], [b]) => a.localeCompare(b))
+                            .map(([key, value]) => (
+                              <div key={key} className="flex items-start gap-2">
+                                <span className="text-xs font-mono text-muted-foreground min-w-24">
+                                  {key}:
+                                </span>
+                                <span className="text-xs font-mono break-all flex-1">
+                                  {value === 'NULL' ? (
+                                    <span className="text-muted-foreground italic">NULL</span>
+                                  ) : value === '' ? (
+                                    <span className="text-muted-foreground italic">empty</span>
+                                  ) : (
+                                    value
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t border-border">
+                      <div className="flex items-center gap-3">
+                        <Code className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">ADB Command</p>
+                          <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded mt-1">
+                            adb shell content query --uri content://call_log/calls
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+                
                 <TabsContent value="history" className="mt-0 p-4">
                   <div className="space-y-3">
                     <p className="text-sm font-medium mb-4">Recent calls with this number</p>
                     
-                    {/* Show dummy history for the same number */}
-                    {dummyCallLogs
+                    {/* Show call history for the same number */}
+                    {callLogs
                       .filter(call => call.phoneNumber === selectedCallData.phoneNumber)
                       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
                       .map((call) => (
@@ -284,7 +355,7 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                         </div>
                       ))}
                     
-                    {dummyCallLogs.filter(call => call.phoneNumber === selectedCallData.phoneNumber).length === 1 && (
+                    {callLogs.filter(call => call.phoneNumber === selectedCallData.phoneNumber).length === 1 && (
                       <div className="text-center py-8">
                         <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                         <p className="text-sm text-muted-foreground">

@@ -147,6 +147,30 @@ export const getUIXml = os
     }
   });
 
+export const getCallLogs = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const result = await ADBHelper.executeADBCommand([
+        "-s",
+        input.deviceId,
+        "shell",
+        "content",
+        "query",
+        "--uri",
+        "content://call_log/calls"
+      ], { useCache: true });
+      
+      return { success: true, data: result };
+    } catch (error) {
+      throw new Error(`Failed to get call logs: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -159,4 +183,5 @@ export const adb = {
   getScreenshotBase64,
   dumpUIXml,
   getUIXml,
+  getCallLogs,
 };

@@ -3,12 +3,14 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { CallLogsLeftSide } from "@/components/call-logs-left-side";
 import { CallLogsRightSide } from "@/components/call-logs-right-side";
+import { CallLog } from "@/utils/call-log-parser";
 
 function CallLogsPage() {
   const { t } = useTranslation();
   const [leftWidth, setLeftWidth] = useState(30);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedCall, setSelectedCall] = useState("");
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = () => {
@@ -59,6 +61,7 @@ function CallLogsPage() {
           onCallSelect={setSelectedCall}
           isDragging={isDragging}
           onDragStart={handleMouseDown}
+          onCallLogsUpdate={setCallLogs}
         />
 
         {/* Resizable Divider */}
@@ -69,7 +72,7 @@ function CallLogsPage() {
         />
 
         {/* Right Section - Call Details */}
-        <CallLogsRightSide selectedCall={selectedCall} />
+        <CallLogsRightSide selectedCall={selectedCall} callLogs={callLogs} />
       </div>
     </div>
   );

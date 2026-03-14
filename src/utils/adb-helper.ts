@@ -4,6 +4,7 @@ import { access, chmod, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { app } from "electron";
+import { existsSync } from "node:fs";
 
 const execAsync = promisify(exec);
 
@@ -216,6 +217,13 @@ export const ADBHelper = {
   getADBPath(): string {
     const platform = process.platform;
     const adbExecutable = platform === "win32" ? "adb.exe" : "adb";
+    
+    // First check if ADB exists in the Pilotfish directory (macOS specific path)
+    const pilotfishPath = "/Users/raju/Library/Application Support/Pilotfish/platform-tools/" + adbExecutable;
+    if (existsSync(pilotfishPath)) {
+      return pilotfishPath;
+    }
+    
     return join(platformToolsPath, adbExecutable);
   },
 
