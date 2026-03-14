@@ -71,6 +71,82 @@ export const getADBCacheSize = os.handler(() => {
   return { size: ADBHelper.getCacheSize() };
 });
 
+export const takeScreenshot = os
+  .input(
+    z.object({
+      deviceId: z.string().optional(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const args = input.deviceId 
+        ? ["-s", input.deviceId, "shell", "screencap", "-p", "/sdcard/screenshot.png"]
+        : ["shell", "screencap", "-p", "/sdcard/screenshot.png"];
+      
+      const result = await ADBHelper.executeADBCommand(args);
+      return { success: true, output: result };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+  });
+
+export const getScreenshotBase64 = os
+  .input(
+    z.object({
+      deviceId: z.string().optional(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const args = input.deviceId 
+        ? ["-s", input.deviceId, "shell", "base64", "/sdcard/screenshot.png", "|", "tr", "-d", "'\\n'"]
+        : ["shell", "base64", "/sdcard/screenshot.png", "|", "tr", "-d", "'\\n'"];
+      
+      const result = await ADBHelper.executeADBCommand(args);
+      return { success: true, output: result.trim() };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+  });
+
+export const dumpUIXml = os
+  .input(
+    z.object({
+      deviceId: z.string().optional(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const args = input.deviceId 
+        ? ["-s", input.deviceId, "shell", "uiautomator", "dump"]
+        : ["shell", "uiautomator", "dump"];
+      
+      const result = await ADBHelper.executeADBCommand(args);
+      return { success: true, output: result };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+  });
+
+export const getUIXml = os
+  .input(
+    z.object({
+      deviceId: z.string().optional(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const args = input.deviceId 
+        ? ["-s", input.deviceId, "shell", "cat", "/sdcard/window_dump.xml"]
+        : ["shell", "cat", "/sdcard/window_dump.xml"];
+      
+      const result = await ADBHelper.executeADBCommand(args);
+      return { success: true, output: result };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -79,4 +155,8 @@ export const adb = {
   getInstalledPackages,
   clearADBCache,
   getADBCacheSize,
+  takeScreenshot,
+  getScreenshotBase64,
+  dumpUIXml,
+  getUIXml,
 };
