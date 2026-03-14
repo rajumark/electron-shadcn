@@ -228,13 +228,21 @@ function AppsPage() {
                   ))}
                 </div>
               ) : selectedDevice ? (
-                <div className="flex-1 flex items-center justify-center border border-border rounded-lg bg-background mx-2">
+                <div className="flex flex-col items-center justify-center mx-2">
                   <p className="text-xs text-muted-foreground text-center py-4">
                     {searchQuery.trim() ? "No packages found matching your search" : "No packages found or failed to load"}
                   </p>
+                  {searchQuery.trim() && packages.length > 0 && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="text-xs px-3 py-1 border border-border rounded hover:bg-muted transition-colors"
+                    >
+                      Clear Filter
+                    </button>
+                  )}
                 </div>
               ) : (
-                <div className="flex-1 flex items-center justify-center border border-border rounded-lg bg-background mx-2">
+                <div className="flex flex-col items-center justify-center mx-2">
                   <p className="text-xs text-muted-foreground text-center py-4">
                     Select a device to view installed packages
                   </p>
