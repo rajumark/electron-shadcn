@@ -10,6 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
  
 function AppsPage() {
   const { t } = useTranslation();
@@ -98,6 +105,11 @@ function AppsPage() {
 
   const handlePackageClick = (pkg: string) => {
     setSelectedPackage(pkg);
+  };
+
+  const handleContextMenuAction = (action: string, pkg: string) => {
+    console.log(`Action: ${action}, Package: ${pkg}`);
+    // TODO: Implement actual functionality for each action
   };
 
   useEffect(() => {
@@ -213,18 +225,39 @@ function AppsPage() {
               ) : filteredPackages.length > 0 ? (
                 <div className="h-full overflow-y-auto space-y-1 bg-background">
                   {filteredPackages.map((pkg, index) => (
-                    <div
-                      key={index}
-                      onClick={() => handlePackageClick(pkg)}
-                      className={`p-2 text-xs font-mono cursor-pointer transition-colors truncate border-b border-border/50 last:border-b-0 ${
-                        selectedPackage === pkg
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-background hover:bg-muted"
-                      }`}
-                      title={pkg}
-                    >
-                      {pkg}
-                    </div>
+                    <ContextMenu key={index}>
+                      <ContextMenuTrigger asChild>
+                        <div
+                          onClick={() => handlePackageClick(pkg)}
+                          className={`p-2 text-xs font-mono cursor-pointer transition-colors truncate border-b border-border/50 last:border-b-0 ${
+                            selectedPackage === pkg
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background hover:bg-muted"
+                          }`}
+                          title={pkg}
+                        >
+                          {pkg}
+                        </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => handleContextMenuAction("open", pkg)}>
+                          Open
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => handleContextMenuAction("force_stop", pkg)}>
+                          Force stop
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => handleContextMenuAction("restart", pkg)}>
+                          Restart
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => handleContextMenuAction("clear_data", pkg)}>
+                          Clear data
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem onClick={() => handleContextMenuAction("pin_app", pkg)}>
+                          Pin app
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   ))}
                 </div>
               ) : selectedDevice ? (
