@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Filter, Search, X } from "lucide-react";
 import { ipc } from "@/ipc/manager";
@@ -22,11 +22,13 @@ function AppsPage() {
   const [packages, setPackages] = useState<string[]>([]);
   const [filteredPackages, setFilteredPackages] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const packageListRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
   
   // Filter state
   const [filterType, setFilterType] = useState<string>("all"); // all, user, system, disabled
@@ -82,22 +84,42 @@ function AppsPage() {
     fetchPackages();
   }, [selectedDevice, refreshKey, filterType]);
 
-  // Filter packages based on search query
+  // Debounced search to prevent UI lag
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredPackages(packages);
-    } else {
-      const filtered = packages.filter(pkg => 
-        pkg.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredPackages(filtered);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
     
-    // Scroll to top instantly on any search change
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 150ms delay for instant UI feel
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Memoized filtered packages for performance
+  const memoizedFilteredPackages = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return packages;
+    }
+    return packages.filter(pkg => 
+      pkg.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
+  }, [packages, debouncedSearchQuery]);
+
+  // Update filtered packages when memoized result changes
+  useEffect(() => {
+    setFilteredPackages(memoizedFilteredPackages);
+    
+    // Scroll to top instantly when search results change
     if (packageListRef.current) {
       packageListRef.current.scrollTop = 0;
     }
-  }, [packages, searchQuery]);
+  }, [memoizedFilteredPackages]);
 
   const handleRefreshPackages = () => {
     setRefreshKey(prev => prev + 1);
@@ -223,7 +245,7 @@ function AppsPage() {
                   <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
                 </div>
               ) : filteredPackages.length > 0 ? (
-                <div ref={packageListRef} className="flex-1 overflow-hidden">
+                <div ref={packageListRef} className="flex-1">
                   <PackageList
                     packages={filteredPackages}
                     selectedPackage={selectedPackage}
