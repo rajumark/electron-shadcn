@@ -275,15 +275,14 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
               <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
             </div>
           ) : filteredPackages.length > 0 ? (
-            <div ref={packageListRef} className="flex-1">
-              <PackageList
-                packages={filteredPackages}
-                selectedPackage={selectedPackage}
-                onPackageClick={handlePackageClick}
-                onContextMenuAction={handleContextMenuAction}
-                pinnedPackages={pinnedPackages}
-              />
-            </div>
+            <PackageList
+              ref={packageListRef}
+              packages={filteredPackages}
+              selectedPackage={selectedPackage}
+              onPackageClick={handlePackageClick}
+              onContextMenuAction={handleContextMenuAction}
+              pinnedPackages={pinnedPackages}
+            />
           ) : selectedDevice ? (
             <div className="flex flex-col items-center justify-center mx-2">
               <p className="text-xs text-muted-foreground text-center py-4">

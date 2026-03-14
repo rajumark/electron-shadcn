@@ -1,5 +1,5 @@
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, forwardRef } from "react";
 
 interface PackageListProps {
   packages: string[];
@@ -105,9 +105,12 @@ const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAct
 
 PackageListItem.displayName = "PackageListItem";
 
-export const PackageList = React.memo(function PackageList({ packages, selectedPackage, onPackageClick, onContextMenuAction, pinnedPackages }: PackageListProps) {
+export const PackageList = React.memo(forwardRef<HTMLDivElement, PackageListProps>(function PackageList({ packages, selectedPackage, onPackageClick, onContextMenuAction, pinnedPackages }: PackageListProps, ref) {
   const [scrollTop, setScrollTop] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Use forwarded ref or local ref
+  React.useImperativeHandle(ref, () => containerRef.current!);
 
   // Separate pinned and unpinned packages with memoization
   const { pinnedItems, unpinnedItems } = useMemo(() => {
@@ -193,4 +196,6 @@ export const PackageList = React.memo(function PackageList({ packages, selectedP
       </div>
     </div>
   );
-});
+}));
+
+PackageList.displayName = "PackageList";
