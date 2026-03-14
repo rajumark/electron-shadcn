@@ -217,10 +217,10 @@ function AppsPage() {
                       <div
                         key={index}
                         onClick={() => handlePackageClick(pkg)}
-                        className={`p-2 border rounded text-xs font-mono cursor-pointer transition-colors ${
+                        className={`p-2 text-xs font-mono cursor-pointer transition-colors ${
                           selectedPackage === pkg
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background hover:bg-muted border-border"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background hover:bg-muted"
                         }`}
                       >
                         {pkg}
