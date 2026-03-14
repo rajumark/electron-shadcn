@@ -126,13 +126,26 @@ export const UIInspector: React.FC = () => {
     return node;
   };
 
+  const refreshPage = () => {
+    // Clear all current data
+    setScreenshotUrl("");
+    setXmlData(null);
+    setSelectedNode(null);
+    setSelectedNodeForOverlay(null);
+    setMaxDepth(0);
+    setCurrentDepth(0);
+    setExpandedNodes(new Set());
+    
+    // Fetch fresh data
+    fetchData();
+  };
+
   const fetchData = useCallback(async () => {
-    if (!selectedDevice?.id) {
-      toast.error("No device selected");
-      return;
-    }
 
     setLoading(true);
+    let screenshotSuccess = false;
+    let xmlSuccess = false;
+    
     try {
       // Take screenshot
       const screenshotResult = await ipc.client.adb.takeScreenshot({
@@ -142,6 +155,7 @@ export const UIInspector: React.FC = () => {
       if (!screenshotResult.success) {
         throw new Error(screenshotResult.error || "Failed to take screenshot");
       }
+      screenshotSuccess = true;
 
       // Get screenshot as base64
       const base64Result = await ipc.client.adb.getScreenshotBase64({
@@ -173,6 +187,7 @@ export const UIInspector: React.FC = () => {
       if (!xmlResult.success) {
         throw new Error(xmlResult.error || "Failed to get UI XML");
       }
+      xmlSuccess = true;
 
       // Parse XML
       const parser = new DOMParser();
@@ -198,7 +213,10 @@ export const UIInspector: React.FC = () => {
         setExpandedNodes(allNodeIds);
       }
 
-      toast.success("UI Inspector data refreshed successfully");
+      // Only show success message if both operations succeeded
+      if (screenshotSuccess && xmlSuccess) {
+        toast.success("UI Inspector data refreshed successfully");
+      }
     } catch (error) {
       console.error("Failed to fetch UI Inspector data:", error);
       
@@ -539,7 +557,7 @@ export const UIInspector: React.FC = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={fetchData}
+              onClick={refreshPage}
               disabled={loading || !selectedDevice?.id}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
