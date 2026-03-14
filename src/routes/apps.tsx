@@ -10,13 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import { PackageList } from "@/components/package-list";
  
 function AppsPage() {
   const { t } = useTranslation();
@@ -223,43 +217,12 @@ function AppsPage() {
                   <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
                 </div>
               ) : filteredPackages.length > 0 ? (
-                <div className="h-full overflow-y-auto space-y-1 bg-background">
-                  {filteredPackages.map((pkg, index) => (
-                    <ContextMenu key={index}>
-                      <ContextMenuTrigger asChild>
-                        <div
-                          onClick={() => handlePackageClick(pkg)}
-                          className={`p-2 text-xs font-mono cursor-pointer transition-colors truncate border-b border-border/50 last:border-b-0 ${
-                            selectedPackage === pkg
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-background hover:bg-muted"
-                          }`}
-                          title={pkg}
-                        >
-                          {pkg}
-                        </div>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent>
-                        <ContextMenuItem onClick={() => handleContextMenuAction("open", pkg)}>
-                          Open
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => handleContextMenuAction("force_stop", pkg)}>
-                          Force stop
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => handleContextMenuAction("restart", pkg)}>
-                          Restart
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={() => handleContextMenuAction("clear_data", pkg)}>
-                          Clear data
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem onClick={() => handleContextMenuAction("pin_app", pkg)}>
-                          Pin app
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
-                  ))}
-                </div>
+                <PackageList
+                  packages={filteredPackages}
+                  selectedPackage={selectedPackage}
+                  onPackageClick={handlePackageClick}
+                  onContextMenuAction={handleContextMenuAction}
+                />
               ) : selectedDevice ? (
                 <div className="flex flex-col items-center justify-center mx-2">
                   <p className="text-xs text-muted-foreground text-center py-4">
@@ -294,37 +257,11 @@ function AppsPage() {
 
         {/* Right Section - App Details */}
         <div className="mr-2 mb-2 ml-0 min-h-full flex-1 p-4 min-w-0">
-          <h2 className="mb-2 font-semibold text-sm">App Details</h2>
           {selectedPackage ? (
-            <div className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg border">
-                <h3 className="text-xs font-semibold mb-2">Package Information</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium">Package Name:</span>
-                    <span className="text-xs font-mono bg-background px-2 py-1 rounded border break-all">
-                      {selectedPackage}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-xs font-medium">Available Actions</h4>
-                <div className="flex flex-wrap gap-2">
-                  <button className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 transition-colors">
-                    Get App Info
-                  </button>
-                  <button className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 transition-colors">
-                    Get Permissions
-                  </button>
-                  <button className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 transition-colors">
-                    Launch App
-                  </button>
-                  <button className="px-3 py-1 text-xs bg-destructive text-destructive-foreground rounded hover:bg-destructive/80 transition-colors">
-                    Uninstall
-                  </button>
-                </div>
+            <div className="p-3 bg-muted rounded-lg border">
+              <h3 className="text-xs font-semibold mb-2">Selected Package</h3>
+              <div className="text-xs font-mono bg-background px-2 py-1 rounded border break-all">
+                {selectedPackage}
               </div>
             </div>
           ) : (
