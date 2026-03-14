@@ -83,6 +83,17 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
     }
   }, [packageName, selectedDevice]);
 
+  const refreshPermissions = async () => {
+    try {
+      // Clear cache first to ensure fresh data
+      await ipc.client.adb.clearADBCache();
+      // Then fetch permissions
+      await fetchPermissions();
+    } catch (error) {
+      console.error("Failed to refresh permissions:", error);
+    }
+  };
+
   const parsePermissionsContent = (result: string): Permission[] => {
     if (!result) return [];
 
@@ -191,6 +202,9 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
   const grantAllPermissions = async () => {
     setActionLoading("grant-all");
     try {
+      // Clear cache before batch operations to ensure fresh state
+      await ipc.client.adb.clearADBCache();
+      
       for (const permission of permissions) {
         if (permission.section === "runtime permissions" && !permission.granted) {
           await modifyPermission(permission.permission, true);
@@ -204,6 +218,9 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
   const revokeAllPermissions = async () => {
     setActionLoading("revoke-all");
     try {
+      // Clear cache before batch operations to ensure fresh state
+      await ipc.client.adb.clearADBCache();
+      
       for (const permission of permissions) {
         if (permission.section === "runtime permissions" && permission.granted) {
           await modifyPermission(permission.permission, false);
@@ -347,6 +364,19 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
         <div className="flex gap-2 mb-4 flex-wrap">
           <Button
             size="sm"
+            variant="outline"
+            onClick={refreshPermissions}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Refresh
+          </Button>
+          <Button
+            size="sm"
             onClick={grantAllPermissions}
             disabled={actionLoading !== null}
             className="bg-green-600 hover:bg-green-700"
@@ -388,19 +418,6 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
             <Info className="h-4 w-4 mr-2" />
             App Info
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={fetchPermissions}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Refresh
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
@@ -408,11 +425,12 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
                 Settings
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="w-64">
               {settingsOptions.map((option) => (
                 <DropdownMenuItem
                   key={option.intent}
                   onClick={() => openSettings(option.intent)}
+                  className="flex items-center justify-between"
                 >
                   {option.name}
                 </DropdownMenuItem>
