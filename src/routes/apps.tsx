@@ -384,7 +384,7 @@ function AppsPage() {
                       <AppDetailsBasics />
                     </TabsContent>
                     <TabsContent value="permissions" className="mt-0">
-                      <AppDetailsPermissions />
+                      <AppDetailsPermissions packageName={selectedPackage} />
                     </TabsContent>
                     <TabsContent value="apk-files" className="mt-0">
                       <AppDetailsApkFiles />
