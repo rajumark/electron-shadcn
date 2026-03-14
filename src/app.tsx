@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { updateAppLanguage } from "./actions/language";
 import { syncWithLocalTheme } from "./actions/theme";
 import { ADBSetupDialog } from "./components/adb-setup-dialog";
+import { Toaster } from "./components/ui/sonner";
 import { ipc } from "./ipc/manager";
 import { router } from "./utils/routes";
 import "./localization/i18n";
@@ -49,6 +50,7 @@ export default function App() {
         onClose={() => setShowADBDialog(false)}
         onSetupComplete={handleSetupComplete}
       />
+      <Toaster />
     </>
   );
 }

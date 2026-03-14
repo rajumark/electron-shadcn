@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { ipc } from "@/ipc/manager";
 import { packageStore } from "@/utils/store";
+import { toast } from "sonner";
 
 interface UsePackageContextMenuParams {
   selectedDevice: { id: string } | null;
@@ -8,6 +9,7 @@ interface UsePackageContextMenuParams {
   setRefreshKey: (updater: (prev: number) => number) => void;
   setError: (message: string) => void;
   setSearchQuery: (value: string) => void;
+  onAppUninstalled?: (pkg: string) => void;
 }
 
 export function usePackageContextMenu({
@@ -16,6 +18,7 @@ export function usePackageContextMenu({
   setRefreshKey,
   setError,
   setSearchQuery,
+  onAppUninstalled,
 }: UsePackageContextMenuParams) {
   const handleContextMenuAction = useCallback(
     async (action: string, pkg: string) => {
@@ -31,6 +34,11 @@ export function usePackageContextMenu({
         const updatedPinned = await packageStore.getPinnedPackages();
         setPinnedPackages(updatedPinned);
         setRefreshKey((prev) => prev + 1);
+        toast.success(
+          isCurrentlyPinned
+            ? `Unpinned ${pkg}`
+            : `Pinned ${pkg}`,
+        );
         return;
       }
 
@@ -61,6 +69,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success(`Started ${pkg}`);
             break;
           }
           case "force_stop": {
@@ -75,6 +84,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success(`Force stopped ${pkg}`);
             break;
           }
           case "restart": {
@@ -103,6 +113,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success(`Restarted ${pkg}`);
             break;
           }
           case "clear_data": {
@@ -124,6 +135,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success(`Cleared data for ${pkg}`);
             break;
           }
           case "uninstall": {
@@ -145,7 +157,11 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            if (onAppUninstalled) {
+              onAppUninstalled(pkg);
+            }
             setRefreshKey((prev) => prev + 1);
+            toast.success(`Uninstalled ${pkg}`);
             break;
           }
           case "home": {
@@ -160,6 +176,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success("Sent Home key event");
             break;
           }
           case "app_info": {
@@ -177,6 +194,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.info(`Opened app info for ${pkg}`);
             break;
           }
           case "enable": {
@@ -191,6 +209,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success(`Enabled ${pkg}`);
             break;
           }
           case "disable": {
@@ -205,12 +224,14 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.success(`Disabled ${pkg}`);
             break;
           }
           case "copy": {
             if (navigator?.clipboard) {
               await navigator.clipboard.writeText(pkg);
             }
+            toast.success("Copied package name");
             break;
           }
           case "open_in_playstore_app": {
@@ -228,6 +249,7 @@ export function usePackageContextMenu({
               ],
               useCache: false,
             });
+            toast.info(`Opening ${pkg} in Play Store app`);
             break;
           }
           case "open_in_playstore_site": {
@@ -235,6 +257,7 @@ export function usePackageContextMenu({
               `https://play.google.com/store/apps/details?id=${pkg}`,
               "_blank",
             );
+            toast.info("Opened Play Store page in browser");
             break;
           }
           case "find_apk_online": {
@@ -244,10 +267,12 @@ export function usePackageContextMenu({
           }
           case "permissions": {
             setError("Permissions details view is not implemented in this app yet.");
+            toast.info("Permissions view is not implemented yet.");
             break;
           }
           case "full_details": {
             setError("Full details view is not implemented in this app yet.");
+            toast.info("Full details view is not implemented yet.");
             break;
           }
           default: {
@@ -256,10 +281,13 @@ export function usePackageContextMenu({
         }
       } catch (err) {
         console.error("Failed to perform ADB action:", err);
+        const message =
+          err instanceof Error ? err.message : "Unknown error";
         setError(
-          `Failed to perform action "${action}" on ${pkg}: ${
-            err instanceof Error ? err.message : "Unknown error"
-          }`,
+          `Failed to perform action "${action}" on ${pkg}: ${message}`,
+        );
+        toast.error(
+          `Action "${action}" failed on ${pkg}: ${message}`,
         );
       }
     },

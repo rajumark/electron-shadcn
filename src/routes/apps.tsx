@@ -30,6 +30,7 @@ function AppsPage() {
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [pinnedPackages, setPinnedPackages] = useState<string[]>([]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const packageListRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   
@@ -48,44 +49,63 @@ function AppsPage() {
 
   // Fetch packages when device is selected or refresh is triggered
   useEffect(() => {
-    if (!selectedDevice) {
+    if (!selectedDevice || !selectedDevice.id?.trim()) {
       setPackages([]);
       setFilteredPackages([]);
+      setHasLoadedOnce(false);
       return;
     }
 
     const fetchPackages = async () => {
-      setLoadingPackages(true);
+      // Show loading state only for the first visible load on this device
+      if (!hasLoadedOnce) {
+        setLoadingPackages(true);
+      }
       setError("");
-      
+
       try {
         let command = "pm list packages";
-        if (filterType === "user") { 
+        if (filterType === "user") {
           command = "pm list packages -3";
         } else if (filterType === "system") {
           command = "pm list packages -s";
         } else if (filterType === "disabled") {
           command = "pm list packages -d";
         }
-        
+
         const packageList = await ipc.client.adb.getInstalledPackages({
           deviceId: selectedDevice.id,
           command,
         });
-        setPackages(packageList);
-        setFilteredPackages(packageList);
+
+        const isSameLength = packages.length === packageList.length;
+        const isSame =
+          isSameLength &&
+          packages.every((pkg, index) => pkg === packageList[index]);
+
+        if (!isSame) {
+          setPackages(packageList);
+          setFilteredPackages(packageList);
+          setHasLoadedOnce(true);
+        }
       } catch (error) {
         console.error("Failed to fetch packages:", error);
-        setError(`Failed to fetch packages: ${error instanceof Error ? error.message : "Unknown error"}`);
+        setError(
+          `Failed to fetch packages: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        );
         setPackages([]);
         setFilteredPackages([]);
       } finally {
-        setLoadingPackages(false);
+        if (!hasLoadedOnce) {
+          setLoadingPackages(false);
+        }
       }
     };
 
     fetchPackages();
-  }, [selectedDevice, refreshKey, filterType]);
+  }, [selectedDevice, refreshKey, filterType, packages, hasLoadedOnce]);
 
   // Debounced search to prevent UI lag
   useEffect(() => {
@@ -103,6 +123,21 @@ function AppsPage() {
       }
     };
   }, [searchQuery]);
+
+  // Auto-refresh packages every 5 seconds while a valid device is selected
+  useEffect(() => {
+    if (!selectedDevice || !selectedDevice.id?.trim()) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setRefreshKey((prev) => prev + 1);
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [selectedDevice]);
 
   // Load pinned packages on mount
   useEffect(() => {
@@ -141,12 +176,24 @@ function AppsPage() {
     setSelectedPackage(pkg);
   }, []);
 
+  const handleAppUninstalled = useCallback(
+    (pkg: string) => {
+      setPackages((prev) => prev.filter((p) => p !== pkg));
+      setFilteredPackages((prev) => prev.filter((p) => p !== pkg));
+      if (selectedPackage === pkg) {
+        setSelectedPackage("");
+      }
+    },
+    [selectedPackage],
+  );
+
   const { handleContextMenuAction } = usePackageContextMenu({
     selectedDevice,
     setPinnedPackages,
     setRefreshKey,
     setError,
     setSearchQuery,
+    onAppUninstalled: handleAppUninstalled,
   });
 
   useEffect(() => {
