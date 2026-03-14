@@ -142,7 +142,7 @@ function AppsPage() {
           className="h-full flex flex-col"
           style={{ width: `${leftWidth}%` }}
         >
-          <div className="p-4 flex flex-col h-full">
+          <div className="px-4 pb-4 flex flex-col h-full">
             {/* Header with Title and Filter */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-medium">
@@ -150,8 +150,8 @@ function AppsPage() {
               </h2>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 hover:bg-muted rounded-md transition-colors relative">
-                    <Filter className="h-4 w-4" />
+                  <button className="p-1.5 hover:bg-muted rounded-md transition-colors relative">
+                    <Filter className="h-3.5 w-3.5" />
                     {filterType !== "all" && (
                       <div className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></div>
                     )}
