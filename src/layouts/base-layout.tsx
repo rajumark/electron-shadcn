@@ -9,11 +9,15 @@ export default function BaseLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden relative">
       <DragWindowRegion title="Pilotfish" />
       <MenubarDemo />
       <SimpleDeviceList />
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <div className="flex-1 overflow-hidden relative">
+        {children}
+        {/* Fixed 30px vertical bar at right edge - starts below menubar */}
+        <div className="absolute top-0 right-0 w-[30px] h-full bg-orange-500 z-50" />
+      </div>
     </div>
   );
 }
