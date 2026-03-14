@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, X, Loader2, Settings, RotateCcw, Info } from "lucide-react";
+import { Search, X, Loader2, Settings, RotateCcw, Info, RefreshCw } from "lucide-react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
 import { Button } from "@/components/ui/button";
@@ -253,9 +253,13 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
     }
   };
 
-  // Filter permissions based on search and filter
+  // Filter permissions based on search and filter, and remove duplicates
   useEffect(() => {
-    const filtered = permissions.filter(item => {
+    const uniquePermissions = permissions.filter((item, index, self) => 
+      index === self.findIndex((p) => p.permission === item.permission && p.section === item.section)
+    );
+    
+    const filtered = uniquePermissions.filter(item => {
       const matchesFilter = item.section.toLowerCase().includes(selectedFilter);
       const matchesSearch = item.permission.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesFilter && matchesSearch;
@@ -355,6 +359,19 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
             <Info className="h-4 w-4 mr-2" />
             App Info
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={fetchPermissions}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Refresh
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
@@ -414,6 +431,16 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
                 key={index}
                 className="flex items-center justify-between p-3 rounded-lg border bg-card"
               >
+                {/* Permission Switch */}
+                {(item.section === "runtime permissions" || item.section === "install permissions") && (
+                  <Switch
+                    checked={item.granted || false}
+                    onCheckedChange={(checked) => modifyPermission(item.permission, checked)}
+                    disabled={item.section === "install permissions" || actionLoading !== null}
+                    className="mr-3"
+                  />
+                )}
+                
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-mono truncate">{item.permission}</p>
                   {item.details && (
@@ -421,21 +448,7 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
                       {item.details}
                     </p>
                   )}
-                  {item.flags && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Flags: {item.flags}
-                    </p>
-                  )}
                 </div>
-                
-                {/* Permission Switch */}
-                {(item.section === "runtime permissions" || item.section === "install permissions") && (
-                  <Switch
-                    checked={item.granted || false}
-                    onCheckedChange={(checked) => modifyPermission(item.permission, checked)}
-                    disabled={item.section === "install permissions" || actionLoading !== null}
-                  />
-                )}
               </div>
             ))}
           </div>
