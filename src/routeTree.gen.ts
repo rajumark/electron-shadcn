@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UidemoRouteImport } from './routes/uidemo'
+import { Route as UiInspectorRouteImport } from './routes/ui-inspector'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SecondRouteImport } from './routes/second'
@@ -20,6 +21,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const UidemoRoute = UidemoRouteImport.update({
   id: '/uidemo',
   path: '/uidemo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UiInspectorRoute = UiInspectorRouteImport.update({
+  id: '/ui-inspector',
+  path: '/ui-inspector',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TerminalRoute = TerminalRouteImport.update({
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
+  '/ui-inspector': typeof UiInspectorRoute
   '/uidemo': typeof UidemoRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
+  '/ui-inspector': typeof UiInspectorRoute
   '/uidemo': typeof UidemoRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
+  '/ui-inspector': typeof UiInspectorRoute
   '/uidemo': typeof UidemoRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/second'
     | '/settings'
     | '/terminal'
+    | '/ui-inspector'
     | '/uidemo'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/second'
     | '/settings'
     | '/terminal'
+    | '/ui-inspector'
     | '/uidemo'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/second'
     | '/settings'
     | '/terminal'
+    | '/ui-inspector'
     | '/uidemo'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   SecondRoute: typeof SecondRoute
   SettingsRoute: typeof SettingsRoute
   TerminalRoute: typeof TerminalRoute
+  UiInspectorRoute: typeof UiInspectorRoute
   UidemoRoute: typeof UidemoRoute
 }
 
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/uidemo'
       fullPath: '/uidemo'
       preLoaderRoute: typeof UidemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ui-inspector': {
+      id: '/ui-inspector'
+      path: '/ui-inspector'
+      fullPath: '/ui-inspector'
+      preLoaderRoute: typeof UiInspectorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terminal': {
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecondRoute: SecondRoute,
   SettingsRoute: SettingsRoute,
   TerminalRoute: TerminalRoute,
+  UiInspectorRoute: UiInspectorRoute,
   UidemoRoute: UidemoRoute,
 }
 export const routeTree = rootRouteImport
