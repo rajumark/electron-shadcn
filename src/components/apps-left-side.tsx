@@ -144,7 +144,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     };
   }, [selectedDevice]);
 
-  // Load pinned packages on mount
+  // Load pinned packages on mount 
   useEffect(() => {
     const loadPinnedPackages = async () => {
       const pinned = await packageStore.getPinnedPackages();
