@@ -363,9 +363,8 @@ function AppsPage() {
           {selectedPackage ? (
             <div className="h-full flex flex-col">
               {/* Package Name */}
-              <div className="p-4 border-b">
-                <h3 className="text-lg font-semibold">Package Name</h3>
-                <p className="text-sm text-muted-foreground font-mono break-all mt-1">
+              <div className="p-4">
+                <p className="text-sm text-muted-foreground font-mono break-all">
                   {selectedPackage}
                 </p>
               </div>
@@ -396,6 +395,9 @@ function AppsPage() {
                   </div>
                 </Tabs>
               </div>
+              
+              {/* Divider */}
+              <div className="w-full h-px bg-gray-300" />
             </div>
           ) : (
             <div className="flex items-center justify-center h-full">
