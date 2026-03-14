@@ -93,7 +93,7 @@ export const AndroidSettings: React.FC = () => {
 
     return (
       <button
-        className="group relative flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-full hover:bg-blue-50 hover:border-blue-200 transition-colors"
+        className="group relative flex items-center gap-1 px-2 py-1 text-xs bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors text-left min-h-[30px]"
         onClick={() => launchSetting(setting)}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -102,7 +102,7 @@ export const AndroidSettings: React.FC = () => {
         onMouseLeave={() => setShowPinIcon(false)}
         disabled={loading}
       >
-        <span className="truncate max-w-[200px]">{setting.text}</span>
+        <span className="truncate w-full line-clamp-2">{setting.text}</span>
         
         {/* Pin icon - visible on hover or context menu */}
         <button
@@ -133,7 +133,7 @@ export const AndroidSettings: React.FC = () => {
     return (
       <div className="mb-6">
         <h3 className="text-xs font-medium text-gray-600 mb-3 px-2">{title}</h3>
-        <div className="flex flex-wrap gap-2 px-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 px-2">
           {settings.map(setting => (
             <SettingButton 
               key={setting.id} 
