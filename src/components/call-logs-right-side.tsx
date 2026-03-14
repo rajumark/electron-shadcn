@@ -110,7 +110,7 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
     const command = `-a android.intent.action.VIEW -d "https://api.whatsapp.com/send?phone=${cleanNumber.replace('+', '')}"`;
     executeAction('whatsapp', command);
   };
-
+ 
   const handleTelegram = () => {
     if (!selectedCallData) return;
     const command = `-a android.intent.action.VIEW -d "tg://msg?to=${selectedCallData.phoneNumber}"`;
