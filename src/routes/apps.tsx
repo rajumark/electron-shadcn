@@ -139,13 +139,13 @@ function AppsPage() {
       <div className="relative flex flex-1" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
-          className="mr-0 mb-2 ml-2 h-full flex flex-col"
+          className="h-full flex flex-col"
           style={{ width: `${leftWidth}%` }}
         >
           <div className="p-4 flex flex-col h-full">
             {/* Header with Title and Filter */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium">
+              <h2 className="text-sm font-medium">
                 {filterOptions.find(option => option.id === filterType)?.label || "Apps"}
               </h2>
               <DropdownMenu>
@@ -250,15 +250,15 @@ function AppsPage() {
 
         {/* Right Section - App Details */}
         <div className="mr-2 mb-2 ml-0 min-h-full flex-1 p-4">
-          <h2 className="mb-2 font-semibold text-lg">App Details</h2>
+          <h2 className="mb-2 font-semibold text-sm">App Details</h2>
           {selectedPackage ? (
             <div className="space-y-4">
               <div className="p-3 bg-muted rounded-lg border">
-                <h3 className="text-sm font-semibold mb-2">Package Information</h3>
+                <h3 className="text-xs font-semibold mb-2">Package Information</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Package Name:</span>
-                    <span className="text-sm font-mono bg-background px-2 py-1 rounded border break-all">
+                    <span className="text-xs font-medium">Package Name:</span>
+                    <span className="text-xs font-mono bg-background px-2 py-1 rounded border break-all">
                       {selectedPackage}
                     </span>
                   </div>
@@ -266,7 +266,7 @@ function AppsPage() {
               </div>
               
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">Available Actions</h4>
+                <h4 className="text-xs font-medium">Available Actions</h4>
                 <div className="flex flex-wrap gap-2">
                   <button className="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 transition-colors">
                     Get App Info
