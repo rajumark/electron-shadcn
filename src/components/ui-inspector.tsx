@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
 interface XMLNode {
@@ -20,6 +21,20 @@ interface Bounds {
   height: number;
 }
 
+const calculateMaxDepth = (node: XMLNode, currentDepth: number = 0): number => {
+  if (!node.children || node.children.length === 0) {
+    return currentDepth;
+  }
+  
+  let maxChildDepth = currentDepth;
+  for (const child of node.children) {
+    const childDepth = calculateMaxDepth(child, currentDepth + 1);
+    maxChildDepth = Math.max(maxChildDepth, childDepth);
+  }
+  
+  return maxChildDepth;
+};
+
 export const UIInspector: React.FC = () => {
   const { t } = useTranslation();
   const { selectedDevice } = useSelectedDevice();
@@ -30,6 +45,8 @@ export const UIInspector: React.FC = () => {
   const [xmlData, setXmlData] = useState<XMLNode | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<XMLNode | null>(null);
+  const [maxDepth, setMaxDepth] = useState<number>(0);
+  const [currentDepth, setCurrentDepth] = useState<number>(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const screenshotRef = useRef<HTMLImageElement>(null);
@@ -164,6 +181,12 @@ export const UIInspector: React.FC = () => {
       if (rootNode) {
         const parsedNode = parseXMLToNode(rootNode);
         setXmlData(parsedNode);
+        
+        // Calculate max depth
+        const depth = calculateMaxDepth(parsedNode);
+        setMaxDepth(depth);
+        setCurrentDepth(0); // Reset to 0 when new data loads
+        
         // Expand all nodes by default
         const allNodeIds = new Set<string>();
         getAllNodeIds(parsedNode, allNodeIds);
@@ -237,12 +260,15 @@ export const UIInspector: React.FC = () => {
     const resourceId = getResourceId(node);
     const bounds = node.attributes["bounds"];
     const hasBounds = !!bounds;
+    const isAtCurrentDepth = level === currentDepth;
 
     return (
       <div key={nodeId} className="select-none">
         <div
           className={`flex items-center gap-1 py-1 px-2 hover:bg-muted/50 cursor-pointer text-xs ${
             selectedNode === node ? "bg-muted" : ""
+          } ${
+            isAtCurrentDepth ? "border-l-4 border-l-blue-500 bg-blue-50" : ""
           }`}
           style={{ paddingLeft: `${level * 12 + 8}px` }}
           onClick={() => {
@@ -472,9 +498,24 @@ export const UIInspector: React.FC = () => {
               <Monitor className="h-4 w-4" />
               <h3 className="font-medium text-sm">Screenshot</h3>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {selectedDevice?.name || "No device"}
-            </div>
+            {xmlData && maxDepth > 0 ? (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">Depth</span>
+                <Slider
+                  value={[currentDepth]}
+                  onValueChange={(value) => setCurrentDepth(value[0])}
+                  max={maxDepth}
+                  min={0}
+                  step={1}
+                  className="w-24"
+                />
+                <span className="text-xs text-muted-foreground w-4">{currentDepth}</span>
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground">
+                {selectedDevice?.name || "No device"}
+              </div>
+            )}
           </div>
           
           <div className="flex-1 relative overflow-hidden bg-muted/20">
