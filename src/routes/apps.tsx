@@ -53,7 +53,7 @@ function AppsPage() {
       
       try {
         let command = "pm list packages";
-        if (filterType === "user") {
+        if (filterType === "user") { 
           command = "pm list packages -3";
         } else if (filterType === "system") {
           command = "pm list packages -s";
