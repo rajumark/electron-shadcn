@@ -186,7 +186,11 @@ export const UIInspector: React.FC = () => {
         // Calculate max depth
         const depth = calculateMaxDepth(parsedNode);
         setMaxDepth(depth);
-        setCurrentDepth(0); // Reset to 0 when new data loads
+        
+        // Only reset to 0 if current depth is beyond new max depth
+        if (currentDepth > depth) {
+          setCurrentDepth(depth);
+        }
         
         // Expand all nodes by default
         const allNodeIds = new Set<string>();
