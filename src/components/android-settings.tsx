@@ -3,12 +3,11 @@ import { Search, Pin, PinOff } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { androidSettings, type AndroidSetting } from "@/constants/android-settings";
+import { toast } from "sonner";
 
 export const AndroidSettings: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [pinnedSettings, setPinnedSettings] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
   const { selectedDevice } = useSelectedDevice();
 
   // Load pinned settings from local storage
@@ -63,28 +62,28 @@ export const AndroidSettings: React.FC = () => {
   // Launch Android setting
   const launchSetting = useCallback(async (setting: AndroidSetting) => {
     if (!selectedDevice || !selectedDevice.id?.trim()) {
-      setError("No device selected");
+      toast.error("No device selected");
       return;
     }
 
-    setLoading(true);
-    setError("");
-
     try {
+      // Show loading toast
+      const loadingToast = toast.loading(`Launching ${setting.text}...`);
+      
       // Force stop settings app first
       const forceStopCommand = ["-s", selectedDevice.id, "shell", "am", "force-stop", "com.android.settings"];
       await ipc.client.adb.executeADBCommand({ args: forceStopCommand });
 
       // Launch the specific setting
       const intentCommand = ["-s", selectedDevice.id, "shell", "am", "start", "-a", setting.intent];
-      const result = await ipc.client.adb.executeADBCommand({ args: intentCommand });
+      await ipc.client.adb.executeADBCommand({ args: intentCommand });
       
+      // Update toast to success
+      toast.success(`Successfully launched: ${setting.text}`, { id: loadingToast });
       console.log(`Successfully launched: ${setting.text}`);
     } catch (error) {
       console.error(`Failed to launch ${setting.text}:`, error);
-      setError(`Failed to launch ${setting.text}: ${error instanceof Error ? error.message : "Unknown error"}`);
-    } finally {
-      setLoading(false);
+      toast.error(`Failed to launch ${setting.text}: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }, [selectedDevice]);
 
@@ -100,7 +99,7 @@ export const AndroidSettings: React.FC = () => {
           setShowPinIcon(true);
         }}
         onMouseLeave={() => setShowPinIcon(false)}
-        disabled={loading}
+        disabled={false}
       >
         <span className="truncate w-full line-clamp-2">{setting.text}</span>
         
@@ -173,20 +172,6 @@ export const AndroidSettings: React.FC = () => {
           />
         </div>
         
-        {/* Error Display */}
-        {error && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-xs text-red-600">{error}</p>
-          </div>
-        )}
-        
-        {/* Loading Indicator */}
-        {loading && (
-          <div className="mt-3 flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <p className="text-xs text-gray-600">Launching setting...</p>
-          </div>
-        )}
       </div>
 
       {/* Settings List */}
