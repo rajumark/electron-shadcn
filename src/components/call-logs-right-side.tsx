@@ -4,8 +4,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, Settings } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, Settings, MessageSquare, UserPlus, MessageCircle, Send } from "lucide-react";
 import { CallLog, formatDuration, formatDateTime } from "@/utils/call-log-parser";
+import { ipc } from "@/ipc/manager";
+import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { useState } from "react";
 
 interface CallLogsRightSideProps {
   selectedCall: string;
@@ -18,6 +21,8 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
   callLogs,
 }) => {
   const selectedCallData = callLogs.find(call => call.id === selectedCall);
+  const { selectedDevice } = useSelectedDevice();
+  const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
 
 
   const getCallIcon = (type: CallLog['type'], size: number = 20) => {
@@ -59,6 +64,72 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
     }
   };
 
+  const executeAction = async (actionType: string, intentCommand: string) => {
+    if (!selectedDevice || !selectedCallData) return;
+    
+    setIsActionLoading(actionType);
+    try {
+      const result = await ipc.client.adb.executeIntentCommand({
+        deviceId: selectedDevice.id,
+        intentCommand
+      });
+      if (result.success) {
+        console.log(`${actionType} action successful`);
+      } else {
+        console.error(`${actionType} action failed:`, result.error);
+      }
+    } catch (error) {
+      console.error(`${actionType} action error:`, error);
+    } finally {
+      setIsActionLoading(null);
+    }
+  };
+
+  const handleCall = () => {
+    if (!selectedCallData) return;
+    const command = `-a android.intent.action.DIAL -d tel:${selectedCallData.phoneNumber}`;
+    executeAction('call', command);
+  };
+
+  const handleMessage = () => {
+    if (!selectedCallData) return;
+    const command = `-a android.intent.action.SENDTO -d sms:${selectedCallData.phoneNumber}`;
+    executeAction('message', command);
+  };
+
+  const handleSaveContact = () => {
+    if (!selectedCallData) return;
+    const name = selectedCallData.contactName || `Contact ${selectedCallData.phoneNumber}`;
+    const command = `-a android.intent.action.INSERT -t vnd.android.cursor.dir/contact -e name "${name}" -e phone "${selectedCallData.phoneNumber}"`;
+    executeAction('saveContact', command);
+  };
+
+  const handleWhatsApp = () => {
+    if (!selectedCallData) return;
+    const cleanNumber = selectedCallData.phoneNumber.replace(/[^0-9+]/g, '');
+    const command = `-a android.intent.action.VIEW -d "https://api.whatsapp.com/send?phone=${cleanNumber.replace('+', '')}"`;
+    executeAction('whatsapp', command);
+  };
+
+  const handleTelegram = () => {
+    if (!selectedCallData) return;
+    const command = `-a android.intent.action.VIEW -d "tg://msg?to=${selectedCallData.phoneNumber}"`;
+    executeAction('telegram', command);
+  };
+
+  const handleDirectSMS = () => {
+    if (!selectedCallData) return;
+    const message = "I missed your call. I will call you back shortly.";
+    const command = `-a android.intent.action.SENDTO -d sms:${selectedCallData.phoneNumber} --es sms_body "${message}"`;
+    executeAction('directSMS', command);
+  };
+
+  const needsSaveContact = selectedCallData && (
+    !selectedCallData.contactName || 
+    selectedCallData.raw.lookup_uri === 'NULL' || 
+    !selectedCallData.raw.lookup_uri
+  );
+
   return (
     <div className="mr-2 mb-2 ml-0 min-h-full flex-1 min-w-0">
       {selectedCallData ? (
@@ -70,11 +141,11 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                 {getCallIcon(selectedCallData.type, 20)}
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold">
-                  {selectedCallData.contactName || "Unknown Contact"}
-                </h3>
+                <p className="text-base font-medium">
+                  {selectedCallData.contactName || selectedCallData.phoneNumber}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {selectedCallData.phoneNumber}
+                  {selectedCallData.contactName ? selectedCallData.phoneNumber : ""}
                 </p>
               </div>
             </div>
@@ -82,8 +153,76 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
               <span>{getCallTypeLabel(selectedCallData.type)}</span>
               <span>{formatDuration(selectedCallData.duration)}</span>
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {/* Call Button */}
+              <button
+                onClick={handleCall}
+                disabled={isActionLoading === 'call' || !selectedDevice}
+                className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white rounded-md transition-colors text-sm disabled:cursor-not-allowed"
+              >
+                <Phone className="h-4 w-4" />
+                {isActionLoading === 'call' ? 'Calling...' : 'Call'}
+              </button>
+
+              {/* Message Button */}
+              <button
+                onClick={handleMessage}
+                disabled={isActionLoading === 'message' || !selectedDevice}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-md transition-colors text-sm disabled:cursor-not-allowed"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {isActionLoading === 'message' ? 'Opening...' : 'Message'}
+              </button>
+
+              {/* Save Contact Button - Only show when contact needs to be saved */}
+              {needsSaveContact && (
+                <button
+                  onClick={handleSaveContact}
+                  disabled={isActionLoading === 'saveContact' || !selectedDevice}
+                  className="flex items-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white rounded-md transition-colors text-sm disabled:cursor-not-allowed"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {isActionLoading === 'saveContact' ? 'Saving...' : 'Save Contact'}
+                </button>
+              )}
+
+              {/* WhatsApp Button */}
+              <button
+                onClick={handleWhatsApp}
+                disabled={isActionLoading === 'whatsapp' || !selectedDevice}
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-md transition-colors text-sm disabled:cursor-not-allowed"
+                title="Open in WhatsApp"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </button>
+
+              {/* Telegram Button */}
+              <button
+                onClick={handleTelegram}
+                disabled={isActionLoading === 'telegram' || !selectedDevice}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-md transition-colors text-sm disabled:cursor-not-allowed"
+                title="Open in Telegram"
+              >
+                <Send className="h-4 w-4" />
+                Telegram
+              </button>
+
+              {/* Direct SMS with Pre-written Message */}
+              <button
+                onClick={handleDirectSMS}
+                disabled={isActionLoading === 'directSMS' || !selectedDevice}
+                className="flex items-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white rounded-md transition-colors text-sm disabled:cursor-not-allowed"
+                title="Send SMS with pre-written message"
+              >
+                <Send className="h-4 w-4" />
+                Quick Reply
+              </button>
+            </div>
           </div>
-          
+
           {/* Tabs */}
           <div className="flex-1 overflow-hidden">
             <Tabs defaultValue="basics" className="h-full flex flex-col">
@@ -312,18 +451,7 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                       </div>
                     </div>
                     
-                    <div className="pt-4 border-t border-border">
-                      <div className="flex items-center gap-3">
-                        <Code className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">ADB Command</p>
-                          <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded mt-1">
-                            adb shell content query --uri content://call_log/calls
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                                      </div>
                 </TabsContent>
                 
                 <TabsContent value="history" className="mt-0 p-4">

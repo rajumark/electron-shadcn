@@ -1,6 +1,15 @@
 import { os } from "@orpc/server";
 import { z } from "zod";
 import { ADBHelper } from "@/utils/adb-helper";
+import { exec, spawn } from "node:child_process";
+import { createWriteStream } from "node:fs";
+import { access, chmod, mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { promisify } from "node:util";
+import { app } from "electron";
+import { existsSync } from "node:fs";
+
+const execAsync = promisify(exec);
 
 export const checkADB = os.handler(async () => {
   return await ADBHelper.checkADBReady();
@@ -171,6 +180,29 @@ export const getCallLogs = os
     }
   });
 
+export const executeIntentCommand = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      intentCommand: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    const adbPath = ADBHelper.getADBPath();
+    const command = `${adbPath} -s ${input.deviceId} shell am start ${input.intentCommand}`;
+    
+    try {
+      const { stdout } = await execAsync(command);
+      return { success: true, output: stdout };
+    } catch (error) {
+      console.error('Intent command failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -184,4 +216,5 @@ export const adb = {
   dumpUIXml,
   getUIXml,
   getCallLogs,
+  executeIntentCommand,
 };
