@@ -45,17 +45,55 @@ const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAct
       </div>
     </ContextMenuTrigger>
     <ContextMenuContent>
-      <ContextMenuItem onClick={() => onContextMenuAction("open", pkg)}>
-        Open
+      <ContextMenuItem onClick={() => onContextMenuAction("start", pkg)}>
+        Start
       </ContextMenuItem>
       <ContextMenuItem onClick={() => onContextMenuAction("force_stop", pkg)}>
-        Force stop
+        Force Stop
       </ContextMenuItem>
       <ContextMenuItem onClick={() => onContextMenuAction("restart", pkg)}>
         Restart
       </ContextMenuItem>
       <ContextMenuItem onClick={() => onContextMenuAction("clear_data", pkg)}>
-        Clear data
+        Clear Data
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("uninstall", pkg)}>
+        Uninstall
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem onClick={() => onContextMenuAction("search_here", pkg)}>
+        Search here
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("copy", pkg)}>
+        Copy
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("home", pkg)}>
+        Home
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("permissions", pkg)}>
+        Permissions
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("app_info", pkg)}>
+        App Info
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("enable", pkg)}>
+        Enable
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("disable", pkg)}>
+        Disable
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("full_details", pkg)}>
+        Full Details
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem onClick={() => onContextMenuAction("open_in_playstore_app", pkg)}>
+        Open in Playstore app
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("open_in_playstore_site", pkg)}>
+        View in Playstore site
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => onContextMenuAction("find_apk_online", pkg)}>
+        Find APK Online
       </ContextMenuItem>
       <ContextMenuSeparator />
       <ContextMenuItem onClick={() => onContextMenuAction("pin_app", pkg)}>

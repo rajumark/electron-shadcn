@@ -14,10 +14,13 @@ export const executeADBCommand = os
   .input(
     z.object({
       args: z.array(z.string()),
+      useCache: z.boolean().optional(),
     })
   )
   .handler(async ({ input }) => {
-    return await ADBHelper.executeADBCommand(input.args);
+    return await ADBHelper.executeADBCommand(input.args, {
+      useCache: input.useCache,
+    });
   });
 
 export const getADBPath = os.handler(() => {
@@ -36,12 +39,15 @@ export const getInstalledPackages = os
       const command = input.command || "pm list packages";
       const commandParts = command.split(" ");
       
-      const packages = await ADBHelper.executeADBCommand([
-        "-s",
-        input.deviceId,
-        "shell",
-        ...commandParts,
-      ]);
+      const packages = await ADBHelper.executeADBCommand(
+        [
+          "-s",
+          input.deviceId,
+          "shell",
+          ...commandParts,
+        ],
+        { useCache: true },
+      );
       
       // Parse the output and return clean package names
       const packageList = packages

@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PackageList } from "@/components/package-list";
+import { usePackageContextMenu } from "@/hooks/use-package-context-menu";
  
 function AppsPage() {
   const { t } = useTranslation();
@@ -140,22 +141,13 @@ function AppsPage() {
     setSelectedPackage(pkg);
   }, []);
 
-  const handleContextMenuAction = useCallback(async (action: string, pkg: string) => {
-    console.log(`Action: ${action}, Package: ${pkg}`);
-    
-    if (action === 'pin_app') {
-      const isCurrentlyPinned = await packageStore.isPinned(pkg);
-      if (isCurrentlyPinned) {
-        await packageStore.unpinPackage(pkg);
-      } else {
-        await packageStore.pinPackage(pkg);
-      }
-      // Update state to trigger re-render
-      const updatedPinned = await packageStore.getPinnedPackages();
-      setPinnedPackages(updatedPinned);
-      setRefreshKey(prev => prev + 1); // Refresh list
-    }
-  }, []);
+  const { handleContextMenuAction } = usePackageContextMenu({
+    selectedDevice,
+    setPinnedPackages,
+    setRefreshKey,
+    setError,
+    setSearchQuery,
+  });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

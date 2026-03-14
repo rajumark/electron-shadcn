@@ -219,14 +219,21 @@ export const ADBHelper = {
     return join(platformToolsPath, adbExecutable);
   },
 
-  executeADBCommand(args: string[]): Promise<string> {
+  executeADBCommand(
+    args: string[],
+    options?: {
+      useCache?: boolean;
+    },
+  ): Promise<string> {
+    const useCache = options?.useCache ?? true;
     const cacheKey = JSON.stringify(args);
     const now = Date.now();
-    
-    // Check cache first
-    const cached = commandCache.get(cacheKey);
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-      return Promise.resolve(cached.data);
+
+    if (useCache) {
+      const cached = commandCache.get(cacheKey);
+      if (cached && now - cached.timestamp < CACHE_DURATION) {
+        return Promise.resolve(cached.data);
+      }
     }
 
     const adbPath = this.getADBPath();
@@ -251,19 +258,19 @@ export const ADBHelper = {
 
       adb.on("close", (code) => {
         if (code === 0) {
-          // Cache successful results
-          commandCache.set(cacheKey, { data: stdout, timestamp: now });
-          
-          // Clean up old cache entries periodically
-          if (commandCache.size > 100) {
-            const cutoff = now - CACHE_DURATION;
-            for (const [key, value] of commandCache.entries()) {
-              if (value.timestamp < cutoff) {
-                commandCache.delete(key);
+          if (useCache) {
+            commandCache.set(cacheKey, { data: stdout, timestamp: now });
+
+            if (commandCache.size > 100) {
+              const cutoff = now - CACHE_DURATION;
+              for (const [key, value] of commandCache.entries()) {
+                if (value.timestamp < cutoff) {
+                  commandCache.delete(key);
+                }
               }
             }
           }
-          
+
           resolve(stdout);
         } else {
           reject(new Error(`ADB command failed with code ${code}: ${stderr}`));
