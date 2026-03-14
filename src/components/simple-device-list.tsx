@@ -68,14 +68,14 @@ export function SimpleDeviceList() {
             .filter((device) => device !== "");
 
           // Add fake devices for testing
-          const fakeDevices = [
-            { id: "FAKE12345", name: "Test Device 1" },
-            { id: "FAKE67890", name: "Test Device 2" },
-            { id: "FAKEABCDE", name: "Test Device 3" }
-          ];
+          // const fakeDevices = [
+          //   { id: "FAKE12345", name: "Test Device 1" },
+          //   { id: "FAKE67890", name: "Test Device 2" },
+          //   { id: "FAKEABCDE", name: "Test Device 3" }
+          // ];
 
           // Combine real and fake devices
-          const allDevices = [...parsedDevices, ...fakeDevices.map(device => device.id)];
+          const allDevices = [...parsedDevices];
 
           // Fetch device names asynchronously for real devices only
           const devicesWithNames = await Promise.all(
@@ -86,7 +86,7 @@ export function SimpleDeviceList() {
           );
 
           // Add fake devices with their names
-          const finalDevices = [...devicesWithNames, ...fakeDevices];
+          const finalDevices = [...devicesWithNames];
 
           setDevices(finalDevices);
           
