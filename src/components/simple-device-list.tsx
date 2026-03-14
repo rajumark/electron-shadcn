@@ -149,23 +149,25 @@ export function SimpleDeviceList() {
   }
 
   return (
-     
+    <>
       <Tabs value={selectedDevice?.id || ""} onValueChange={(value) => {
         const device = devices.find(d => d.id === value);
         if (device) setSelectedDevice(device);
       }} className="w-full">
-        <TabsList className="inline-flex justify-start px-4 h-auto flex-wrap gap-1 bg-transparent border-0">
+        <TabsList variant="line">
           {devices.map((device) => (
             <TabsTrigger
               key={device.id}
               value={device.id}
-              className="px-3 py-1 text-sm rounded-md border transition-all whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary bg-background hover:bg-muted border-border hover:text-foreground"
             >
               {device.name}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
-   
+      
+      {/* Horizontal Divider */}
+      <div className="w-full h-px bg-gray-300" />
+    </>
   );
 }

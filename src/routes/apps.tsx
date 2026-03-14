@@ -135,7 +135,7 @@ function AppsPage() {
   }, [isDragging]);
 
   return (
-    <div className="mb-2 flex h-[calc(100vh-8rem)]">
+    <div className="mb-2 flex h-[calc(100vh-4rem)]">
       <div className="relative flex flex-1" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
