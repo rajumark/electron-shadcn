@@ -31,37 +31,38 @@ interface AppDetailsPermissionsProps {
   packageName: string;
 }
 
-export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProps) {
-  const { selectedDevice } = useSelectedDevice();
+const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
+  packageName,
+}) => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [filteredPermissions, setFilteredPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("runtime permissions");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const selectedDevice = useSelectedDevice();
 
   const permissionTypes = [
     "runtime permissions",
     "install permissions", 
     "requested permissions",
-    "declared permissions"
+    "declared permissions",
   ];
 
   const settingsOptions = [
-    { name: "Display over other apps", intent: "android.settings.action.MANAGE_OVERLAY_PERMISSION" },
-    { name: "Modify system settings", intent: "android.settings.action.MANAGE_WRITE_SETTINGS" },
-    { name: "Notification listener access", intent: "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS" },
-    { name: "Do Not Disturb access", intent: "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS" },
-    { name: "Usage access (app usage stats)", intent: "android.settings.USAGE_ACCESS_SETTINGS" },
-    { name: "Install unknown apps", intent: "android.settings.MANAGE_UNKNOWN_APP_SOURCES" },
-    { name: "Picture-in-picture access", intent: "android.settings.PICTURE_IN_PICTURE_SETTINGS" },
-    { name: "App notification settings", intent: "android.settings.NOTIFICATION_SETTINGS" },
-    { name: "Schedule exact alarms", intent: "android.settings.REQUEST_SCHEDULE_EXACT_ALARM" },
-    { name: "Ignore battery optimizations", intent: "android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS" },
-    { name: "All Apps Settings", intent: "android.settings.MANAGE_ALL_APPLICATIONS_SETTINGS" },
-    { name: "Accessibility services", intent: "android.settings.ACCESSIBILITY_SETTINGS" },
-    { name: "Bind VPN service", intent: "android.settings.VPN_SETTINGS" },
-    { name: "Default Apps", intent: "android.settings.MANAGE_DEFAULT_APPS_SETTINGS" }
+    { name: "Display over other apps", intent: "android.settings.ACTION_MANAGE_OVERLAY_PERMISSION" },
+    { name: "Notifications", intent: "android.settings.ACTION_APP_NOTIFICATION_SETTINGS" },
+    { name: "Storage", intent: "android.settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION" },
+    { name: "Location", intent: "android.settings.ACTION_LOCATION_SOURCE_SETTINGS" },
+    { name: "Camera", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "Microphone", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "Contacts", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "SMS", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "Phone", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "Calendar", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "Photos & Videos", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    { name: "VPN", intent: "android.settings.ACTION_VPN_SETTINGS" },
+    { name: "Battery", intent: "android.settings.ACTION_BATTERY_SAVER_SETTINGS" },
   ];
 
   const fetchPermissions = useCallback(async () => {
@@ -240,23 +241,12 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
   const restartApp = async () => {
     setActionLoading("restart");
     try {
-      const forceStopCommand = selectedDevice?.id
+      const command = selectedDevice?.id
         ? `-s ${selectedDevice.id} shell am force-stop ${packageName}`
         : `shell am force-stop ${packageName}`;
-      
-      const startCommand = selectedDevice?.id
-        ? `-s ${selectedDevice.id} shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`
-        : `shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`;
 
       await ipc.client.adb.executeADBCommand({
-        args: forceStopCommand.split(" "),
-      });
-
-      // Add 500ms delay before starting the app
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      await ipc.client.adb.executeADBCommand({
-        args: startCommand.split(" "),
+        args: command.split(" "),
       });
 
       console.log("App restarted successfully.");
@@ -331,6 +321,23 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
 
   return (
     <div className="p-4 h-full flex flex-col">
+      {/* Filter Chips */}
+      <div className="mb-4">
+        <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
+          <TabsList variant="line" className="w-fit">
+            {permissionTypes.map((type) => (
+              <TabsTrigger
+                key={type}
+                value={type}
+                className="text-xs"
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1).replace(" permissions", "")}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -350,22 +357,26 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
         )}
       </div>
 
-      {/* Filter Chips */}
-      <div className="mb-4">
-        <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-          <TabsList variant="line" className="w-fit">
-            {permissionTypes.map((type) => (
-              <TabsTrigger
-                key={type}
-                value={type}
-                className="text-xs"
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1).replace(" permissions", "")}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      {/* Permission Summary */}
+      {totalPermissions > 0 && (
+        <div className="mb-4 p-3 bg-muted rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium">Summary:</span> Total: {totalPermissions}
+            {(selectedFilter === "runtime permissions" || selectedFilter === "install permissions") && (
+              <>
+                {" | Granted: "}
+                <Badge variant="secondary" className="ml-1">
+                  {grantedPermissions}
+                </Badge>
+                {" | Not Granted: "}
+                <Badge variant="outline" className="ml-1">
+                  {nonGrantedPermissions}
+                </Badge>
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Action Buttons */}
       {hasRuntimePermissions && (
@@ -448,27 +459,6 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
         </div>
       )}
 
-      {/* Permission Summary */}
-      {totalPermissions > 0 && (
-        <div className="mb-4 p-3 bg-muted rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium">Summary:</span> Total: {totalPermissions}
-            {(selectedFilter === "runtime permissions" || selectedFilter === "install permissions") && (
-              <>
-                {" | Granted: "}
-                <Badge variant="secondary" className="ml-1">
-                  {grantedPermissions}
-                </Badge>
-                {" | Not Granted: "}
-                <Badge variant="outline" className="ml-1">
-                  {nonGrantedPermissions}
-                </Badge>
-              </>
-            )}
-          </p>
-        </div>
-      )}
-
       {/* Permissions List */}
       <div className="flex-1 overflow-auto">
         {loading ? (
@@ -511,4 +501,6 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
       </div>
     </div>
   );
-}
+};
+
+export default AppDetailsPermissions;

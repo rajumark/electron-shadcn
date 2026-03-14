@@ -20,7 +20,7 @@ import {
 import { PackageList } from "@/components/package-list";
 import { usePackageContextMenu } from "@/hooks/use-package-context-menu";
 import { AppDetailsBasics } from "@/components/app-details-basics";
-import { AppDetailsPermissions } from "@/components/app-details-permissions";
+import AppDetailsPermissions from "@/components/app-details-permissions";
 import { AppDetailsApkFiles } from "@/components/app-details-apk-files";
 import { AppDetailsStorage } from "@/components/app-details-storage";
  
