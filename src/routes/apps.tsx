@@ -135,16 +135,16 @@ function AppsPage() {
   }, [isDragging]);
 
   return (
-    <div className="mb-2 flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       <div className="relative flex flex-1 min-w-0" ref={containerRef}>
         {/* Left Section - Package List */}
         <div
-          className="h-full flex flex-col"
+          className="h-full flex flex-col overflow-hidden"
           style={{ width: `${leftWidth}%` }}
         >
-          <div className="pb-4 flex flex-col h-full">
+          <div className="flex flex-col h-full min-h-0">
             {/* Header with Title and Filter */}
-            <div className="flex items-center justify-between mx-2">
+            <div className="flex items-center justify-between mx-2 pt-4 pb-2">
               <h2 className="text-sm font-medium">
                 {filterOptions.find(option => option.id === filterType)?.label || "Apps"}
               </h2>
@@ -175,7 +175,7 @@ function AppsPage() {
             </div>
 
             {/* Search Input */}
-            <div className="mb-4 mx-2 relative">
+            <div className="mb-2 mx-2 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -198,45 +198,47 @@ function AppsPage() {
 
             {/* Error Display */}
             {error && (
-              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <div className="mb-2 mx-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-xs text-destructive">{error}</p>
               </div>
             )}
 
-            {/* Package List */}
-            <div className="flex-1 flex flex-col min-h-0">
+            {/* Package List Container */}
+            <div className="flex-1 flex flex-col overflow-hidden mx-2">
               {loadingPackages ? (
                 <div className="text-center py-4">
                   <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                   <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
                 </div>
               ) : filteredPackages.length > 0 ? (
-                <>
-                  <div className="flex-1 overflow-y-auto space-y-1">
-                    {filteredPackages.map((pkg, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handlePackageClick(pkg)}
-                        className={`p-2 text-xs font-mono cursor-pointer transition-colors truncate ${
-                          selectedPackage === pkg
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-background hover:bg-muted"
-                        }`}
-                        title={pkg}
-                      >
-                        {pkg}
-                      </div>
-                    ))}
-                  </div>
-                </>
+                <div className="h-full overflow-y-auto space-y-1 border border-border rounded-lg bg-background">
+                  {filteredPackages.map((pkg, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handlePackageClick(pkg)}
+                      className={`p-2 text-xs font-mono cursor-pointer transition-colors truncate border-b border-border/50 last:border-b-0 ${
+                        selectedPackage === pkg
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background hover:bg-muted"
+                      }`}
+                      title={pkg}
+                    >
+                      {pkg}
+                    </div>
+                  ))}
+                </div>
               ) : selectedDevice ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  {searchQuery.trim() ? "No packages found matching your search" : "No packages found or failed to load"}
-                </p>
+                <div className="flex-1 flex items-center justify-center border border-border rounded-lg bg-background mx-2">
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    {searchQuery.trim() ? "No packages found matching your search" : "No packages found or failed to load"}
+                  </p>
+                </div>
               ) : (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  Select a device to view installed packages
-                </p>
+                <div className="flex-1 flex items-center justify-center border border-border rounded-lg bg-background mx-2">
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Select a device to view installed packages
+                  </p>
+                </div>
               )}
             </div>
           </div>

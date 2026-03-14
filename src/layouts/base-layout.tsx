@@ -9,11 +9,11 @@ export default function BaseLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="h-screen flex flex-col overflow-hidden">
       <DragWindowRegion title="Pilotfish" />
       <MenubarDemo />
       <SimpleDeviceList />
-      <main className="h-screen">{children}</main>
-    </>
+      <main className="flex-1 overflow-hidden">{children}</main>
+    </div>
   );
 }
