@@ -69,6 +69,7 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
 
       const result = await ipc.client.adb.executeADBCommand({
         args: command.split(" "),
+        useCache: false, // Disable cache to always get fresh data
       });
 
       if (result) {
@@ -115,14 +116,23 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
           granted: details.trim() === "true",
         });
       } else if (currentSection === "runtime permissions" && line.includes(": granted=")) {
-        const [permission, details] = line.split(": granted=");
-        const [grantedPart, flagsPart] = details.split(", flags=");
-        permissionsList.push({
-          section: currentSection,
-          permission: permission.trim(),
-          granted: grantedPart.trim() === "true",
-          flags: flagsPart ? flagsPart.trim() : null,
-        });
+        // Handle runtime permissions format: "android.permission.NAME: granted=false, flags=[...]"
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith("android.permission.")) {
+          const colonIndex = trimmedLine.indexOf(":");
+          const permission = trimmedLine.substring(0, colonIndex);
+          const rest = trimmedLine.substring(colonIndex + 1);
+          
+          // Extract granted status
+          const grantedMatch = rest.match(/granted=(true|false)/);
+          const granted = grantedMatch ? grantedMatch[1] === "true" : false;
+          
+          permissionsList.push({
+            section: currentSection,
+            permission: permission.trim(),
+            granted: granted,
+          });
+        }
       } else if (currentSection === "requested permissions" && line.trim()) {
         if (!line.includes(":")) {
           permissionsList.push({
@@ -139,19 +149,38 @@ export function AppDetailsPermissions({ packageName }: AppDetailsPermissionsProp
   const modifyPermission = async (permissionName: string, isGranted: boolean) => {
     if (!packageName) return;
 
+    console.log(`=== MODIFYING PERMISSION ===`);
+    console.log(`Permission: ${permissionName}`);
+    console.log(`Action: ${isGranted ? 'grant' : 'revoke'}`);
+    console.log(`Package: ${packageName}`);
+
     setActionLoading(isGranted ? "grant" : "revoke");
     try {
+      // Clear cache before modifying to ensure fresh state
+      await ipc.client.adb.clearADBCache();
+      
       const action = isGranted ? "grant" : "revoke";
       const command = selectedDevice?.id
         ? `-s ${selectedDevice.id} shell pm ${action} ${packageName} ${permissionName}`
         : `shell pm ${action} ${packageName} ${permissionName}`;
 
-      await ipc.client.adb.executeADBCommand({
+      console.log(`Executing command: ${command}`);
+
+      const result = await ipc.client.adb.executeADBCommand({
         args: command.split(" "),
+        useCache: false, // Don't cache this command
       });
 
+      console.log(`Command result:`, result);
+
       console.log(`Permission ${action}ed successfully: ${permissionName}`);
+      
+      // Add a small delay before refreshing to ensure the change is applied
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log(`=== REFRESHING PERMISSIONS AFTER CHANGE ===`);
       await fetchPermissions(); // Refresh list after change
+      console.log(`=== PERMISSIONS REFRESHED ===`);
     } catch (error) {
       console.error(`Failed to ${isGranted ? "grant" : "revoke"} permission: ${permissionName}`, error);
     } finally {
