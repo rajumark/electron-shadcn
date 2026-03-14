@@ -22,12 +22,15 @@ const PackageListItem = React.memo(({ pkg, isSelected, onClick, onContextMenuAct
     <ContextMenuTrigger asChild>
       <div
         onClick={onClick}
-        className={`p-2 text-xs font-mono cursor-pointer truncate border-b border-border/50 last:border-b-0 ${
+        className={`p-2 text-xs cursor-pointer truncate border-b border-border/50 last:border-b-0 font-mono ${
           isSelected
             ? "bg-primary text-primary-foreground"
             : "bg-background hover:bg-muted"
         }`}
-        style={{ height: `${ITEM_HEIGHT}px` }}
+        style={{ 
+          height: `${ITEM_HEIGHT}px`,
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace"
+        }}
         title={pkg}
       >
         {pkg}
