@@ -320,9 +320,9 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
   const nonGrantedPermissions = totalPermissions - grantedPermissions;
 
   return (
-    <div className="p-4 h-full flex flex-col">
+    <div className="p-0 h-full flex flex-col">
       {/* Filter Chips */}
-      <div className="mb-4">
+      <div className="mb-0 mt-0">
         <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
           <TabsList variant="line" className="w-fit">
             {permissionTypes.map((type) => (
