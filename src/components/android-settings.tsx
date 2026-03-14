@@ -159,7 +159,7 @@ export const AndroidSettings: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Search Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
+      <div className="sticky top-0 bg-white p-4 z-10">
         <div className="relative max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
