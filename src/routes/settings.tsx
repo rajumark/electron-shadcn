@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { AndroidSettings } from "@/components/android-settings";
 
 function SettingsPage() {
   const { t } = useTranslation();
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-1 flex-col items-center justify-center gap-2">
-        <h1 className="font-bold text-4xl">Settings</h1>
-        <p className="text-muted-foreground">Page name coming soon</p>
+      <div className="flex-1">
+        <AndroidSettings />
       </div>
     </div>
   );
