@@ -201,7 +201,19 @@ export const UIInspector: React.FC = () => {
       toast.success("UI Inspector data refreshed successfully");
     } catch (error) {
       console.error("Failed to fetch UI Inspector data:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to fetch data");
+      
+      // Handle specific ADB error codes
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch data";
+      
+      if (errorMessage.includes("137")) {
+        toast.error("Device screen is locked or unavailable. Please unlock device and try again.");
+      } else if (errorMessage.includes("device not found")) {
+        toast.error("No device connected. Please connect a device and try again.");
+      } else if (errorMessage.includes("command not found")) {
+        toast.error("UI Automator not available on this device. Please check device compatibility.");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
