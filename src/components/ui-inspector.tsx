@@ -47,6 +47,7 @@ export const UIInspector: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<XMLNode | null>(null);
   const [maxDepth, setMaxDepth] = useState<number>(0);
   const [currentDepth, setCurrentDepth] = useState<number>(0);
+  const [selectedNodeForOverlay, setSelectedNodeForOverlay] = useState<XMLNode | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const screenshotRef = useRef<HTMLImageElement>(null);
@@ -208,6 +209,37 @@ export const UIInspector: React.FC = () => {
     node.children.forEach(child => getAllNodeIds(child, ids));
   };
 
+  const findNodeDepth = (targetNode: XMLNode, node: XMLNode, currentDepth: number = 0): number => {
+    if (node === targetNode) {
+      return currentDepth;
+    }
+    
+    for (const child of node.children) {
+      const depth = findNodeDepth(targetNode, child, currentDepth + 1);
+      if (depth !== -1) return depth;
+    }
+    
+    return -1; // Not found
+  };
+
+  const scrollToXmlNode = (node: XMLNode) => {
+    const nodeId = getNodeId(node);
+    const element = document.querySelector(`[data-node-id="${nodeId}"]`);
+    
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      
+      // Add temporary highlight effect
+      element.classList.add('bg-green-100', 'border-green-500');
+      setTimeout(() => {
+        element.classList.remove('bg-green-100', 'border-green-500');
+      }, 1000);
+    }
+  };
+
   const toggleNodeExpansion = (nodeId: string) => {
     setExpandedNodes(prev => {
       const newSet = new Set(prev);
@@ -261,27 +293,36 @@ export const UIInspector: React.FC = () => {
     const bounds = node.attributes["bounds"];
     const hasBounds = !!bounds;
     const isAtCurrentDepth = level === currentDepth;
+    const isSelectedForOverlay = selectedNodeForOverlay === node;
 
     return (
       <div key={nodeId} className="select-none">
         <div
+          data-node-id={nodeId}
           className={`flex items-center gap-1 py-1 px-2 hover:bg-muted/50 cursor-pointer text-xs ${
             selectedNode === node ? "bg-muted" : ""
           } ${
             isAtCurrentDepth ? "border-l-4 border-l-blue-500 bg-blue-50" : ""
+          } ${
+            isSelectedForOverlay ? "bg-green-100 border-l-4 border-l-green-500" : ""
           }`}
           style={{ paddingLeft: `${level * 12 + 8}px` }}
-          onClick={() => {
+          onClick={(e) => {
+            // Only set selection states, don't toggle expansion
             setSelectedNode(node);
-            if (hasChildren) {
-              toggleNodeExpansion(nodeId);
-            }
+            setSelectedNodeForOverlay(node);
           }}
         >
           {hasChildren && (
-            <span className="text-muted-foreground">
+            <div 
+              className="text-muted-foreground cursor-pointer hover:bg-muted-200 rounded p-1 mr-1 -ml-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleNodeExpansion(nodeId);
+              }}
+            >
               {isExpanded ? "▼" : "▶"}
-            </span>
+            </div>
           )}
           {!hasChildren && <span className="w-4" />}
           
@@ -353,12 +394,12 @@ export const UIInspector: React.FC = () => {
         const parsedBounds = parseBounds(bounds);
         if (parsedBounds && depth === currentDepth) {
           const rect = document.createElement("div");
-          rect.className = "absolute border border-white box-shadow-[0_0_0_2px_black]";
+          rect.className = "absolute border border-white box-shadow-[0_0_0_2px_black cursor-pointer hover:border-blue-400 transition-colors";
           rect.style.left = `${parsedBounds.x * scaleX}px`;
           rect.style.top = `${parsedBounds.y * scaleY}px`;
           rect.style.width = `${parsedBounds.width * scaleX}px`;
           rect.style.height = `${parsedBounds.height * scaleY}px`;
-          rect.style.pointerEvents = "none";
+          rect.style.pointerEvents = "auto";
           
           // Highlight selected node
           if (selectedNode === node) {
@@ -366,6 +407,24 @@ export const UIInspector: React.FC = () => {
             rect.style.borderColor = "#3b82f6";
             rect.style.boxShadow = "0 0 0 2px #3b82f6";
           }
+          
+          // Add click handler for overlay → XML synchronization
+          rect.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Find and scroll to XML node
+            scrollToXmlNode(node);
+            
+            // Set selected states
+            setSelectedNode(node);
+            setSelectedNodeForOverlay(node);
+            
+            // Move slider to this node's depth if not already at current depth
+            const nodeDepth = findNodeDepth(node, xmlData!, 0);
+            if (nodeDepth !== -1 && nodeDepth !== currentDepth) {
+              setCurrentDepth(nodeDepth);
+            }
+          });
           
           overlay.appendChild(rect);
         }
@@ -376,7 +435,7 @@ export const UIInspector: React.FC = () => {
     };
 
     drawRectanglesForNode(xmlData);
-  }, [xmlData, selectedNode, currentDepth]);
+  }, [xmlData, selectedNode, selectedNodeForOverlay, currentDepth]);
 
   useEffect(() => {
     drawOverlay();
@@ -391,7 +450,7 @@ export const UIInspector: React.FC = () => {
       
       return () => clearInterval(interval);
     }
-  }, [isDragging, drawOverlay, currentDepth]);
+  }, [isDragging, drawOverlay, currentDepth, selectedNodeForOverlay]);
 
   // Add resize observer to detect container size changes
   useEffect(() => {
@@ -404,7 +463,7 @@ export const UIInspector: React.FC = () => {
     resizeObserver.observe(overlayRef.current.parentElement);
 
     return () => resizeObserver.disconnect();
-  }, [drawOverlay, currentDepth]);
+  }, [drawOverlay, currentDepth, selectedNodeForOverlay]);
 
   // Handle image load and scroll events
   useEffect(() => {
@@ -418,7 +477,7 @@ export const UIInspector: React.FC = () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, [drawOverlay, currentDepth]);
+  }, [drawOverlay, currentDepth, selectedNodeForOverlay]);
 
   // Handle image load
   useEffect(() => {
@@ -439,7 +498,7 @@ export const UIInspector: React.FC = () => {
     return () => {
       img.removeEventListener('load', handleImageLoad);
     };
-  }, [screenshotUrl, drawOverlay, currentDepth]);
+  }, [screenshotUrl, drawOverlay, currentDepth, selectedNodeForOverlay]);
 
   useEffect(() => {
     // Initial data fetch
