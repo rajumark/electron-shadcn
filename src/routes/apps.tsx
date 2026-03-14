@@ -110,7 +110,7 @@ function AppsPage() {
       const newLeftWidth =
         ((e.clientX - containerRect.left) / containerRect.width) * 100;
 
-      if (newLeftWidth >= 20 && newLeftWidth <= 50) {
+      if (newLeftWidth >= 20 && newLeftWidth <= 80) {
         setLeftWidth(newLeftWidth);
       }
     };
