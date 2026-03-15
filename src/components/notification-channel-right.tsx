@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Copy, RefreshCw, Volume2, Vibrate, Lightbulb } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Copy, RefreshCw, Volume2, Vibrate, Lightbulb, Settings, AlertCircle } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import {
@@ -8,6 +8,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface NotificationChannelDetails {
   id: string;
@@ -53,13 +62,46 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
   const [error, setError] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [openingSettings, setOpeningSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState<string>("");
 
   const { selectedDevice } = useSelectedDevice();
 
   // Find the selected channel from the channels array
-  const channelDetails = channels.find(channel => 
-    `${channel.packageName}:${channel.id}` === selectedNotificationChannel
-  );
+  const channelDetails = useMemo(() => {
+    return channels.find(channel => 
+      `${channel.packageName}:${channel.id}` === selectedNotificationChannel
+    );
+  }, [channels, selectedNotificationChannel]);
+
+  // Open channel notification settings for the selected channel
+  const openChannelSettings = async () => {
+    if (!selectedDevice || !selectedDevice.id?.trim() || !channelDetails) {
+      setSettingsError("No device or channel selected");
+      return;
+    }
+
+    setOpeningSettings(true);
+    setSettingsError("");
+    
+    try {
+      await ipc.client.adb.executeCommand({
+        deviceId: selectedDevice.id,
+        command: `shell am start -a android.settings.CHANNEL_NOTIFICATION_SETTINGS --es android.provider.extra.APP_PACKAGE ${channelDetails.packageName} --es android.provider.extra.CHANNEL_ID ${channelDetails.id}`,
+      });
+    } catch (error) {
+      console.error("Failed to open channel settings:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setSettingsError(`Failed to open channel settings: ${errorMessage}`);
+    } finally {
+      setOpeningSettings(false);
+    }
+  };
+
+  // Close error dialog
+  const closeErrorDialog = () => {
+    setSettingsError("");
+  };
 
   // Parse notification channel details from dumpsys output
   const parseNotificationChannelDetails = (output: string, targetChannelKey: string): NotificationChannelDetails | null => {
@@ -251,7 +293,8 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
   };
 
   return (
-    <div className="mr-2 mb-2 ml-0 min-h-full flex-1 min-w-0">
+    <>
+      <div className="mr-2 mb-2 ml-0 min-h-full flex-1 min-w-0">
       {selectedNotificationChannel ? (
         <div className="h-full flex flex-col">
           {/* Header */}
@@ -261,21 +304,31 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
                 {selectedNotificationChannel}
               </p>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={handleRefresh}
-                  className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                  title="Refresh details"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={handleCopyToClipboard}
-                  className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                  title="Copy raw data"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              {/* Settings button temporarily hidden
+              <button
+                onClick={openChannelSettings}
+                disabled={!selectedDevice || !channelDetails || openingSettings}
+                className="p-1.5 hover:bg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Open channel notification settings"
+              >
+                <Settings className={`h-3.5 w-3.5 ${openingSettings ? 'animate-spin' : ''}`} />
+              </button>
+              */}
+              <button
+                onClick={handleRefresh}
+                className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                title="Refresh details"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={handleCopyToClipboard}
+                className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                title="Copy raw data"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
+            </div>
             </div>
             {copied && (
               <p className="text-xs text-green-600 mt-1">Copied to clipboard!</p>
@@ -512,5 +565,24 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
         </div>
       )}
     </div>
+
+    {/* Error Dialog */}
+    <Dialog open={!!settingsError} onOpenChange={closeErrorDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            Settings Error
+          </DialogTitle>
+          <DialogDescription>
+            {settingsError}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={closeErrorDialog}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 };

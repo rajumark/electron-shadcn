@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { NotificationRecordLeftSide } from "@/components/notification-record-left";
 import { NotificationRecordRightSide } from "@/components/notification-record-right";
@@ -184,6 +184,9 @@ function NotificationsPage() {
     fetchNotificationChannels();
   }, [selectedDevice]);
 
+  // Memoize channels to prevent unnecessary re-renders
+  const memoizedChannels = useMemo(() => notificationChannels, [notificationChannels]);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
@@ -236,7 +239,7 @@ function NotificationsPage() {
                   selectedPackage={selectedPackage}
                   selectedNotificationChannel={selectedNotificationChannel}
                   onNotificationChannelSelect={setSelectedNotificationChannel}
-                  channels={notificationChannels}
+                  channels={memoizedChannels}
                 />
 
                 <div
@@ -247,7 +250,7 @@ function NotificationsPage() {
 
                 <NotificationChannelRightSide 
   selectedNotificationChannel={selectedNotificationChannel} 
-  channels={notificationChannels}
+  channels={memoizedChannels}
 />
               </div>
             </div>

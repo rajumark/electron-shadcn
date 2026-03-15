@@ -1,7 +1,16 @@
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, Settings, AlertCircle } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface NotificationChannel {
   id: string;
@@ -47,6 +56,10 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filteredChannels, setFilteredChannels] = useState<NotificationChannel[]>([]);
+  const [openingSettings, setOpeningSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState<string>("");
+
+  const { selectedDevice } = useSelectedDevice();
 
   // Filter channels for selected package
   const packageChannels = channels.filter(channel => channel.packageName === selectedPackage);
@@ -65,6 +78,35 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
     }
   }, [searchQuery, packageChannels]);
 
+  // Open notification settings for the selected package
+  const openNotificationSettings = async () => {
+    if (!selectedDevice || !selectedDevice.id?.trim() || !selectedPackage) {
+      setSettingsError("No device or package selected");
+      return;
+    }
+
+    setOpeningSettings(true);
+    setSettingsError("");
+    
+    try {
+      await ipc.client.adb.executeCommand({
+        deviceId: selectedDevice.id,
+        command: `shell am start -a android.settings.APP_NOTIFICATION_SETTINGS --es android.provider.extra.APP_PACKAGE ${selectedPackage}`,
+      });
+    } catch (error) {
+      console.error("Failed to open notification settings:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      setSettingsError(`Failed to open notification settings: ${errorMessage}`);
+    } finally {
+      setOpeningSettings(false);
+    }
+  };
+
+  // Close error dialog
+  const closeErrorDialog = () => {
+    setSettingsError("");
+  };
+
   const formatImportance = (importance: number) => {
     const importanceMap: { [key: number]: string } = {
       0: "None",
@@ -82,7 +124,8 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
   };
 
   return (
-    <div className="flex flex-col h-full border-l border-r border-border">
+    <>
+      <div className="flex flex-col h-full border-l border-r border-border">
       <div className="flex flex-col h-full min-h-0">
         {/* Header */}
         <div className="p-3 border-b border-border">
@@ -90,6 +133,16 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
             <h3 className="text-sm font-medium">
               {selectedPackage} ({packageChannels.length})
             </h3>
+            {/* Settings button temporarily hidden
+            <button
+              onClick={openNotificationSettings}
+              disabled={!selectedDevice || !selectedPackage || openingSettings}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Open notification settings"
+            >
+              <Settings className={`h-3.5 w-3.5 ${openingSettings ? 'animate-spin' : ''}`} />
+            </button>
+            */}
           </div>
           
           {/* Search Input */}
@@ -182,5 +235,24 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
         </div>
       </div>
     </div>
+
+    {/* Error Dialog */}
+    <Dialog open={!!settingsError} onOpenChange={closeErrorDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            Settings Error
+          </DialogTitle>
+          <DialogDescription>
+            {settingsError}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={closeErrorDialog}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 };
