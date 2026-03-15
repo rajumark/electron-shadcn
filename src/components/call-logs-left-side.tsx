@@ -106,7 +106,7 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
     };
 
     fetchCallLogs();
-  }, [selectedDevice, refreshKey, callLogs, hasLoadedOnce]);
+  }, [selectedDevice, refreshKey, hasLoadedOnce]);
 
   // Filter call logs based on type and search
   const memoizedFilteredCallLogs = useMemo(() => {

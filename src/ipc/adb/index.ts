@@ -171,12 +171,70 @@ export const getCallLogs = os
         "content",
         "query",
         "--uri",
-        "content://call_log/calls"
+        "content://call_log/calls",
+        "--projection",
+        "_id:number:name:duration:date:type"
       ], { useCache: true });
       
       return { success: true, data: result };
     } catch (error) {
       throw new Error(`Failed to get call logs: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  });
+
+export const getCallLogDetails = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      callId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const result = await ADBHelper.executeADBCommand([
+        "-s",
+        input.deviceId,
+        "shell",
+        "content",
+        "query",
+        "--uri",
+        "content://call_log/calls",
+        "--where",
+        `_id=${input.callId}`
+      ], { useCache: true });
+      
+      return { success: true, data: result };
+    } catch (error) {
+      throw new Error(`Failed to get call log details: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  });
+
+export const getCallHistoryByNumber = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      phoneNumber: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const result = await ADBHelper.executeADBCommand([
+        "-s",
+        input.deviceId,
+        "shell",
+        "content",
+        "query",
+        "--uri",
+        "content://call_log/calls",
+        "--where",
+        `number='${input.phoneNumber}'`,
+        "--projection",
+        "_id:number:name:duration:date:type"
+      ], { useCache: true });
+      
+      return { success: true, data: result };
+    } catch (error) {
+      throw new Error(`Failed to get call history by number: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   });
 
@@ -216,5 +274,7 @@ export const adb = {
   dumpUIXml,
   getUIXml,
   getCallLogs,
+  getCallLogDetails,
+  getCallHistoryByNumber,
   executeIntentCommand,
 };
