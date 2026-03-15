@@ -70,6 +70,7 @@ function NotificationsPage() {
     const lines = output.split('\n');
     const channels: any[] = [];
     let currentPackage = "";
+    const channelMap = new Map<string, any>(); // Use Map to deduplicate by package:channelId
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -84,6 +85,14 @@ function NotificationsPage() {
       // Match NotificationChannel lines - more flexible regex
       const channelMatch = line.match(/NotificationChannel\{mId='([^']+)',/);
       if (channelMatch && currentPackage) {
+        // Create unique key for deduplication
+        const uniqueKey = `${currentPackage}:${channelMatch[1]}`;
+        
+        // Skip if we already have this channel
+        if (channelMap.has(uniqueKey)) {
+          continue;
+        }
+        
         // Extract all the channel properties in a more flexible way
         const channelLine = line;
         const channel: any = {
@@ -141,11 +150,13 @@ function NotificationsPage() {
         channel.importantConvo = false;
         channel.lastNotificationUpdateTimeMs = 0;
         
-        channels.push(channel);
+        // Add to map for deduplication
+        channelMap.set(uniqueKey, channel);
       }
     }
     
-    return channels;
+    // Convert Map to array and return
+    return Array.from(channelMap.values());
   };
 
   // Fetch notification channels when device is selected
@@ -234,7 +245,10 @@ function NotificationsPage() {
                   onMouseDown={handleMouseDown}
                 />
 
-                <NotificationChannelRightSide selectedNotificationChannel={selectedNotificationChannel} />
+                <NotificationChannelRightSide 
+  selectedNotificationChannel={selectedNotificationChannel} 
+  channels={notificationChannels}
+/>
               </div>
             </div>
           </TabsContent>

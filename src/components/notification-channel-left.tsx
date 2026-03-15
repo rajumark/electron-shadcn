@@ -41,6 +41,7 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
   const parseNotificationPackages = (output: string): PackageInfo[] => {
     const lines = output.split('\n');
     const packageMap = new Map<string, PackageInfo>();
+    const channelMap = new Map<string, any>(); // Use Map to deduplicate channels
     let currentPackage = "";
     
     for (let i = 0; i < lines.length; i++) {
@@ -61,11 +62,18 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
         }
       }
       
-      // Match NotificationChannel lines to count channels per package
+      // Match NotificationChannel lines to count channels per package (with deduplication)
       const channelMatch = line.match(/NotificationChannel\{mId='([^']+)',/);
       if (channelMatch && currentPackage && packageMap.has(currentPackage)) {
-        const packageInfo = packageMap.get(currentPackage)!;
-        packageInfo.channelCount++;
+        // Create unique key for deduplication
+        const uniqueKey = `${currentPackage}:${channelMatch[1]}`;
+        
+        // Only count if we haven't seen this channel before
+        if (!channelMap.has(uniqueKey)) {
+          channelMap.set(uniqueKey, true); // Mark as seen
+          const packageInfo = packageMap.get(currentPackage)!;
+          packageInfo.channelCount++;
+        }
       }
     }
     

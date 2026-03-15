@@ -41,12 +41,13 @@ interface NotificationChannelDetails {
 
 interface NotificationChannelRightSideProps {
   selectedNotificationChannel: string;
+  channels: NotificationChannelDetails[];
 }
 
 export const NotificationChannelRightSide: React.FC<NotificationChannelRightSideProps> = ({
   selectedNotificationChannel,
+  channels,
 }) => {
-  const [channelDetails, setChannelDetails] = useState<NotificationChannelDetails | null>(null);
   const [rawData, setRawData] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -54,6 +55,11 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
   const [copied, setCopied] = useState(false);
 
   const { selectedDevice } = useSelectedDevice();
+
+  // Find the selected channel from the channels array
+  const channelDetails = channels.find(channel => 
+    `${channel.packageName}:${channel.id}` === selectedNotificationChannel
+  );
 
   // Parse notification channel details from dumpsys output
   const parseNotificationChannelDetails = (output: string, targetChannelKey: string): NotificationChannelDetails | null => {
@@ -130,11 +136,11 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
     return foundChannel;
   };
 
-  // Fetch notification channel details
+  // Fetch notification channel details when channel is selected
   useEffect(() => {
-    if (!selectedNotificationChannel || !selectedDevice || !selectedDevice.id?.trim()) {
-      setChannelDetails(null);
+    if (!selectedDevice || !selectedDevice.id?.trim() || !selectedNotificationChannel) {
       setRawData("");
+      setError("");
       return;
     }
 
@@ -148,43 +154,34 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
           command: "dumpsys notification",
         });
 
-        const details = parseNotificationChannelDetails(output, selectedNotificationChannel);
-        
-        if (details) {
-          setChannelDetails(details);
-          
-          // Extract relevant raw data for this channel and package
-          const lines = output.split('\n');
-          const [packageName] = selectedNotificationChannel.split(':');
-          let packageStartIndex = -1;
-          let packageEndIndex = -1;
-          
-          // Find the package section
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes(`AppSettings: ${packageName} (`)) {
-              packageStartIndex = i;
+        // Extract the raw data for the selected package
+        const [packageName] = selectedNotificationChannel.split(':');
+        const lines = output.split('\n');
+        let packageRawData = "";
+        let inTargetPackage = false;
+
+        for (const line of lines) {
+          const appSettingsMatch = line.match(/AppSettings: ([^ ]+) \(/);
+          if (appSettingsMatch) {
+            if (appSettingsMatch[1] === packageName) {
+              inTargetPackage = true;
+              packageRawData += line + '\n';
+            } else {
+              inTargetPackage = false;
             }
-            if (packageStartIndex !== -1 && i > packageStartIndex && lines[i].includes("AppSettings:")) {
-              packageEndIndex = i;
-              break;
-            }
+          } else if (inTargetPackage) {
+            packageRawData += line + '\n';
           }
-          
-          if (packageStartIndex !== -1) {
-            const packageLines = lines.slice(packageStartIndex, packageEndIndex !== -1 ? packageEndIndex : packageStartIndex + 100);
-            setRawData(packageLines.join('\n'));
-          }
-        } else {
-          setError("Notification channel not found");
         }
+
+        setRawData(packageRawData);
       } catch (error) {
-        console.error("Failed to fetch notification channel details:", error);
+        console.error("Failed to fetch channel details:", error);
         setError(
-          `Failed to fetch notification channel details: ${
+          `Failed to fetch channel details: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
-        setChannelDetails(null);
         setRawData("");
       } finally {
         setLoading(false);
@@ -192,7 +189,7 @@ export const NotificationChannelRightSide: React.FC<NotificationChannelRightSide
     };
 
     fetchChannelDetails();
-  }, [selectedNotificationChannel, selectedDevice, refreshKey]);
+  }, [selectedDevice, selectedNotificationChannel, refreshKey]);
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
