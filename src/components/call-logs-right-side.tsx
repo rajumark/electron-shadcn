@@ -9,6 +9,7 @@ import { CallLog, formatDuration, formatDateTime, parseCallLogData } from "@/uti
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { useState, useEffect } from "react";
+import { ContactRight } from "./contact-right";
 
 interface CallLogsRightSideProps {
   selectedCall: string;
@@ -602,48 +603,11 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="contact" className="mt-0 p-4">
-                  <div className="space-y-4">
-                    {selectedCallData.contactName ? (
-                      <>
-                        <div className="flex items-center gap-3">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm font-medium">Contact Name</p>
-                            <p className="text-sm text-muted-foreground">
-                              {selectedCallData.contactName}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm font-medium">Phone Number</p>
-                            <p className="text-sm text-muted-foreground font-mono">
-                              {selectedCallData.phoneNumber}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="pt-4 border-t border-border">
-                          <p className="text-sm text-muted-foreground">
-                            Contact information would be available in a real implementation with access to the device's contacts.
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-8">
-                        <User className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-sm text-muted-foreground">
-                          No contact information available for this number.
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          This number is not saved in your contacts.
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                <TabsContent value="contact" className="mt-0 p-0">
+                  <ContactRight 
+                    phoneNumber={selectedCallData.phoneNumber}
+                    contactName={selectedCallData.contactName}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="raw" className="mt-0 p-4">

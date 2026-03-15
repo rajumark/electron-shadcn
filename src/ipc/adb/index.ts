@@ -285,6 +285,82 @@ export const executeIntentCommand = os
     }
   });
 
+export const getContactByPhone = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      phoneNumber: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const adbCommand = [
+        "-s",
+        input.deviceId,
+        "shell",
+        "content",
+        "query",
+        "--uri",
+        `content://com.android.contacts/data/phones/filter/${input.phoneNumber}`
+      ];
+      
+      console.log('=== DEBUG: Contact by phone ADB Command:', adbCommand.join(' '));
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: true });
+      
+      console.log('=== DEBUG: Contact by phone ADB Result:', result);
+      console.log('=== DEBUG: Contact by phone ADB Result length:', result?.length);
+      
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('=== DEBUG: Contact by phone ADB Error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        data: null
+      };
+    }
+  });
+
+export const getContactDetails = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      contactId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const adbCommand = [
+        "-s",
+        input.deviceId,
+        "shell",
+        "content",
+        "query",
+        "--uri",
+        "content://com.android.contacts/data",
+        "--where",
+        `contact_id=${input.contactId}`
+      ];
+      
+      console.log('=== DEBUG: Contact details ADB Command:', adbCommand.join(' '));
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: true });
+      
+      console.log('=== DEBUG: Contact details ADB Result:', result);
+      console.log('=== DEBUG: Contact details ADB Result length:', result?.length);
+      
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('=== DEBUG: Contact details ADB Error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        data: null
+      };
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -301,4 +377,6 @@ export const adb = {
   getCallLogDetails,
   getCallHistoryByNumber,
   executeIntentCommand,
+  getContactByPhone,
+  getContactDetails,
 };
