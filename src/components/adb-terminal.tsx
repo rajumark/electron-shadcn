@@ -1,11 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Toggle } from "./ui/toggle";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
 import { toast } from "sonner";
-import { Terminal, Play, X, Copy, Save, Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Terminal, Play, X, Copy, Save, Search, ChevronUp, ChevronDown, History } from "lucide-react";
 
 interface ADBTerminalProps {
   className?: string;
@@ -19,8 +20,27 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [totalMatches, setTotalMatches] = useState(0);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const { selectedDevice } = useSelectedDevice();
   const outputRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load command history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const history = await ipc.client.store.getCommandHistory();
+        setCommandHistory(history);
+      } catch (error) {
+        console.error('Failed to load command history:', error);
+      }
+    };
+    loadHistory();
+  }, []);
 
   const handleRunCommand = async () => {
     if (!command.trim()) {
@@ -41,9 +61,15 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
       if (result.success) {
         setOutput(result.output || "Command executed successfully");
         toast.success("Command executed successfully");
+        
+        // Save to history (avoid duplicates)
+        await ipc.client.store.addToCommandHistory({ command: command.trim() });
+        const updatedHistory = await ipc.client.store.getCommandHistory();
+        setCommandHistory(updatedHistory);
       } else {
         setOutput(`Error: ${result.error}`);
         toast.error(`Command failed: ${result.error}`);
+        console.error('ADB Command Error Details:', result);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -54,10 +80,60 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleSelectHistoryCommand = (historyCommand: string) => {
+    setCommand(historyCommand);
+    setHistoryOpen(false);
+    setShowSuggestions(false);
+  };
+
+  const handleCommandChange = (value: string) => {
+    setCommand(value);
+    
+    // Generate suggestions based on history
+    if (value.trim()) {
+      const filteredSuggestions = commandHistory
+        .filter(cmd => cmd.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 8); // Limit to 8 suggestions
+      setSuggestions(filteredSuggestions);
+      setShowSuggestions(filteredSuggestions.length > 0);
+      setSelectedSuggestionIndex(-1);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setSelectedSuggestionIndex(-1);
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    setCommand(suggestion);
+    setShowSuggestions(false);
+    setSelectedSuggestionIndex(-1);
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleRunCommand();
+      if (showSuggestions && selectedSuggestionIndex >= 0) {
+        handleSuggestionSelect(suggestions[selectedSuggestionIndex]);
+      } else {
+        handleRunCommand();
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (showSuggestions && suggestions.length > 0) {
+        const newIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+        setSelectedSuggestionIndex(newIndex);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (showSuggestions && suggestions.length > 0) {
+        const newIndex = Math.max(selectedSuggestionIndex - 1, -1);
+        setSelectedSuggestionIndex(newIndex);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setSelectedSuggestionIndex(-1);
     }
   };
 
@@ -120,7 +196,7 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     updateSearchMatches();
   }, [searchQuery, output]);
 
@@ -129,15 +205,67 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
       {/* Header with controls */}
       <div className="border-b p-4 space-y-4">
         {/* Command input row */}
-        <div className="flex items-center gap-4">
-          <Input
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Enter ADB command"
-            className="w-1/2"
-            disabled={isLoading}
-          />
+        <div className="flex items-center gap-4 relative">
+          <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" disabled={commandHistory.length === 0}>
+                <History className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 max-h-60 overflow-y-auto" align="start">
+              <div className="space-y-1">
+                <div className="font-medium text-xs text-muted-foreground mb-2">Command History</div>
+                {commandHistory.length === 0 ? (
+                  <div className="text-xs text-muted-foreground italic">No commands in history</div>
+                ) : (
+                  commandHistory.map((cmd, index) => (
+                    <div
+                      key={index}
+                      className="text-xs p-2 rounded hover:bg-muted cursor-pointer font-mono"
+                      onClick={() => handleSelectHistoryCommand(cmd)}
+                    >
+                      {cmd}
+                    </div>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <div className="relative w-1/2">
+            <Input
+              ref={inputRef}
+              value={command}
+              onChange={(e) => handleCommandChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                if (command.trim()) {
+                  handleCommandChange(command);
+                }
+              }}
+              placeholder="Enter ADB command"
+              className="w-full"
+              disabled={isLoading}
+            />
+            
+            {/* Suggestions dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-md max-h-48 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className={`px-3 py-2 text-xs cursor-pointer font-mono hover:bg-muted ${
+                      index === selectedSuggestionIndex ? 'bg-muted' : ''
+                    }`}
+                    onClick={() => handleSuggestionSelect(suggestion)}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
           <Button
             onClick={handleRunCommand}
             disabled={isLoading || !command.trim()}
@@ -170,9 +298,9 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
       </div>
 
       {/* Output area with controls */}
-      <div className="flex-1 flex flex-col p-4 overflow-auto">
+      <div className="flex-1 flex flex-col p-4 overflow-hidden">
         {/* Output controls */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 flex-shrink-0">
           <Button
             onClick={handleCopyOutput}
             variant="outline"
@@ -195,7 +323,7 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
           <div className="flex-1" />
           
           {/* Search controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               value={searchQuery}
@@ -204,7 +332,7 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
               className="w-48 h-6 text-xs"
             />
             {totalMatches > 0 && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
                 ({currentMatchIndex + 1}/{totalMatches})
               </span>
             )}

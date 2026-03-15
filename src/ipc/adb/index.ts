@@ -421,6 +421,8 @@ export const executeCustomADBCommand = os
   )
   .handler(async ({ input }) => {
     try {
+      console.log('=== DEBUG: executeCustomADBCommand called with:', input);
+      
       // Parse the command and handle shortcuts
       let parsedCommand = input.command.trim();
       
@@ -448,8 +450,10 @@ export const executeCustomADBCommand = os
       }
 
       console.log('=== DEBUG: Final ADB Command:', finalCommand);
+      console.log('=== DEBUG: ADB Path:', ADBHelper.getADBPath());
       
       const result = await ADBHelper.executeADBCommand(finalCommand, { useCache: false });
+      console.log('=== DEBUG: ADB Result:', result);
       return { success: true, output: result };
     } catch (error) {
       console.error('=== DEBUG: Custom ADB Command Error:', error);

@@ -4,11 +4,13 @@ import Store from 'electron-store';
 
 interface StoreSchema {
   pinnedPackages: string[];
+  commandHistory: string[];
 }
 
 const store = new Store<StoreSchema>({
   defaults: {
-    pinnedPackages: []
+    pinnedPackages: [],
+    commandHistory: []
   }
 });
 
@@ -47,10 +49,33 @@ export const clearAllPinned = os.handler(async () => {
   return [];
 });
 
+export const getCommandHistory = os.handler(async () => {
+  return store.get('commandHistory', []);
+});
+
+export const addToCommandHistory = os
+  .input(z.object({ command: z.string() }))
+  .handler(async ({ input }) => {
+    const history = store.get('commandHistory', []);
+    // Avoid duplicates - remove if exists, then add to beginning
+    const filteredHistory = history.filter(cmd => cmd !== input.command);
+    const updatedHistory = [input.command, ...filteredHistory].slice(0, 50); // Keep max 50 commands
+    store.set('commandHistory', updatedHistory);
+    return updatedHistory;
+  });
+
+export const clearCommandHistory = os.handler(async () => {
+  store.set('commandHistory', []);
+  return [];
+});
+
 export const storeHandlers = {
   getPinnedPackages,
   pinPackage,
   unpinPackage,
   isPinned,
   clearAllPinned,
+  getCommandHistory,
+  addToCommandHistory,
+  clearCommandHistory,
 };

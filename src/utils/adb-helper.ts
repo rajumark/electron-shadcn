@@ -218,13 +218,25 @@ export const ADBHelper = {
     const platform = process.platform;
     const adbExecutable = platform === "win32" ? "adb.exe" : "adb";
     
-    // First check if ADB exists in the Pilotfish directory (macOS specific path)
-    const pilotfishPath = "/Users/raju/Library/Application Support/Pilotfish/platform-tools/" + adbExecutable;
-    if (existsSync(pilotfishPath)) {
-      return pilotfishPath;
+    // First try the bundled platform-tools path
+    const bundledPath = join(platformToolsPath, adbExecutable);
+    if (existsSync(bundledPath)) {
+      return bundledPath;
     }
     
-    return join(platformToolsPath, adbExecutable);
+    // Fallback to system PATH (for development/testing)
+    try {
+      const { execSync } = require('child_process');
+      const systemPath = execSync('which adb', { encoding: 'utf8' }).trim();
+      if (systemPath && existsSync(systemPath)) {
+        return systemPath;
+      }
+    } catch (error) {
+      // ADB not found in PATH
+    }
+    
+    // Return bundled path as last resort (will show error if it doesn't exist)
+    return bundledPath;
   },
 
   executeADBCommand(
@@ -245,6 +257,8 @@ export const ADBHelper = {
     }
 
     const adbPath = this.getADBPath();
+    console.log('=== DEBUG: ADB Path exists:', existsSync(adbPath));
+    console.log('=== DEBUG: ADB Path:', adbPath);
 
     return new Promise((resolve, reject) => {
       const adb = spawn(adbPath, args, { 
@@ -265,6 +279,8 @@ export const ADBHelper = {
       });
 
       adb.on("close", (code) => {
+        console.log('=== DEBUG: ADB Process closed with code:', code);
+        console.log('=== DEBUG: ADB stderr:', stderr);
         if (code === 0) {
           if (useCache) {
             commandCache.set(cacheKey, { data: stdout, timestamp: now });
@@ -286,11 +302,13 @@ export const ADBHelper = {
       });
 
       adb.on("error", (error) => {
+        console.error('=== DEBUG: ADB Process error:', error);
         reject(new Error(`Failed to execute ADB command: ${error.message}`));
       });
 
       // Handle timeout
       adb.on("timeout", () => {
+        console.error('=== DEBUG: ADB Process timeout');
         adb.kill();
         reject(new Error("ADB command timed out after 30 seconds"));
       });
