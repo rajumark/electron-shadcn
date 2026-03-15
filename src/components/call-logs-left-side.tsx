@@ -164,6 +164,25 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
     }
   };
 
+  const getCallTypeLabel = (type: CallLog['type']): string => {
+    switch (type) {
+      case "incoming":
+        return "Incoming Call";
+      case "outgoing":
+        return "Outgoing Call";
+      case "missed":
+        return "Missed Call";
+      case "rejected":
+        return "Rejected Call";
+      case "blocked":
+        return "Blocked Call";
+      case "voicemail":
+        return "Voicemail Call";
+      default:
+        return "Unknown Call Type";
+    }
+  };
+
   return (
     <div
       className="h-full flex flex-col overflow-hidden"
@@ -277,6 +296,11 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
                       <p className="text-xs text-muted-foreground mt-1">
                         {formatDate(call.timestamp)}
                       </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-muted-foreground">
+                          {getCallTypeLabel(call.type)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

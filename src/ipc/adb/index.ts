@@ -164,7 +164,7 @@ export const getCallLogs = os
   )
   .handler(async ({ input }) => {
     try {
-      const result = await ADBHelper.executeADBCommand([
+      const adbCommand = [
         "-s",
         input.deviceId,
         "shell",
@@ -174,10 +174,18 @@ export const getCallLogs = os
         "content://call_log/calls",
         "--projection",
         "_id:number:name:duration:date:type"
-      ], { useCache: true });
+      ];
+      
+      console.log('=== DEBUG: Left side ADB Command:', adbCommand.join(' '));
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: true });
+      
+      console.log('=== DEBUG: Left side ADB Result:', result);
+      console.log('=== DEBUG: Left side ADB Result length:', result?.length);
       
       return { success: true, data: result };
     } catch (error) {
+      console.error('=== DEBUG: Left side ADB Error:', error);
       throw new Error(`Failed to get call logs: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   });
@@ -191,7 +199,7 @@ export const getCallLogDetails = os
   )
   .handler(async ({ input }) => {
     try {
-      const result = await ADBHelper.executeADBCommand([
+      const adbCommand = [
         "-s",
         input.deviceId,
         "shell",
@@ -201,10 +209,18 @@ export const getCallLogDetails = os
         "content://call_log/calls",
         "--where",
         `_id=${input.callId}`
-      ], { useCache: true });
+      ];
+      
+      console.log('=== DEBUG: ADB Command:', adbCommand.join(' '));
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: true });
+      
+      console.log('=== DEBUG: ADB Result:', result);
+      console.log('=== DEBUG: ADB Result length:', result?.length);
       
       return { success: true, data: result };
     } catch (error) {
+      console.error('=== DEBUG: ADB Error:', error);
       throw new Error(`Failed to get call log details: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   });

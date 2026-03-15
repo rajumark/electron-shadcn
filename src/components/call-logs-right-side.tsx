@@ -4,7 +4,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, Settings, MessageSquare, UserPlus, MessageCircle, Send } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, MessageSquare, UserPlus, MessageCircle, Send } from "lucide-react";
 import { CallLog, formatDuration, formatDateTime, parseCallLogData } from "@/utils/call-log-parser";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
@@ -28,6 +28,57 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [lastFetchedCallId, setLastFetchedCallId] = useState<string | null>(null);
+  const [rawDataSearch, setRawDataSearch] = useState('');
+
+  // Simple parsing function for debugging
+  const parseRawADBResponse = (input: string): Record<string, string> => {
+    const dataMap: Record<string, string> = {};
+    
+    // Remove "Row: X" prefix if it exists
+    const cleanInput = input.replace(/^Row:\s*\d+\s*/, '').trim();
+    
+    const fields = cleanInput.split(', ').map(field => field.trim());
+    
+    // Parse each field
+    for (const field of fields) {
+      const keyValue = field.split('=', 2);
+      if (keyValue.length === 2) {
+        const key = keyValue[0].trim();
+        const value = keyValue[1].trim();
+        dataMap[key] = value;
+      }
+    }
+    
+    return dataMap;
+  };
+
+  // Function to copy raw data to clipboard
+  const copyRawData = async () => {
+    if (detailedCallData?.raw._raw_response) {
+      try {
+        await navigator.clipboard.writeText(detailedCallData.raw._raw_response);
+        // You could add a toast notification here if you want
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    }
+  };
+  const highlightText = (text: string, search: string) => {
+    if (!search.trim()) return text;
+    
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="bg-yellow-200 text-black font-semibold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
 
 
   const getCallIcon = (type: CallLog['type'], size: number = 20) => {
@@ -98,19 +149,86 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
 
         // Fetch detailed call data
         try {
+          // Use actual database _id instead of UUID
+          const actualDatabaseId = currentCall.raw._id;
+          
+          console.log('=== DEBUG: Fetching details for call ID (UUID):', selectedCall);
+          console.log('=== DEBUG: Fetching details for call ID (Database):', actualDatabaseId);
+          console.log('=== DEBUG: Device ID:', selectedDevice?.id);
+          
+          if (!actualDatabaseId) {
+            console.error('=== DEBUG: No database _id found in call data');
+            return;
+          }
+          
+          const adbCommand = `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb -s ${selectedDevice.id} shell content query --uri content://call_log/calls --where "_id=${actualDatabaseId}"`;
+          
+          console.log('=== DEBUG: Full ADB Command:', adbCommand);
+          
           const detailsResponse = await ipc.client.adb.getCallLogDetails({
             deviceId: selectedDevice.id,
-            callId: selectedCall
+            callId: actualDatabaseId  // Use actual database _id
           });
           
+          console.log('=== DEBUG: Raw API response:', detailsResponse);
+          console.log('=== DEBUG: Success:', detailsResponse.success);
+          console.log('=== DEBUG: Data:', detailsResponse.data);
+          
           if (detailsResponse.success && detailsResponse.data) {
-            const parsedDetails = parseCallLogData(detailsResponse.data);
-            if (parsedDetails.length > 0) {
-              setDetailedCallData(parsedDetails[0]);
-            }
+            console.log('=== DEBUG: Raw data string:', detailsResponse.data);
+            console.log('=== DEBUG: Data length:', detailsResponse.data.length);
+            
+            // Store raw response for debugging
+            setDetailedCallData({
+              id: actualDatabaseId,  // Store actual database ID
+              phoneNumber: currentCall.phoneNumber,
+              contactName: currentCall.contactName,
+              timestamp: currentCall.timestamp,
+              duration: currentCall.duration,
+              type: currentCall.type,
+              raw: {
+                _raw_response: detailsResponse.data,
+                _adb_command: adbCommand,
+                // Try to parse as fallback
+                ...parseRawADBResponse(detailsResponse.data)
+              }
+            } as any);
+          } else {
+            console.log('=== DEBUG: Details response failed:', detailsResponse);
+            
+            // Still store the command for debugging even if failed
+            setDetailedCallData({
+              id: actualDatabaseId,
+              phoneNumber: currentCall.phoneNumber,
+              contactName: currentCall.contactName,
+              timestamp: currentCall.timestamp,
+              duration: currentCall.duration,
+              type: currentCall.type,
+              raw: {
+                _raw_response: detailsResponse.data || 'No response',
+                _adb_command: adbCommand,
+                _error: 'API call failed'
+              }
+            } as any);
           }
         } catch (detailsError) {
-          console.error('Failed to fetch call details:', detailsError);
+          console.error('=== DEBUG: Failed to fetch call details:', detailsError);
+          
+          // Store error info for debugging
+          const actualDatabaseId = currentCall.raw._id;
+          setDetailedCallData({
+            id: actualDatabaseId,
+            phoneNumber: currentCall.phoneNumber,
+            contactName: currentCall.contactName,
+            timestamp: currentCall.timestamp,
+            duration: currentCall.duration,
+            type: currentCall.type,
+            raw: {
+              _raw_response: 'Error occurred',
+              _adb_command: `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb -s ${selectedDevice?.id} shell content query --uri content://call_log/calls --where "_id=${actualDatabaseId}"`,
+              _error: detailsError instanceof Error ? detailsError.message : 'Unknown error'
+            }
+          } as any);
         }
         
         // Fetch call history for same number
@@ -306,50 +424,170 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                 <TabsTrigger value="basics">Basics</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="history">History</TabsTrigger>
-                <TabsTrigger value="technical">Technical</TabsTrigger>
                 <TabsTrigger value="raw">Raw Data</TabsTrigger>
               </TabsList>
               
               <div className="flex-1 overflow-auto">
                 <TabsContent value="basics" className="mt-0 p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Date & Time</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDateTime(selectedCallData.timestamp)}
-                        </p>
+                  <div className="space-y-6">
+                    {/* Basic Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+                      
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Date & Time</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDateTime(selectedCallData.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Duration</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDuration(selectedCallData.duration)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Call Type</p>
+                          <p className="text-sm text-muted-foreground">
+                            {getCallTypeLabel(selectedCallData.type)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">Phone Number</p>
+                          <p className="text-sm text-muted-foreground font-mono">
+                            {selectedCallData.phoneNumber}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Duration</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDuration(selectedCallData.duration)}
-                        </p>
+
+                    {/* Technical Details */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Call ID</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw._id || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Subscription ID</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.subscription_id || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Phone Account</p>
+                          <p className="text-sm font-mono text-xs break-all">{detailedCallData?.raw.phone_account_address || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Presentation</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.presentation || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Features</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.features || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Data Usage</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.data_usage || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Last Modified</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.last_modified || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Transcription State</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.transcription_state || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Formatted Number</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.formatted_number || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Subject</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.subject || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Country ISO</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.countryiso || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Geocoded Location</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.geocoded_location || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Missed Reason</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.missed_reason || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Photo URI</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.photo_uri || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Voicemail URI</p>
+                          <p className="text-sm font-mono">{detailedCallData?.raw.voicemail_uri || 'N/A'}</p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Call Type</p>
-                        <p className="text-sm text-muted-foreground">
-                          {getCallTypeLabel(selectedCallData.type)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">Phone Number</p>
-                        <p className="text-sm text-muted-foreground font-mono">
-                          {selectedCallData.phoneNumber}
-                        </p>
+                      
+                      <div className="pt-4 border-t border-border">
+                        <p className="text-sm font-medium mb-2">Additional Fields</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          {detailedCallData?.raw.via_number && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Via Number:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.via_number}</span>
+                            </div>
+                          )}
+                          {detailedCallData?.raw.normalized_number && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Normalized:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.normalized_number}</span>
+                            </div>
+                          )}
+                          {detailedCallData?.raw.numberlabel && detailedCallData.raw.numberlabel !== 'NULL' && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Number Label:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.numberlabel}</span>
+                            </div>
+                          )}
+                          {detailedCallData?.raw.numbertype && detailedCallData.raw.numbertype !== 'NULL' && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Number Type:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.numbertype}</span>
+                            </div>
+                          )}
+                          {detailedCallData?.raw.post_dial_digits && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Post Dial:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.post_dial_digits}</span>
+                            </div>
+                          )}
+                          {detailedCallData?.raw.call_screening_app_name && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Call Screening App:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.call_screening_app_name}</span>
+                            </div>
+                          )}
+                          {detailedCallData?.raw.block_reason && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Block Reason:</span>
+                              <span className="ml-2 font-mono">{detailedCallData.raw.block_reason}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -399,106 +637,6 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="technical" className="mt-0 p-4">
-                  <div className="space-y-4">
-                    {isLoadingDetails ? (
-                      <div className="text-center py-4">
-                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                        <p className="text-xs text-muted-foreground mt-2">Loading technical details...</p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-3">
-                          <Settings className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm font-medium">Technical Details</p>
-                            <p className="text-sm text-muted-foreground">
-                              Advanced call information and system data
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Call ID</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw._id || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Subscription ID</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw.subscription_id || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Phone Account</p>
-                            <p className="text-sm font-mono text-xs break-all">{(detailedCallData || selectedCallData)?.raw.phone_account_address || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Presentation</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw.presentation || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Features</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw.features || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Data Usage</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw.data_usage || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Last Modified</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw.last_modified || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Transcription State</p>
-                            <p className="text-sm font-mono">{(detailedCallData || selectedCallData)?.raw.transcription_state || 'N/A'}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="pt-4 border-t border-border">
-                          <p className="text-sm font-medium mb-2">Additional Fields</p>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            {(detailedCallData || selectedCallData)?.raw.via_number && (
-                              <div>
-                                <span className="font-medium text-muted-foreground">Via Number:</span>
-                                <span className="ml-2 font-mono">{(detailedCallData || selectedCallData)?.raw.via_number}</span>
-                              </div>
-                            )}
-                            {(detailedCallData || selectedCallData)?.raw.normalized_number && (
-                              <div>
-                                <span className="font-medium text-muted-foreground">Normalized:</span>
-                                <span className="ml-2 font-mono">{(detailedCallData || selectedCallData)?.raw.normalized_number}</span>
-                              </div>
-                            )}
-                            {(detailedCallData || selectedCallData)?.raw.formatted_number && (detailedCallData || selectedCallData)?.raw.formatted_number !== 'NULL' && (
-                              <div>
-                                <span className="font-medium text-muted-foreground">Formatted:</span>
-                                <span className="ml-2 font-mono">{(detailedCallData || selectedCallData)?.raw.formatted_number}</span>
-                              </div>
-                            )}
-                            {(detailedCallData || selectedCallData)?.raw.numberlabel && (detailedCallData || selectedCallData)?.raw.numberlabel !== 'NULL' && (
-                              <div>
-                                <span className="font-medium text-muted-foreground">Number Label:</span>
-                                <span className="ml-2 font-mono">{(detailedCallData || selectedCallData)?.raw.numberlabel}</span>
-                              </div>
-                            )}
-                            {(detailedCallData || selectedCallData)?.raw.numbertype && (detailedCallData || selectedCallData)?.raw.numbertype !== 'NULL' && (
-                              <div>
-                                <span className="font-medium text-muted-foreground">Number Type:</span>
-                                <span className="ml-2 font-mono">{(detailedCallData || selectedCallData)?.raw.numbertype}</span>
-                              </div>
-                            )}
-                            {(detailedCallData || selectedCallData)?.raw.post_dial_digits && (
-                              <div>
-                                <span className="font-medium text-muted-foreground">Post Dial:</span>
-                                <span className="ml-2 font-mono">{(detailedCallData || selectedCallData)?.raw.post_dial_digits}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </TabsContent>
-                
                 <TabsContent value="raw" className="mt-0 p-4">
                   <div className="space-y-4">
                     {isLoadingDetails ? (
@@ -506,43 +644,55 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                         <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                         <p className="text-xs text-muted-foreground mt-2">Loading raw data...</p>
                       </div>
-                    ) : (
+                    ) : detailedCallData ? (
                       <>
-                        <div className="flex items-center gap-3">
-                          <Database className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-sm font-medium">Raw ADB Data</p>
-                            <p className="text-sm text-muted-foreground">
-                              Complete data from Android call log database
-                            </p>
-                          </div>
+                        {/* Search Input with Copy Button */}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Search in raw data..."
+                            value={rawDataSearch}
+                            onChange={(e) => setRawDataSearch(e.target.value)}
+                            className="w-2/5 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                          {rawDataSearch && (
+                            <button
+                              onClick={() => setRawDataSearch('')}
+                              className="px-2 py-1 text-xs bg-muted hover:bg-muted/80 rounded transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                          <button
+                            onClick={copyRawData}
+                            className="px-3 py-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded transition-colors flex items-center gap-1"
+                          >
+                            Copy
+                          </button>
                         </div>
                         
-                        <div className="bg-muted rounded-lg p-3">
-                          <div className="max-h-96 overflow-auto">
-                            <div className="space-y-2">
-                              {Object.entries((detailedCallData || selectedCallData)?.raw || {})
-                                .sort(([a], [b]) => a.localeCompare(b))
-                                .map(([key, value]) => (
-                                  <div key={key} className="flex items-start gap-2">
-                                    <span className="text-xs font-mono text-muted-foreground min-w-24">
-                                      {key}:
-                                    </span>
-                                    <span className="text-xs font-mono break-all flex-1">
-                                      {value === 'NULL' ? (
-                                        <span className="text-muted-foreground italic">NULL</span>
-                                      ) : value === '' ? (
-                                        <span className="text-muted-foreground italic">empty</span>
-                                      ) : (
-                                        value
-                                      )}
-                                    </span>
-                                  </div>
-                                ))}
+                        {/* Show Raw ADB Response with highlighting */}
+                        <div className="text-xs font-mono whitespace-pre-wrap break-all">
+                          {highlightText(detailedCallData.raw._raw_response || 'No raw response', rawDataSearch)}
+                        </div>
+                        
+                        {/* Show Error if any */}
+                        {detailedCallData.raw._error && (
+                          <div className="bg-red-50 border border-red-200 rounded p-3">
+                            <h4 className="text-sm font-medium mb-2 text-red-700">Error:</h4>
+                            <div className="text-xs text-red-600 font-mono break-all">
+                              {detailedCallData.raw._error}
                             </div>
                           </div>
-                        </div>
+                        )}
                       </>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Database className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          Loading detailed data failed. Please try selecting the call again.
+                        </p>
+                      </div>
                     )}
                   </div>
                 </TabsContent>

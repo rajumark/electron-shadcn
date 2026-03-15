@@ -62,6 +62,11 @@ export const VALID_CALL_LOG_COLUMNS = [
   "call_id_details",
   "is_read",
   "firewalltype",
+  "formatted_number",
+  "photo_id",
+  "is_business_call",
+  "cached_convert_number",
+  "asserted_display_name",
 ];
 
 export interface CallLog {
@@ -115,53 +120,42 @@ function parseSingleCallLog(input: string): CallLog | null {
 
   const dataMap: Record<string, string> = {};
   
-  // Remove "Row: ..." prefix if it exists
-  const cleanInput = input.replace(/^Row:\s*/, '').trim();
+  // Simple, robust parsing approach
+  // Remove "Row: X" prefix if it exists
+  const cleanInput = input.replace(/^Row:\s*\d+\s*/, '').trim();
   
-  const fields = cleanInput.split(', ').map(field => field.trim());
-
-  // Parse each field
-  for (let i = 0; i < fields.length; i++) {
-    const field = fields[i];
-    const keyValue = field.split('=', 2); // Split only into two parts: key and value
-
-    if (keyValue.length === 2) {
-      let key = keyValue[0].trim();
-      let value = keyValue[1].trim();
-
-      // Handle multi-line values (like addresses with commas)
-      // Look ahead to see if next fields don't contain "=" which means they're part of this value
-      let nextIndex = i + 1;
-      while (nextIndex < fields.length && !fields[nextIndex].includes('=')) {
-        value += ', ' + fields[nextIndex];
-        nextIndex++;
-        i++; // Skip the fields we've consumed as part of the value
-      }
-
-      // Only include valid columns
-      if (VALID_CALL_LOG_COLUMNS.includes(key)) {
-        // Process special fields
-        if (key === 'type') {
-          value = getCallTypeDescription(parseInt(value) || 99);
-        } else if (key === 'date') {
-          value = convertTimestampToDate(value);
-        }
-        
-        dataMap[key] = value;
-      }
+  // Split by comma and parse each key=value pair
+  const pairs = cleanInput.split(',').map(pair => pair.trim());
+  
+  for (const pair of pairs) {
+    const equalIndex = pair.indexOf('=');
+    if (equalIndex > 0) {
+      const key = pair.substring(0, equalIndex).trim();
+      const value = pair.substring(equalIndex + 1).trim();
+      dataMap[key] = value;
     }
   }
 
-  // Convert to our CallLog interface
-  if (!dataMap._id && !dataMap.number) {
-    return null; // Skip invalid entries
+  // Parse timestamp
+  const timestamp = new Date(parseInt(dataMap.date || '0'));
+  
+  // Parse duration
+  const duration = parseInt(dataMap.duration || '0');
+  
+  // Parse call type
+  const typeValue = parseInt(dataMap.type || '0');
+  let callType: CallLog['type'] = 'unknown';
+  switch (typeValue) {
+    case 1: callType = 'incoming'; break;
+    case 2: callType = 'outgoing'; break;
+    case 3: callType = 'missed'; break;
+    case 4: callType = 'rejected'; break;
+    case 5: callType = 'blocked'; break;
+    case 6: callType = 'voicemail'; break;
+    default: callType = 'unknown'; break;
   }
-
-  const callType = mapCallTypeString(dataMap.type || 'Unknown');
-  const duration = parseInt(dataMap.duration || '0') || 0;
-  const timestamp = parseTimestamp(dataMap.date);
-
-  // Try to get contact name from multiple possible fields
+  
+  // Handle contact name
   let contactName: string | undefined = dataMap.name;
   if (!contactName || contactName === 'NULL') {
     // Try other possible name fields
