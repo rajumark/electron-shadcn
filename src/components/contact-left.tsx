@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Search, X, RefreshCw, User, Phone } from "lucide-react";
+import { Search, X, RefreshCw, User } from "lucide-react";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 
@@ -233,106 +233,106 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
 
   return (
     <div
-      className="flex flex-col bg-background border-r border-border"
+      className="h-full flex flex-col overflow-hidden"
       style={{ width: `${leftWidth}%` }}
     >
-      {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Contacts</h2>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing || loading || !selectedDevice}
-            className="p-2 hover:bg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Refresh contacts"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
+      <div className="flex flex-col h-full min-h-0">
+        {/* Header with Title and Refresh */}
+        <div className="flex items-center justify-between mx-2 pt-2 pb-2">
+          <h2 className="text-sm font-medium">
+            Contacts
+          </h2>
+          <div className="flex items-center gap-1">
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing || !selectedDevice}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh contacts"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        {/* Search Input */}
+        <div className="mb-2 mx-2 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </div>
           <input
             type="text"
-            placeholder="Search contacts..."
+            placeholder={`Search in ${contacts.length} contacts`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-10 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
         </div>
-      </div>
 
-      {/* Contacts List */}
-      <div className="flex-1 overflow-auto">
-        {loading && !hasLoadedOnce ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mb-3"></div>
-              <p className="text-sm text-muted-foreground">Loading contacts...</p>
+        {/* Contacts List Container */}
+        <div className="flex-1 flex flex-col overflow-hidden mx-2">
+          {loading ? (
+            <div className="text-center py-4">
+              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <p className="text-xs text-muted-foreground mt-2">Loading contacts...</p>
             </div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <User className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground mb-2">{error}</p>
-              <button
-                onClick={handleRefresh}
-                className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-auto">
-            {filteredContacts.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <User className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    {searchQuery ? "No contacts found" : "No contacts available"}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div ref={contactListRef} className="divide-y divide-border">
-                {filteredContacts.map((contact) => (
-                  <div
-                    key={contact.contact_id}
-                    onClick={() => handleContactClick(contact.contact_id)}
-                    className={`p-2 cursor-pointer transition-colors hover:bg-muted ${
-                      selectedContact === contact.contact_id ? "bg-muted border-l-2 border-primary" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="p-1 bg-muted rounded-full">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">
+          ) : filteredContacts.length > 0 ? (
+            <div ref={contactListRef} className="flex-1 overflow-auto">
+              {filteredContacts.map((contact) => (
+                <div
+                  key={contact.contact_id}
+                  onClick={() => handleContactClick(contact.contact_id)}
+                  className={`p-3 border-b border-border hover:bg-muted cursor-pointer transition-colors ${
+                    selectedContact === contact.contact_id ? "bg-muted" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium truncate">
                           {contact.display_name}
                         </p>
+                        <span className="text-xs text-muted-foreground">
+                          ID: {contact.contact_id}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
                         <p className="text-xs text-muted-foreground truncate">
                           {contact.data1}
                         </p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center mx-2">
+              <p className="text-xs text-muted-foreground text-center py-4">
+                {searchQuery.trim() ? "No contacts found matching your search" : "No contacts found"}
+              </p>
+              {searchQuery.trim() && contacts.length > 0 && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-xs px-3 py-1 border border-border rounded hover:bg-muted transition-colors"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Drag Handle */}
