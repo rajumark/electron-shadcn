@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle, Download, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 
 interface ADBSetupDialogProps {
@@ -17,6 +17,7 @@ export function ADBSetupDialog({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -53,6 +54,17 @@ export function ADBSetupDialog({
       setIsDownloading(false);
     }
   };
+
+  // Auto-trigger download when dialog opens for the first time
+  useEffect(() => {
+    if (isOpen && !hasAutoTriggered && !isDownloading && !isComplete) {
+      setHasAutoTriggered(true);
+      // Small delay to ensure dialog is fully rendered
+      setTimeout(() => {
+        handleDownload();
+      }, 100);
+    }
+  }, [isOpen, hasAutoTriggered, isDownloading, isComplete]);
 
   if (!isOpen) {
     return null;
