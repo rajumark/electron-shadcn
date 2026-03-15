@@ -282,137 +282,99 @@ function BatteriesPage() {
                   </Button>
                 </div>
 
-                {/* At-a-Glance Stats - Compact */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Card className="p-3">
-                    <div className="flex flex-col items-center">
-                      <BatteryIcon className="h-6 w-6 mb-1 text-primary" />
-                      <div className="text-xl font-bold">{level}%</div>
-                      <Badge variant={batteryStatus.variant} className="text-xs mt-1">
-                        {batteryStatus.text}
-                      </Badge>
+                {/* Main Battery Status - Ultra Compact */}
+                <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950 dark:to-green-950 rounded-lg p-3 border">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <BatteryIcon className="h-5 w-5 text-primary" />
+                      <span className="text-lg font-bold">{level}%</span>
                     </div>
-                  </Card>
-
-                  <Card className="p-3">
-                    <div className="flex flex-col items-center">
-                      <Battery className="h-6 w-6 mb-1 text-green-600" />
-                      <div className="text-xl font-bold">{healthText}</div>
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        {health}
-                      </Badge>
-                    </div>
-                  </Card>
-
-                  <Card className="p-3">
-                    <div className="flex flex-col items-center">
-                      <PowerIcon className="h-6 w-6 mb-1 text-blue-600" />
-                      <div className="text-sm font-bold">{getPowerSource()}</div>
-                      <Badge variant="outline" className="text-xs mt-1">
-                        Power
-                      </Badge>
-                    </div>
-                  </Card>
-
-                  <Card className="p-3">
-                    <div className="flex flex-col items-center">
-                      <Thermometer className={`h-6 w-6 mb-1 ${
-                        temperature > 400 ? 'text-red-600' : temperature > 300 ? 'text-orange-600' : 'text-blue-600'
-                      }`} />
-                      <div className="text-sm font-bold">{formatTemperature(temperature)}</div>
-                      <Badge variant="outline" className="text-xs mt-1">
-                        Temp
-                      </Badge>
-                    </div>
-                  </Card>
+                    <Badge variant={batteryStatus.variant} className="text-xs">
+                      {batteryStatus.text}
+                    </Badge>
+                  </div>
+                  <Progress value={level} className="h-2 mb-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Health: {healthText}</span>
+                    <span>{getPowerSource()}</span>
+                  </div>
                 </div>
 
-                {/* Live Telemetry - Compact */}
-                <Card className="p-3">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Zap className="h-4 w-4" />
-                      Charging Telemetry
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-xs text-muted-foreground">Voltage</div>
-                        <div className="text-sm font-semibold">{formatVoltage(voltage)}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">Power</div>
-                        <div className="text-sm font-semibold">{formatPower(chargeWatt)}</div>
-                      </div>
+                {/* Quick Metrics Grid - Minimal */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-muted/30 rounded p-2">
+                    <Thermometer className={`h-4 w-4 mx-auto mb-1 ${
+                      temperature > 400 ? 'text-red-600' : temperature > 300 ? 'text-orange-600' : 'text-blue-600'
+                    }`} />
+                    <div className="text-xs font-medium">{formatTemperature(temperature)}</div>
+                    <div className="text-xs text-muted-foreground">Temp</div>
+                  </div>
+                  <div className="bg-muted/30 rounded p-2">
+                    <Zap className="h-4 w-4 mx-auto mb-1 text-yellow-600" />
+                    <div className="text-xs font-medium">{formatVoltage(voltage)}</div>
+                    <div className="text-xs text-muted-foreground">Voltage</div>
+                  </div>
+                  <div className="bg-muted/30 rounded p-2">
+                    <PowerIcon className="h-4 w-4 mx-auto mb-1 text-blue-600" />
+                    <div className="text-xs font-medium">{formatPower(chargeWatt)}</div>
+                    <div className="text-xs text-muted-foreground">Power</div>
+                  </div>
+                </div>
+
+                {/* Capacity Info - Compact */}
+                {fullDesignCapacity > 0 && (
+                  <div className="bg-muted/20 rounded p-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-medium">Capacity Health</span>
+                      <span className="text-xs font-bold">{capacityPercentage.toFixed(1)}%</span>
                     </div>
-                    
-                    {fullDesignCapacity > 0 && (
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span>Capacity</span>
-                          <span>{capacityPercentage.toFixed(1)}%</span>
+                    <Progress value={capacityPercentage} className="h-1.5 mb-1" />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{formatCapacity(fullCapacity)}</span>
+                      <span>{formatCapacity(fullDesignCapacity)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Battery Specs - Minimal List */}
+                <div className="bg-muted/10 rounded p-2 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Technology</span>
+                    <span className="font-medium">{technology}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Cycles</span>
+                    <span className="font-medium">{cycleCount}</span>
+                  </div>
+                  {manufacturingDate > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Mfg. Date</span>
+                      <span className="font-medium">{formatDate(manufacturingDate)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hardware Details - Compact Table */}
+                <div className="bg-muted/5 rounded p-2 overflow-auto">
+                  <div className="text-xs font-medium mb-2 text-muted-foreground">Hardware Details</div>
+                  <div className="space-y-1">
+                    {Object.entries(batteryData)
+                      .filter(([key]) => !key.includes('Time when') && !key.includes('The last'))
+                      .sort(([a], [b]) => a.localeCompare(b))
+                      .slice(0, 8) // Show only first 8 items to save space
+                      .map(([key, value]) => (
+                        <div key={key} className="flex justify-between text-xs">
+                          <span className="text-muted-foreground truncate max-w-[60%]">{key}</span>
+                          <span className="font-medium truncate max-w-[40%] text-right">{String(value)}</span>
                         </div>
-                        <Progress value={capacityPercentage} className="h-1" />
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>{formatCapacity(fullCapacity)}</span>
-                          <span>{formatCapacity(fullDesignCapacity)}</span>
-                        </div>
+                      ))}
+                    {Object.keys(batteryData).length > 8 && (
+                      <div className="text-xs text-muted-foreground text-center pt-1">
+                        ... and {Object.keys(batteryData).length - 8} more
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-
-                {/* Quick Stats - Compact */}
-                <Card className="p-3">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Quick Stats</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">Technology</span>
-                      <span className="text-sm font-medium">{technology}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">Cycles</span>
-                      <span className="text-sm font-medium">{cycleCount}</span>
-                    </div>
-                    {manufacturingDate > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-xs text-muted-foreground">Mfg. Date</span>
-                        <span className="text-sm font-medium">{formatDate(manufacturingDate)}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Hardware Details - Compact */}
-                <Card className="p-3 flex-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Hardware Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="overflow-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs">Property</TableHead>
-                          <TableHead className="text-xs">Value</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Object.entries(batteryData)
-                          .filter(([key]) => !key.includes('Time when') && !key.includes('The last'))
-                          .sort(([a], [b]) => a.localeCompare(b))
-                          .map(([key, value]) => (
-                            <TableRow key={key}>
-                              <TableCell className="font-medium text-xs">{key}</TableCell>
-                              <TableCell className="text-xs">{String(value)}</TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </>
             )}
           </div>
