@@ -131,11 +131,6 @@ export const CallLogsLeftSide: React.FC<CallLogsLeftSideProps> = ({
   // Update filtered call logs when memoized result changes
   useEffect(() => {
     setFilteredCallLogs(memoizedFilteredCallLogs);
-    
-    // Scroll to top when search results change
-    if (callListRef.current) {
-      callListRef.current.scrollTop = 0;
-    }
   }, [memoizedFilteredCallLogs]);
 
   const handleRefreshCallLogs = async () => {
