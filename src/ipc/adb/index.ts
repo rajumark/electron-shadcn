@@ -234,7 +234,7 @@ export const getCallHistoryByNumber = os
   )
   .handler(async ({ input }) => {
     try {
-      const result = await ADBHelper.executeADBCommand([
+      const adbCommand = [
         "-s",
         input.deviceId,
         "shell",
@@ -243,14 +243,22 @@ export const getCallHistoryByNumber = os
         "--uri",
         "content://call_log/calls",
         "--where",
-        `number='${input.phoneNumber}'`,
+        `number=\\'${input.phoneNumber}\\'`,
         "--projection",
         "_id:number:name:duration:date:type"
-      ], { useCache: true });
+      ];
+      
+      console.log('=== DEBUG: History IPC Command:', adbCommand.join(' '));
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: true });
+      
+      console.log('=== DEBUG: History IPC Result:', result);
+      console.log('=== DEBUG: History IPC Result length:', result?.length);
       
       return { success: true, data: result };
     } catch (error) {
-      throw new Error(`Failed to get call history by number: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error('=== DEBUG: History IPC Error:', error);
+      throw new Error(`Failed to get call history: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   });
 

@@ -4,7 +4,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, MessageSquare, UserPlus, MessageCircle, Send } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Calendar, Clock, User, Info, Code, Database, Settings, MessageSquare, UserPlus, MessageCircle, Send } from "lucide-react";
 import { CallLog, formatDuration, formatDateTime, parseCallLogData } from "@/utils/call-log-parser";
 import { ipc } from "@/ipc/manager";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
@@ -29,7 +29,12 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [lastFetchedCallId, setLastFetchedCallId] = useState<string | null>(null);
   const [rawDataSearch, setRawDataSearch] = useState('');
-  const [showCopyToast, setShowCopyToast] = useState(false);
+  // Add state for storing debug info
+  const [historyDebugInfo, setHistoryDebugInfo] = useState<{
+    command: string;
+    response: string;
+    parsed: any;
+  } | null>(null);
 
   // Simple parsing function for debugging
   const parseRawADBResponse = (input: string): Record<string, string> => {
@@ -235,17 +240,49 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
         
         // Fetch call history for same number
         try {
+          const phoneNumber = currentCall.phoneNumber;
+          const adbCommand = `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb -s ${selectedDevice.id} shell content query --uri content://call_log/calls --where "number=\\'${phoneNumber}\\'"`;
+          
+          console.log('=== DEBUG: History ADB Command:', adbCommand);
+          
           const historyResponse = await ipc.client.adb.getCallHistoryByNumber({
             deviceId: selectedDevice.id,
-            phoneNumber: currentCall.phoneNumber
+            phoneNumber: phoneNumber
+          });
+          
+          console.log('=== DEBUG: History API response:', historyResponse);
+          console.log('=== DEBUG: History success:', historyResponse.success);
+          console.log('=== DEBUG: History data:', historyResponse.data);
+          
+          // Store debug info for UI
+          setHistoryDebugInfo({
+            command: adbCommand,
+            response: historyResponse.data || 'No response',
+            parsed: null
           });
           
           if (historyResponse.success && historyResponse.data) {
+            console.log('=== DEBUG: History raw data:', historyResponse.data);
             const parsedHistory = parseCallLogData(historyResponse.data);
-            setCallHistory(parsedHistory);
+            console.log('=== DEBUG: Parsed history:', parsedHistory);
+            console.log('=== DEBUG: Parsed history length:', parsedHistory.length);
+            
+            // Update debug info with parsed data
+            setHistoryDebugInfo({
+              command: adbCommand,
+              response: historyResponse.data,
+              parsed: parsedHistory
+            });
+            
+            if (parsedHistory.length > 0) {
+              console.log('=== DEBUG: First history call:', parsedHistory[0]);
+              setCallHistory(parsedHistory);
+            }
+          } else {
+            console.log('=== DEBUG: History response failed:', historyResponse);
           }
         } catch (historyError) {
-          console.error('Failed to fetch call history:', historyError);
+          console.error('=== DEBUG: Failed to fetch call history:', historyError);
         }
         
         setLastFetchedCallId(selectedCall);
@@ -432,163 +469,155 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
               <div className="flex-1 overflow-auto">
                 <TabsContent value="basics" className="mt-0 p-4">
                   <div className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
-                      
-                      <div className="flex items-center gap-3">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                    {/* Basic Information Card */}
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
                         <div>
-                          <p className="text-sm font-medium">Date & Time</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDateTime(selectedCallData.timestamp)}
-                          </p>
+                          <h3 className="text-sm font-semibold">Call Information</h3>
+                          <p className="text-xs text-muted-foreground">Basic call details</p>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">Duration</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDuration(selectedCallData.duration)}
-                          </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Contact</p>
+                            <p className="text-sm font-medium">
+                              {selectedCallData.contactName || 'Unknown'}
+                            </p>
+                            {selectedCallData.contactName && (
+                              <p className="text-xs text-muted-foreground font-mono">
+                                {selectedCallData.phoneNumber}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Date & Time</p>
+                            <p className="text-sm font-medium">
+                              {formatDateTime(selectedCallData.timestamp)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">Call Type</p>
-                          <p className="text-sm text-muted-foreground">
-                            {getCallTypeLabel(selectedCallData.type)}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <Info className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">Phone Number</p>
-                          <p className="text-sm text-muted-foreground font-mono">
-                            {selectedCallData.phoneNumber}
-                          </p>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Duration</p>
+                            <p className="text-sm font-medium">
+                              {formatDuration(selectedCallData.duration)}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Call Type</p>
+                            <div className="flex items-center gap-2">
+                              {getCallIcon(selectedCallData.type, 16)}
+                              <p className="text-sm font-medium">
+                                {getCallTypeLabel(selectedCallData.type)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Technical Details */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Call ID</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw._id || 'N/A'}</p>
+                    {/* Technical Details Card */}
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-orange-500/10 rounded-lg">
+                          <Settings className="h-4 w-4 text-orange-500" />
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Subscription ID</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.subscription_id || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Phone Account</p>
-                          <p className="text-sm font-mono text-xs break-all">{detailedCallData?.raw.phone_account_address || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Presentation</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.presentation || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Features</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.features || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Data Usage</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.data_usage || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Last Modified</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.last_modified || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Transcription State</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.transcription_state || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Formatted Number</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.formatted_number || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Subject</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.subject || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Country ISO</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.countryiso || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Geocoded Location</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.geocoded_location || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Missed Reason</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.missed_reason || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Photo URI</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.photo_uri || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Voicemail URI</p>
-                          <p className="text-sm font-mono">{detailedCallData?.raw.voicemail_uri || 'N/A'}</p>
+                          <h3 className="text-sm font-semibold">Technical Details</h3>
+                          <p className="text-xs text-muted-foreground">System & network information</p>
                         </div>
                       </div>
                       
-                      <div className="pt-4 border-t border-border">
-                        <p className="text-sm font-medium mb-2">Additional Fields</p>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          {detailedCallData?.raw.via_number && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Via Number:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.via_number}</span>
-                            </div>
-                          )}
-                          {detailedCallData?.raw.normalized_number && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Normalized:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.normalized_number}</span>
-                            </div>
-                          )}
-                          {detailedCallData?.raw.numberlabel && detailedCallData.raw.numberlabel !== 'NULL' && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Number Label:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.numberlabel}</span>
-                            </div>
-                          )}
-                          {detailedCallData?.raw.numbertype && detailedCallData.raw.numbertype !== 'NULL' && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Number Type:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.numbertype}</span>
-                            </div>
-                          )}
-                          {detailedCallData?.raw.post_dial_digits && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Post Dial:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.post_dial_digits}</span>
-                            </div>
-                          )}
-                          {detailedCallData?.raw.call_screening_app_name && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Call Screening App:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.call_screening_app_name}</span>
-                            </div>
-                          )}
-                          {detailedCallData?.raw.block_reason && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Block Reason:</span>
-                              <span className="ml-2 font-mono">{detailedCallData.raw.block_reason}</span>
-                            </div>
-                          )}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Call ID</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw._id || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Subscription ID</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.subscription_id || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Phone Account</p>
+                            <p className="text-sm font-mono text-xs break-all">{detailedCallData?.raw.phone_account_address || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Presentation</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.presentation || 'N/A'}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Features</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.features || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Data Usage</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.data_usage || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Last Modified</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.last_modified || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Transcription State</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.transcription_state || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Information Card */}
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-blue-500/10 rounded-lg">
+                          <Info className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold">Additional Information</h3>
+                          <p className="text-xs text-muted-foreground">Extra call details</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Formatted Number</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.formatted_number || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Subject</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.subject || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Country ISO</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.countryiso || 'N/A'}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Geocoded Location</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.geocoded_location || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Missed Reason</p>
+                            <p className="text-sm font-mono">{detailedCallData?.raw.missed_reason || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Photo URI</p>
+                            <p className="text-sm font-mono text-xs break-all">{detailedCallData?.raw.photo_uri || 'N/A'}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -648,12 +677,7 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                       </div>
                     ) : detailedCallData ? (
                       <>
-                        {/* Toast Notification */}
-                        {showCopyToast && (
-                          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-pulse">
-                            ✓ Copied to clipboard!
-                          </div>
-                        )}
+                        
                         
                         {/* Search Input with Copy Button */}
                         <div className="flex items-center gap-2">
@@ -710,6 +734,44 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                   <div className="space-y-3">
                     <p className="text-sm font-medium mb-4">Recent calls with this number</p>
                     
+                    {/* Debug Information */}
+                    {historyDebugInfo && (
+                      <div className="bg-muted border border-border rounded-lg p-3 space-y-2">
+                        <h4 className="text-sm font-medium text-muted-foreground">Debug Information:</h4>
+                        
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">ADB Command:</p>
+                          <div className="bg-black text-green-400 p-2 rounded font-mono text-xs break-all">
+                            {historyDebugInfo.command}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Raw Response:</p>
+                          <div className="bg-black text-green-400 p-2 rounded font-mono text-xs break-all max-h-32 overflow-auto">
+                            {historyDebugInfo.response}
+                          </div>
+                        </div>
+                        
+                        {historyDebugInfo.parsed && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Parsed Data ({historyDebugInfo.parsed.length} calls):</p>
+                            <div className="text-xs font-mono bg-background p-2 rounded max-h-32 overflow-auto">
+                              {historyDebugInfo.parsed.slice(0, 3).map((call: any, index: number) => (
+                                <div key={index} className="mb-2 pb-2 border-b border-border last:border-b-0">
+                                  <p>Type: {call.type} | Duration: {call.duration}s | Date: {call.timestamp.toString()}</p>
+                                  <p>Phone: {call.phoneNumber} | Name: {call.contactName || 'N/A'}</p>
+                                </div>
+                              ))}
+                              {historyDebugInfo.parsed.length > 3 && (
+                                <p className="text-muted-foreground">... and {historyDebugInfo.parsed.length - 3} more</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {isLoadingHistory ? (
                       <div className="text-center py-4">
                         <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -717,7 +779,7 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                       </div>
                     ) : (
                       <>
-                        {/* Try to use the fetched call history first, fallback to local callLogs */}
+                        {/* Use fetched call history if available, otherwise filter local callLogs */}
                         {(callHistory.length > 0 ? callHistory : callLogs
                           .filter(call => call.phoneNumber === selectedCallData?.phoneNumber))
                           .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
