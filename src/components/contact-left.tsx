@@ -154,17 +154,32 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
           console.log('=== DEBUG: Parsed contacts:', parsedContacts);
           console.log('=== DEBUG: Parsed contacts count:', parsedContacts.length);
           
+          // Sort contacts by contact_id in descending order (highest number first)
+          const sortedContacts = parsedContacts.sort((a, b) => {
+            const aId = parseInt(a.contact_id) || 0;
+            const bId = parseInt(b.contact_id) || 0;
+            return bId - aId; // Descending order
+          });
+          
+          // Deduplicate by contact_id (keep first occurrence)
+          const uniqueContacts = sortedContacts.filter((contact, index, array) => 
+            array.findIndex(c => c.contact_id === contact.contact_id) === index
+          );
+          
+          console.log('=== DEBUG: Sorted contacts (first 5):', sortedContacts.slice(0, 5));
+          console.log('=== DEBUG: Unique contacts count:', uniqueContacts.length);
+          
           // Check if data has changed
-          const isSameLength = contacts.length === parsedContacts.length;
+          const isSameLength = contacts.length === uniqueContacts.length;
           const isSame = isSameLength && contacts.every((contact, index) => 
-            contact.contact_id === parsedContacts[index]?.contact_id
+            contact.contact_id === uniqueContacts[index]?.contact_id
           );
 
           if (!isSame) {
-            setContacts(parsedContacts);
-            setFilteredContacts(parsedContacts);
+            setContacts(uniqueContacts);
+            setFilteredContacts(uniqueContacts);
             setHasLoadedOnce(true);
-            onContactsUpdate(parsedContacts);
+            onContactsUpdate(uniqueContacts);
           }
         } else {
           throw new Error('No response from ADB command');
@@ -295,16 +310,16 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
                   <div
                     key={contact.contact_id}
                     onClick={() => handleContactClick(contact.contact_id)}
-                    className={`p-4 cursor-pointer transition-colors hover:bg-muted ${
+                    className={`p-2 cursor-pointer transition-colors hover:bg-muted ${
                       selectedContact === contact.contact_id ? "bg-muted border-l-2 border-primary" : ""
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-full">
-                        <User className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 bg-muted rounded-full">
+                        <User className="h-3 w-3 text-muted-foreground" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
+                        <p className="text-xs font-medium truncate">
                           {contact.display_name}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
