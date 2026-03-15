@@ -384,6 +384,33 @@ export const executeCommand = os
     }
   });
 
+export const getBatteryInfo = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const adbCommand = [
+        "-s",
+        input.deviceId,
+        "shell",
+        "dumpsys",
+        "battery",
+      ];
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: false });
+      return { success: true, data: result };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        data: null
+      };
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -403,4 +430,5 @@ export const adb = {
   getContactByPhone,
   getContactDetails,
   executeCommand,
+  getBatteryInfo,
 };
