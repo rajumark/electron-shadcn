@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,47 @@ function BatteriesPage() {
   const [batteryData, setBatteryData] = useState<BatteryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [leftWidth, setLeftWidth] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!(isDragging && containerRef.current)) {
+      return;
+    }
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newLeftWidth =
+      ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+    if (newLeftWidth >= 20 && newLeftWidth <= 80) {
+      setLeftWidth(newLeftWidth);
+    }
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const parseBatteryData = (rawOutput: string): BatteryData => {
     const data: BatteryData = {};
@@ -225,163 +266,174 @@ function BatteriesPage() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-bold text-2xl">Battery Information</h1>
-          <p className="text-muted-foreground">Device: {selectedDevice.name}</p>
+      <div className="flex-1 overflow-hidden">
+        <div className="relative flex flex-1 min-w-0 h-full" ref={containerRef}>
+          {/* Battery Left - Current UI */}
+          <div 
+            className="flex flex-col gap-4 overflow-auto h-full"
+            style={{ width: `${leftWidth}%` }}
+          >
+            {batteryData && (
+              <>
+                {/* Refresh Button */}
+                <div className="flex justify-start">
+                  <Button onClick={fetchBatteryInfo} disabled={isLoading} size="sm">
+                    <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+
+                {/* At-a-Glance Stats - Compact */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Card className="p-3">
+                    <div className="flex flex-col items-center">
+                      <BatteryIcon className="h-6 w-6 mb-1 text-primary" />
+                      <div className="text-xl font-bold">{level}%</div>
+                      <Badge variant={batteryStatus.variant} className="text-xs mt-1">
+                        {batteryStatus.text}
+                      </Badge>
+                    </div>
+                  </Card>
+
+                  <Card className="p-3">
+                    <div className="flex flex-col items-center">
+                      <Battery className="h-6 w-6 mb-1 text-green-600" />
+                      <div className="text-xl font-bold">{healthText}</div>
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        {health}
+                      </Badge>
+                    </div>
+                  </Card>
+
+                  <Card className="p-3">
+                    <div className="flex flex-col items-center">
+                      <PowerIcon className="h-6 w-6 mb-1 text-blue-600" />
+                      <div className="text-sm font-bold">{getPowerSource()}</div>
+                      <Badge variant="outline" className="text-xs mt-1">
+                        Power
+                      </Badge>
+                    </div>
+                  </Card>
+
+                  <Card className="p-3">
+                    <div className="flex flex-col items-center">
+                      <Thermometer className={`h-6 w-6 mb-1 ${
+                        temperature > 400 ? 'text-red-600' : temperature > 300 ? 'text-orange-600' : 'text-blue-600'
+                      }`} />
+                      <div className="text-sm font-bold">{formatTemperature(temperature)}</div>
+                      <Badge variant="outline" className="text-xs mt-1">
+                        Temp
+                      </Badge>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Live Telemetry - Compact */}
+                <Card className="p-3">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      Charging Telemetry
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Voltage</div>
+                        <div className="text-sm font-semibold">{formatVoltage(voltage)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Power</div>
+                        <div className="text-sm font-semibold">{formatPower(chargeWatt)}</div>
+                      </div>
+                    </div>
+                    
+                    {fullDesignCapacity > 0 && (
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span>Capacity</span>
+                          <span>{capacityPercentage.toFixed(1)}%</span>
+                        </div>
+                        <Progress value={capacityPercentage} className="h-1" />
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>{formatCapacity(fullCapacity)}</span>
+                          <span>{formatCapacity(fullDesignCapacity)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats - Compact */}
+                <Card className="p-3">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Quick Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-muted-foreground">Technology</span>
+                      <span className="text-sm font-medium">{technology}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-muted-foreground">Cycles</span>
+                      <span className="text-sm font-medium">{cycleCount}</span>
+                    </div>
+                    {manufacturingDate > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">Mfg. Date</span>
+                        <span className="text-sm font-medium">{formatDate(manufacturingDate)}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Hardware Details - Compact */}
+                <Card className="p-3 flex-1">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Hardware Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Property</TableHead>
+                          <TableHead className="text-xs">Value</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(batteryData)
+                          .filter(([key]) => !key.includes('Time when') && !key.includes('The last'))
+                          .sort(([a], [b]) => a.localeCompare(b))
+                          .map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableCell className="font-medium text-xs">{key}</TableCell>
+                              <TableCell className="text-xs">{String(value)}</TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+
+          {/* Resizable Divider */}
+          <div
+            className="relative cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors"
+            style={{ width: '0.5px' }}
+            onMouseDown={handleMouseDown}
+          />
+
+          {/* Battery Right - Coming Soon */}
+          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-muted rounded-lg">
+            <div className="text-center space-y-2">
+              <Battery className="h-16 w-16 mx-auto text-muted-foreground" />
+              <h2 className="text-xl font-semibold text-muted-foreground">Coming Soon</h2>
+              <p className="text-sm text-muted-foreground">Advanced battery analytics and insights</p>
+            </div>
+          </div>
         </div>
-        <Button onClick={fetchBatteryInfo} disabled={isLoading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
       </div>
-
-      {batteryData && (
-        <>
-          {/* At-a-Glance Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <BatteryIcon className="h-8 w-8 mb-2 text-primary" />
-                <div className="text-2xl font-bold">{level}%</div>
-                <Badge variant={batteryStatus.variant} className="mt-1">
-                  {batteryStatus.text}
-                </Badge>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Battery className="h-8 w-8 mb-2 text-green-600" />
-                <div className="text-2xl font-bold">{healthText}</div>
-                <Badge variant="secondary" className="mt-1">
-                  Health: {health}
-                </Badge>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <PowerIcon className="h-8 w-8 mb-2 text-blue-600" />
-                <div className="text-2xl font-bold">{getPowerSource()}</div>
-                <Badge variant="outline" className="mt-1">
-                  Power Source
-                </Badge>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Thermometer className={`h-8 w-8 mb-2 ${
-                  temperature > 400 ? 'text-red-600' : temperature > 300 ? 'text-orange-600' : 'text-blue-600'
-                }`} />
-                <div className="text-2xl font-bold">{formatTemperature(temperature)}</div>
-                <Badge variant="outline" className="mt-1">
-                  Temperature
-                </Badge>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Live Telemetry */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Charging Telemetry
-                </CardTitle>
-                <CardDescription>
-                  Real-time power metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Voltage</div>
-                    <div className="text-lg font-semibold">{formatVoltage(voltage)}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Power</div>
-                    <div className="text-lg font-semibold">{formatPower(chargeWatt)}</div>
-                  </div>
-                </div>
-                
-                {fullDesignCapacity > 0 && (
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Capacity vs Design</span>
-                      <span>{capacityPercentage.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={capacityPercentage} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>{formatCapacity(fullCapacity)}</span>
-                      <span>{formatCapacity(fullDesignCapacity)}</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
-                <CardDescription>
-                  Battery specifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Technology</span>
-                  <span className="font-medium">{technology}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Cycle Count</span>
-                  <span className="font-medium">{cycleCount}</span>
-                </div>
-                {manufacturingDate > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Mfg. Date</span>
-                    <span className="font-medium">{formatDate(manufacturingDate)}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Hardware Identity Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Hardware Details</CardTitle>
-              <CardDescription>
-                Complete battery information from device
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.entries(batteryData)
-                    .filter(([key]) => !key.includes('Time when') && !key.includes('The last'))
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([key, value]) => (
-                      <TableRow key={key}>
-                        <TableCell className="font-medium">{key}</TableCell>
-                        <TableCell>{String(value)}</TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </>
-      )}
     </div>
   );
 }
