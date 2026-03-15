@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ContactLeftSide } from "@/components/contact-left";
-import { ContactRightSimple } from "@/components/contact-right-simple";
+import { ContactRight } from "@/components/contact-right";
 
 interface Contact {
   contact_id: string;
@@ -77,7 +77,11 @@ function ContactsPage() {
         />
 
         {/* Right Section - Contact Details */}
-        <ContactRightSimple selectedContact={selectedContact} contacts={contacts} />
+        <ContactRight 
+          phoneNumber={contacts.find(c => c.contact_id === selectedContact)?.data1 || ""}
+          contactName={contacts.find(c => c.contact_id === selectedContact)?.display_name || ""}
+          contactId={selectedContact}
+        />
       </div>
     </div>
   );

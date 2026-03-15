@@ -45,9 +45,10 @@ interface ContactData {
 interface ContactRightProps {
   phoneNumber: string;
   contactName?: string;
+  contactId?: string; // New optional prop for direct contact_id lookup
 }
 
-export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contactName }) => {
+export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contactName, contactId }) => {
   const { selectedDevice } = useSelectedDevice();
   const [contactData, setContactData] = useState<ContactData[]>([]);
   const [rawResponse, setRawResponse] = useState<string>('');
@@ -190,47 +191,50 @@ export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contact
 
   useEffect(() => {
     const fetchContactData = async () => {
-      if (!phoneNumber || !selectedDevice) {
+      if (!selectedDevice) {
         setContactData([]);
         return;
       }
+
+      // If we have contactId, use it directly. Otherwise, try to find by phone number.
+      let targetContactId: string | null = contactId || null;
 
       setIsLoading(true);
       setError(null);
 
       try {
-        // First, try to find contact by phone number
-        const phoneQuery = `content://com.android.contacts/data/phones/filter/${phoneNumber}`;
-        const phoneCommand = `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb -s ${selectedDevice.id} shell content query --uri ${phoneQuery}`;
-        
-        console.log('=== DEBUG: Phone query command:', phoneCommand);
-        
-        const phoneResponse = await ipc.client.adb.getContactByPhone({
-          deviceId: selectedDevice.id,
-          phoneNumber: phoneNumber
-        });
+        // If we don't have contactId, try to find contact by phone number (original logic)
+        if (!targetContactId && phoneNumber) {
+          const phoneQuery = `content://com.android.contacts/data/phones/filter/${phoneNumber}`;
+          const phoneCommand = `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb -s ${selectedDevice.id} shell content query --uri ${phoneQuery}`;
+          
+          console.log('=== DEBUG: Phone query command:', phoneCommand);
+          
+          const phoneResponse = await ipc.client.adb.getContactByPhone({
+            deviceId: selectedDevice.id,
+            phoneNumber: phoneNumber
+          });
 
-        let contactId: string | null = null;
-        
-        if (phoneResponse.success && phoneResponse.data) {
-          console.log('=== DEBUG: Phone query response:', phoneResponse.data);
-          const phoneData = parseContactData(phoneResponse.data);
-          if (phoneData.length > 0) {
-            contactId = phoneData[0].contact_id;
-            console.log('=== DEBUG: Found contact ID:', contactId);
+          if (phoneResponse.success && phoneResponse.data) {
+            console.log('=== DEBUG: Phone query response:', phoneResponse.data);
+            const phoneData = parseContactData(phoneResponse.data);
+            if (phoneData.length > 0) {
+              targetContactId = phoneData[0].contact_id;
+              console.log('=== DEBUG: Found contact ID:', targetContactId);
+            }
           }
         }
 
-        if (contactId) {
+        if (targetContactId) {
           // Fetch full contact data using contact_id
-          const contactQuery = `content://com.android.contacts/data --where "contact_id=${contactId}"`;
+          const contactQuery = `content://com.android.contacts/data --where "contact_id=${targetContactId}"`;
           const contactCommand = `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb -s ${selectedDevice.id} shell content query --uri ${contactQuery}`;
           
           console.log('=== DEBUG: Contact query command:', contactCommand);
           
           const contactResponse = await ipc.client.adb.getContactDetails({
             deviceId: selectedDevice.id,
-            contactId: contactId
+            contactId: targetContactId
           });
 
           if (contactResponse.success && contactResponse.data) {
@@ -244,7 +248,11 @@ export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contact
             setRawResponse(contactResponse.data || 'No data available');
           }
         } else {
-          setError('Contact not found for this phone number');
+          if (phoneNumber) {
+            setError('Contact not found for this phone number');
+          } else {
+            setError('No contact information available');
+          }
         }
       } catch (err) {
         console.error('=== DEBUG: Error fetching contact data:', err);
@@ -255,7 +263,7 @@ export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contact
     };
 
     fetchContactData();
-  }, [phoneNumber, selectedDevice]);
+  }, [phoneNumber, contactId, selectedDevice]);
 
   const organizedData = organizeContactData(contactData);
 
