@@ -11,7 +11,7 @@ import { Terminal, Play, X, Copy, Save, Search, ChevronUp, ChevronDown, History 
 interface ADBTerminalProps {
   className?: string;
 }
-
+ 
 export function ADBTerminal({ className }: ADBTerminalProps) {
   const [command, setCommand] = useState("");
   const [output, setOutput] = useState("");
