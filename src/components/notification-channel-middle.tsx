@@ -51,9 +51,6 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
   // Filter channels for selected package
   const packageChannels = channels.filter(channel => channel.packageName === selectedPackage);
 
-  // Debug Info - Show first few package names for comparison
-  const samplePackageNames = channels.slice(0, 5).map(c => c.packageName);
-
   // Filter channels based on search
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -93,17 +90,6 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
             <h3 className="text-sm font-medium">
               {selectedPackage} ({packageChannels.length})
             </h3>
-          </div>
-          
-          {/* Debug Info */}
-          <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted/50 rounded">
-            <div>Selected Package: {selectedPackage || "None"}</div>
-            <div>Total Channels Available: {channels.length}</div>
-            <div>Channels for Package: {packageChannels.length}</div>
-            <div className="mt-1">Sample Package Names:</div>
-            {samplePackageNames.map((pkg, idx) => (
-              <div key={idx} className="ml-2 font-mono">{pkg}</div>
-            ))}
           </div>
           
           {/* Search Input */}
