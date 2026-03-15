@@ -2,6 +2,12 @@ import { useState, useEffect } from "react";
 import { User, Phone, Mail, Calendar, Star, MessageCircle, Video, Cake, MapPin, Briefcase, Camera, Settings, Info, Hash, Globe, Shield, Clock, Users, CreditCard, Tag, Database, FileText, Image as ImageIcon } from "lucide-react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 interface ContactData {
   _id: string;
@@ -10,7 +16,7 @@ interface ContactData {
   phone_number?: string;
   photo_uri?: string;
   photo_thumb_uri?: string;
-  starred: boolean;
+  starred: string; // Changed from boolean to string since it comes as '1' or '0'
   account_type: string;
   account_name: string;
   lookup: string;
@@ -44,6 +50,7 @@ interface ContactRightProps {
 export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contactName }) => {
   const { selectedDevice } = useSelectedDevice();
   const [contactData, setContactData] = useState<ContactData[]>([]);
+  const [rawResponse, setRawResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,9 +163,11 @@ export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contact
             console.log('=== DEBUG: Contact data response:', contactResponse.data);
             const parsedData = parseContactData(contactResponse.data);
             setContactData(parsedData);
+            setRawResponse(contactResponse.data);
           } else {
             console.log('=== DEBUG: Contact query failed:', contactResponse);
             setError('Failed to fetch contact details');
+            setRawResponse(contactResponse.data || 'No data available');
           }
         } else {
           setError('Contact not found for this phone number');
@@ -241,221 +250,250 @@ export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contact
   }
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Contact Header */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="flex items-center gap-4 mb-4">
-          {organizedData.photo?.photo_thumb_uri ? (
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <ImageIcon className="h-8 w-8 text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-8 w-8 text-primary" />
-            </div>
-          )}
-          
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">
-                {organizedData.basicInfo?.display_name || contactName || 'Unknown Contact'}
-              </h2>
-              {organizedData.basicInfo?.starred === '1' && (
-                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+    <div className="h-full flex flex-col">
+      <Tabs defaultValue="details" className="h-full flex flex-col">
+        <TabsList variant="line" className="mx-4 mt-0">
+          <TabsTrigger value="details">Contact Details</TabsTrigger>
+          <TabsTrigger value="raw">Raw Data</TabsTrigger>
+        </TabsList>
+        
+        <div className="flex-1 overflow-auto">
+          <TabsContent value="details" className="mt-0 p-4">
+            <div className="space-y-6">
+              {/* Contact Header */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center gap-4 mb-4">
+                  {organizedData.photo?.photo_thumb_uri ? (
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-8 w-8 text-primary" />
+                    </div>
+                  )}
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold">
+                        {organizedData.basicInfo?.display_name || contactName || 'Unknown Contact'}
+                      </h2>
+                      {organizedData.basicInfo?.starred === '1' && (
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {organizedData.basicInfo?.account_name || 'Local Contact'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2">
+                  {organizedData.phoneNumbers.map((phone, index) => (
+                    <button
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors text-sm"
+                    >
+                      <Phone className="h-4 w-4" />
+                      Call
+                    </button>
+                  ))}
+                  <button className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors text-sm">
+                    <MessageCircle className="h-4 w-4" />
+                    Message
+                  </button>
+                </div>
+              </div>
+
+              {/* Phone Numbers */}
+              {organizedData.phoneNumbers.length > 0 && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Phone Numbers</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {organizedData.phoneNumbers.map((phone, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{phone.data1 || phone.data4}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {phone.is_primary === '1' ? 'Primary' : ''}
+                            {phone.is_super_primary === '1' ? 'Super Primary' : ''}
+                            {phone.data2 === '1' ? 'Home' : phone.data2 === '2' ? 'Mobile' : phone.data2 === '3' ? 'Work' : 'Other'}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <button className="p-1 hover:bg-muted rounded">
+                            <Phone className="h-3 w-3" />
+                          </button>
+                          <button className="p-1 hover:bg-muted rounded">
+                            <MessageCircle className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {organizedData.basicInfo?.account_name || 'Local Contact'}
-            </p>
-          </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-2">
-          {organizedData.phoneNumbers.map((phone, index) => (
-            <button
-              key={index}
-              className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors text-sm"
-            >
-              <Phone className="h-4 w-4" />
-              Call
-            </button>
-          ))}
-          <button className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors text-sm">
-            <MessageCircle className="h-4 w-4" />
-            Message
-          </button>
-        </div>
-      </div>
+              {/* Basic Information */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Info className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Basic Information</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Display Name</p>
+                    <p className="text-sm">{organizedData.basicInfo?.display_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Contact ID</p>
+                    <p className="text-sm font-mono">{organizedData.basicInfo?.contact_id || 'N/A'}</p>
+                  </div>
+                  {organizedData.nickname && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Nickname</p>
+                      <p className="text-sm">{organizedData.nickname.data1 || 'N/A'}</p>
+                    </div>
+                  )}
+                  {organizedData.basicInfo?.starred === '1' && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Starred</p>
+                      <p className="text-sm">Yes</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-      {/* Phone Numbers */}
-      {organizedData.phoneNumbers.length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Phone className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">Phone Numbers</h3>
-          </div>
-          <div className="space-y-2">
-            {organizedData.phoneNumbers.map((phone, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">{phone.data1 || phone.data4}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {phone.is_primary === '1' ? 'Primary' : ''}
-                    {phone.is_super_primary === '1' ? 'Super Primary' : ''}
-                    {phone.data2 === '1' ? 'Home' : phone.data2 === '2' ? 'Mobile' : phone.data2 === '3' ? 'Work' : 'Other'}
+              {/* Events (Birthday, Anniversary) */}
+              {organizedData.events.length > 0 && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Events</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {organizedData.events.map((event, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <Cake className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{formatEventType(event.data2)}</p>
+                          <p className="text-xs text-muted-foreground">{event.data1}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* WhatsApp Integration */}
+              {organizedData.whatsappData.length > 0 && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MessageCircle className="h-4 w-4 text-green-500" />
+                    <h3 className="text-sm font-semibold">WhatsApp</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {organizedData.whatsappData.map((item, index) => {
+                      if (item.mimetype === 'vnd.android.cursor.item/vnd.com.whatsapp.profile') {
+                        return (
+                          <div key={index} className="flex items-center gap-2">
+                            <p className="text-sm">{item.data3}</p>
+                          </div>
+                        );
+                      }
+                      if (item.mimetype.includes('call')) {
+                        return (
+                          <div key={index} className="flex items-center gap-2">
+                            {item.mimetype.includes('video') ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                            <p className="text-sm">{item.data3}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Groups */}
+              {organizedData.groups.length > 0 && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Groups</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {organizedData.groups.map((group, index) => (
+                      <span key={index} className="px-2 py-1 bg-muted text-xs rounded">
+                        Group {group.data1}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Note */}
+              {organizedData.note && (
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Note</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {organizedData.note.data1 || 'No note available'}
                   </p>
                 </div>
-                <div className="flex gap-1">
-                  <button className="p-1 hover:bg-muted rounded">
-                    <Phone className="h-3 w-3" />
-                  </button>
-                  <button className="p-1 hover:bg-muted rounded">
-                    <MessageCircle className="h-3 w-3" />
-                  </button>
+              )}
+
+              {/* Technical Details */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Database className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Technical Details</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <p className="font-medium text-muted-foreground">Raw Contact ID</p>
+                    <p className="font-mono">{organizedData.basicInfo?.raw_contact_id || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-muted-foreground">Account Type</p>
+                    <p className="font-mono">{organizedData.basicInfo?.account_type || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-muted-foreground">Lookup URI</p>
+                    <p className="font-mono break-all">{organizedData.basicInfo?.lookup || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-muted-foreground">Photo URI</p>
+                    <p className="font-mono break-all">{organizedData.basicInfo?.photo_uri || 'N/A'}</p>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Basic Information */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Info className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">Basic Information</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-1">Display Name</p>
-            <p className="text-sm">{organizedData.basicInfo?.display_name || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-1">Contact ID</p>
-            <p className="text-sm font-mono">{organizedData.basicInfo?.contact_id || 'N/A'}</p>
-          </div>
-          {organizedData.nickname && (
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Nickname</p>
-              <p className="text-sm">{organizedData.nickname.data1 || 'N/A'}</p>
             </div>
-          )}
-          {organizedData.basicInfo?.starred === '1' && (
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Starred</p>
-              <p className="text-sm">Yes</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Events (Birthday, Anniversary) */}
-      {organizedData.events.length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">Events</h3>
-          </div>
-          <div className="space-y-2">
-            {organizedData.events.map((event, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <Cake className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">{formatEventType(event.data2)}</p>
-                  <p className="text-xs text-muted-foreground">{event.data1}</p>
+          </TabsContent>
+          
+          <TabsContent value="raw" className="mt-0 p-4">
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Database className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Raw Contact Data</h3>
+                </div>
+                <div className="bg-muted rounded p-3">
+                  <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                    {rawResponse || 'No raw data available'}
+                  </pre>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          </TabsContent>
         </div>
-      )}
-
-      {/* WhatsApp Integration */}
-      {organizedData.whatsappData.length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="h-4 w-4 text-green-500" />
-            <h3 className="text-sm font-semibold">WhatsApp</h3>
-          </div>
-          <div className="space-y-2">
-            {organizedData.whatsappData.map((item, index) => {
-              if (item.mimetype === 'vnd.android.cursor.item/vnd.com.whatsapp.profile') {
-                return (
-                  <div key={index} className="flex items-center gap-2">
-                    <p className="text-sm">{item.data3}</p>
-                  </div>
-                );
-              }
-              if (item.mimetype.includes('call')) {
-                return (
-                  <div key={index} className="flex items-center gap-2">
-                    {item.mimetype.includes('video') ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-                    <p className="text-sm">{item.data3}</p>
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Groups */}
-      {organizedData.groups.length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">Groups</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {organizedData.groups.map((group, index) => (
-              <span key={index} className="px-2 py-1 bg-muted text-xs rounded">
-                Group {group.data1}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Note */}
-      {organizedData.note && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">Note</h3>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {organizedData.note.data1 || 'No note available'}
-          </p>
-        </div>
-      )}
-
-      {/* Technical Details */}
-      <div className="bg-card border border-border rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Database className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">Technical Details</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div>
-            <p className="font-medium text-muted-foreground">Raw Contact ID</p>
-            <p className="font-mono">{organizedData.basicInfo?.raw_contact_id || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="font-medium text-muted-foreground">Account Type</p>
-            <p className="font-mono">{organizedData.basicInfo?.account_type || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="font-medium text-muted-foreground">Lookup URI</p>
-            <p className="font-mono break-all">{organizedData.basicInfo?.lookup || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="font-medium text-muted-foreground">Photo URI</p>
-            <p className="font-mono break-all">{organizedData.basicInfo?.photo_uri || 'N/A'}</p>
-          </div>
-        </div>
-      </div>
+      </Tabs>
     </div>
   );
 };
