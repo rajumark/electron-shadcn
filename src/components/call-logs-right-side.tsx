@@ -29,6 +29,7 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [lastFetchedCallId, setLastFetchedCallId] = useState<string | null>(null);
   const [rawDataSearch, setRawDataSearch] = useState('');
+  const [showCopyToast, setShowCopyToast] = useState(false);
 
   // Simple parsing function for debugging
   const parseRawADBResponse = (input: string): Record<string, string> => {
@@ -57,7 +58,8 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
     if (detailedCallData?.raw._raw_response) {
       try {
         await navigator.clipboard.writeText(detailedCallData.raw._raw_response);
-        // You could add a toast notification here if you want
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000); // Hide after 2 seconds
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
@@ -646,6 +648,13 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                       </div>
                     ) : detailedCallData ? (
                       <>
+                        {/* Toast Notification */}
+                        {showCopyToast && (
+                          <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-pulse">
+                            ✓ Copied to clipboard!
+                          </div>
+                        )}
+                        
                         {/* Search Input with Copy Button */}
                         <div className="flex items-center gap-2">
                           <input
