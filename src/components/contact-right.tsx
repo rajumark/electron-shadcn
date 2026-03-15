@@ -937,34 +937,31 @@ export const ContactRight: React.FC<ContactRightProps> = ({ phoneNumber, contact
             </div>
           </TabsContent>
           
-          <TabsContent value="raw" className="mt-0 p-4">
-            <div className="space-y-4">
-              <div className="bg-card border border-border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Database className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold">Raw Contact Data</h3>
-                  </div>
-                  <button
-                    onClick={copyRawData}
-                    className="px-3 py-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded transition-colors flex items-center gap-1"
-                  >
-                    Copy
-                  </button>
+          <TabsContent value="raw" className="flex-1 overflow-hidden mt-0">
+            <div className="h-full flex flex-col p-4 overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold">Raw ADB Response</h3>
+                <button
+                  onClick={copyRawData}
+                  disabled={!rawResponse}
+                  className="px-3 py-2 text-xs bg-primary text-primary-foreground hover:bg-primary/90 rounded transition-colors flex items-center gap-1"
+                >
+                  Copy
+                </button>
+              </div>
+              
+              {/* Toast Notification */}
+              {showCopyToast && (
+                <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-pulse">
+                  Copied to clipboard!
                 </div>
-                
-                {/* Toast Notification */}
-                {showCopyToast && (
-                  <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 animate-pulse">
-                    Copied to clipboard!
-                  </div>
-                )}
-                
-                <div className="bg-muted rounded p-3">
-                  <pre className="text-xs font-mono whitespace-pre-wrap break-all">
-                    {rawResponse || 'No raw data available'}
-                  </pre>
-                </div>
+              )}
+              
+              {/* Raw Data Container with proper overflow handling */}
+              <div className="flex-1 overflow-auto bg-muted rounded p-3 min-h-0">
+                <pre className="text-xs font-mono whitespace-pre-wrap break-all">
+                  {rawResponse || 'No raw data available'}
+                </pre>
               </div>
             </div>
           </TabsContent>
