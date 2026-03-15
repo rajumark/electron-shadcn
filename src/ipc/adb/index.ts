@@ -411,6 +411,56 @@ export const getBatteryInfo = os
     }
   });
 
+export const executeCustomADBCommand = os
+  .input(
+    z.object({
+      command: z.string(),
+      deviceId: z.string().optional(),
+      includeDeviceId: z.boolean().default(false),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      // Parse the command and handle shortcuts
+      let parsedCommand = input.command.trim();
+      
+      // Handle shortcuts
+      if (parsedCommand === 'devices') {
+        parsedCommand = 'adb devices';
+      } else if (!parsedCommand.startsWith('adb ')) {
+        parsedCommand = `adb ${parsedCommand}`;
+      }
+
+      // Split command into parts
+      const commandParts = parsedCommand.split(' ');
+      
+      // Remove 'adb' from the beginning if present
+      if (commandParts[0] === 'adb') {
+        commandParts.shift();
+      }
+
+      // Build final command with device ID if needed
+      let finalCommand: string[];
+      if (input.includeDeviceId && input.deviceId) {
+        finalCommand = ['-s', input.deviceId, ...commandParts];
+      } else {
+        finalCommand = commandParts;
+      }
+
+      console.log('=== DEBUG: Final ADB Command:', finalCommand);
+      
+      const result = await ADBHelper.executeADBCommand(finalCommand, { useCache: false });
+      return { success: true, output: result };
+    } catch (error) {
+      console.error('=== DEBUG: Custom ADB Command Error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        output: null
+      };
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -431,4 +481,5 @@ export const adb = {
   getContactDetails,
   executeCommand,
   getBatteryInfo,
+  executeCustomADBCommand,
 };
