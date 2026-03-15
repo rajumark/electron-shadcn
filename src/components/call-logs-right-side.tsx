@@ -29,12 +29,6 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [lastFetchedCallId, setLastFetchedCallId] = useState<string | null>(null);
   const [rawDataSearch, setRawDataSearch] = useState('');
-  // Add state for storing debug info
-  const [historyDebugInfo, setHistoryDebugInfo] = useState<{
-    command: string;
-    response: string;
-    parsed: any;
-  } | null>(null);
 
   // Simple parsing function for debugging
   const parseRawADBResponse = (input: string): Record<string, string> => {
@@ -63,8 +57,6 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
     if (detailedCallData?.raw._raw_response) {
       try {
         await navigator.clipboard.writeText(detailedCallData.raw._raw_response);
-        setShowCopyToast(true);
-        setTimeout(() => setShowCopyToast(false), 2000); // Hide after 2 seconds
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
@@ -254,25 +246,11 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
           console.log('=== DEBUG: History success:', historyResponse.success);
           console.log('=== DEBUG: History data:', historyResponse.data);
           
-          // Store debug info for UI
-          setHistoryDebugInfo({
-            command: adbCommand,
-            response: historyResponse.data || 'No response',
-            parsed: null
-          });
-          
           if (historyResponse.success && historyResponse.data) {
             console.log('=== DEBUG: History raw data:', historyResponse.data);
             const parsedHistory = parseCallLogData(historyResponse.data);
             console.log('=== DEBUG: Parsed history:', parsedHistory);
             console.log('=== DEBUG: Parsed history length:', parsedHistory.length);
-            
-            // Update debug info with parsed data
-            setHistoryDebugInfo({
-              command: adbCommand,
-              response: historyResponse.data,
-              parsed: parsedHistory
-            });
             
             if (parsedHistory.length > 0) {
               console.log('=== DEBUG: First history call:', parsedHistory[0]);
@@ -733,44 +711,6 @@ export const CallLogsRightSide: React.FC<CallLogsRightSideProps> = ({
                 <TabsContent value="history" className="mt-0 p-4">
                   <div className="space-y-3">
                     <p className="text-sm font-medium mb-4">Recent calls with this number</p>
-                    
-                    {/* Debug Information */}
-                    {historyDebugInfo && (
-                      <div className="bg-muted border border-border rounded-lg p-3 space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Debug Information:</h4>
-                        
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">ADB Command:</p>
-                          <div className="bg-black text-green-400 p-2 rounded font-mono text-xs break-all">
-                            {historyDebugInfo.command}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Raw Response:</p>
-                          <div className="bg-black text-green-400 p-2 rounded font-mono text-xs break-all max-h-32 overflow-auto">
-                            {historyDebugInfo.response}
-                          </div>
-                        </div>
-                        
-                        {historyDebugInfo.parsed && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Parsed Data ({historyDebugInfo.parsed.length} calls):</p>
-                            <div className="text-xs font-mono bg-background p-2 rounded max-h-32 overflow-auto">
-                              {historyDebugInfo.parsed.slice(0, 3).map((call: any, index: number) => (
-                                <div key={index} className="mb-2 pb-2 border-b border-border last:border-b-0">
-                                  <p>Type: {call.type} | Duration: {call.duration}s | Date: {call.timestamp.toString()}</p>
-                                  <p>Phone: {call.phoneNumber} | Name: {call.contactName || 'N/A'}</p>
-                                </div>
-                              ))}
-                              {historyDebugInfo.parsed.length > 3 && (
-                                <p className="text-muted-foreground">... and {historyDebugInfo.parsed.length - 3} more</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
                     
                     {isLoadingHistory ? (
                       <div className="text-center py-4">
