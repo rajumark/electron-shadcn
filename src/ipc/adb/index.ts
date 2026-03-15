@@ -361,6 +361,29 @@ export const getContactDetails = os
     }
   });
 
+export const executeCommand = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      command: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const adbCommand = [
+        "-s",
+        input.deviceId,
+        "shell",
+        input.command,
+      ];
+      
+      const result = await ADBHelper.executeADBCommand(adbCommand, { useCache: true });
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to execute command: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -379,4 +402,5 @@ export const adb = {
   executeIntentCommand,
   getContactByPhone,
   getContactDetails,
+  executeCommand,
 };
