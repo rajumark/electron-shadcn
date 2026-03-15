@@ -58,8 +58,8 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
-      // Match NotificationRecord lines - improved regex
-      const recordMatch = line.match(/NotificationRecord\([^:]+: pkg=([^ ]+) user=([^ ]+) id=([^ ]+) tag=([^ ]+) importance=(\d+) key=([^:]+): Notification\(channel=([^ ]+) shortcut=([^ ]+) contentView=([^ ]+) vibrate=([^ ]+) sound=([^ ]+) tick defaults=(\d+) flags=([^ ]+) color=(0x[0-9a-fA-F]+) vis=([^)]+)\)/);
+      // Match NotificationRecord lines - more flexible regex that handles varying formats
+      const recordMatch = line.match(/NotificationRecord\([^:]+: pkg=([^ ]+) user=([^ ]+) id=([^ ]+) tag=([^ ]+) importance=(\d+) key=([^:]+): Notification\(channel=([^ ]+)/);
       if (recordMatch) {
         const record: NotificationRecord = {
           key: recordMatch[6],
@@ -69,8 +69,8 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
           tag: recordMatch[4] === "null" ? null : recordMatch[4],
           importance: parseInt(recordMatch[5]),
           channel: recordMatch[7],
-          flags: recordMatch[12].split('|'),
-          visibility: recordMatch[14],
+          flags: [],
+          visibility: "PRIVATE",
           uid: 0,
           userId: 0,
           opPkg: "",
@@ -78,45 +78,59 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
         };
         
         // Look for uid, opPkg, postTime, and content in next few lines
-        for (let j = i + 1; j < Math.min(i + 50, lines.length); j++) {
-          const uidMatch = lines[j].match(/uid=(\d+)/);
+        for (let j = i + 1; j < Math.min(i + 100, lines.length); j++) {
+          const currentLine = lines[j];
+          
+          const uidMatch = currentLine.match(/uid=(\d+)/);
           if (uidMatch) {
             record.uid = parseInt(uidMatch[1]);
           }
           
-          const opPkgMatch = lines[j].match(/opPkg=(.+)/);
+          const opPkgMatch = currentLine.match(/opPkg=(.+)/);
           if (opPkgMatch) {
             record.opPkg = opPkgMatch[1];
           }
           
-          const postTimeMatch = lines[j].match(/postTime=(\d+)/);
+          const postTimeMatch = currentLine.match(/postTime=(\d+)/);
           if (postTimeMatch) {
             record.postTime = parseInt(postTimeMatch[1]);
           }
           
+          // Extract flags
+          const flagsMatch = currentLine.match(/flags=([^ ]+)/);
+          if (flagsMatch) {
+            record.flags = flagsMatch[1].split('|');
+          }
+          
+          // Extract visibility
+          const visMatch = currentLine.match(/vis=([^ \)]+)/);
+          if (visMatch) {
+            record.visibility = visMatch[1];
+          }
+          
           // Extract title and text from extras
-          const titleMatch = lines[j].match(/android\.title=String \[length=\d+\] (.+)/);
+          const titleMatch = currentLine.match(/android\.title=String \[length=\d+\] (.+)/);
           if (titleMatch) {
             record.title = titleMatch[1].trim();
           }
           
-          const textMatch = lines[j].match(/android\.text=String \[length=\d+\] (.+)/);
+          const textMatch = currentLine.match(/android\.text=String \[length=\d+\] (.+)/);
           if (textMatch) {
             record.text = textMatch[1].trim();
           }
           
-          const bigTextMatch = lines[j].match(/android\.bigText=String \[length=\d+\] (.+)/);
+          const bigTextMatch = currentLine.match(/android\.bigText=String \[length=\d+\] (.+)/);
           if (bigTextMatch && !record.text) {
             record.text = bigTextMatch[1].trim();
           }
           
-          const subTextMatch = lines[j].match(/android\.subText=String \[length=\d+\] (.+)/);
+          const subTextMatch = currentLine.match(/android\.subText=String \[length=\d+\] (.+)/);
           if (subTextMatch) {
             record.subText = subTextMatch[1].trim();
           }
           
           // Stop when we hit the next record
-          if (lines[j].includes("NotificationRecord(") && !lines[j].includes(record.key)) {
+          if (currentLine.includes("NotificationRecord(") && !currentLine.includes(record.key)) {
             break;
           }
         }
