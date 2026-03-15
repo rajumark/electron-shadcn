@@ -22,7 +22,7 @@ import {
   Info
 } from "lucide-react";
 import { toast } from "sonner";
-
+ 
 interface BatteryData {
   [key: string]: string | number;
 }
