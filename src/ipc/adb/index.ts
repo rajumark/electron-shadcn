@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { os } from "@orpc/server";
 import { z } from "zod";
 import { ADBHelper } from "@/utils/adb-helper";
+import { performance } from "./performance";
 
 const execAsync = promisify(exec);
 
@@ -540,4 +541,5 @@ export const adb = {
   executeCommand,
   getBatteryInfo,
   executeCustomADBCommand,
+  performance,
 };

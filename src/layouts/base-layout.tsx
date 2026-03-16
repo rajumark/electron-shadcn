@@ -33,6 +33,7 @@ export default function BaseLayout({
           </Button>
           <span className="text-sm font-medium text-foreground">Pilotfish</span>
         </div>
+        <div className="h-4 w-px bg-border" />
         <SimpleDeviceList />
       </div>
       <div className="relative flex-1 overflow-hidden flex">
