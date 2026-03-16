@@ -22,16 +22,19 @@ export default function BaseLayout({
     <div className="relative flex h-screen flex-col overflow-hidden">
       <DragWindowRegion title="Pilotfish" />
       <div className="flex items-center gap-2 px-2 py-1 border-b">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="h-8 w-8"
-        >
-          <Menu className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="h-8 w-8"
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium text-foreground">Pilotfish</span>
+        </div>
+        <SimpleDeviceList />
       </div>
-      <SimpleDeviceList />
       <div className="relative flex-1 overflow-hidden flex">
         {isSidebarVisible && <LeftSidebar />}
         <div className="flex-1 overflow-hidden">
