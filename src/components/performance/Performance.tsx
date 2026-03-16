@@ -414,7 +414,7 @@ function PerformancePage() {
 
           {/* FPS Chart */}
           <LunaPerformanceMonitor
-            title={`FPS ${topPackage.label || topPackage.name || 'Unknown'}`}
+            title={`FPS ${topPackage.label || topPackage.name || 'System'}`}
             data={fpsData}
             theme="light"
             smooth={false}

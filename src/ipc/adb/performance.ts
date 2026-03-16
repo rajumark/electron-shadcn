@@ -101,17 +101,42 @@ export const getTopPackage = os
 
       for (const line of lines) {
         if (line.includes('mResumedActivity')) {
-          const match = line.match(/ActivityRecord{[^}]+([^}]+)([^}]+)/);
+          // Look for patterns like "mResumedActivity: ActivityRecord{1234567 u0 com.example.app/.MainActivity t12345}"
+          const match = line.match(/mResumedActivity:.*?\s+([a-zA-Z0-9.]+\/[a-zA-Z0-9.]+)/);
           if (match) {
-            topActivity = match[1].trim();
-            const parts = topActivity.split('/');
-            if (parts.length > 0) {
-              topPackage = parts[0];
+            const fullActivity = match[1].trim();
+            const parts = fullActivity.split('/');
+            if (parts.length >= 2) {
+              topPackage = parts[0].trim();
+              topActivity = parts[1].trim();
+            }
+          } else {
+            // Fallback pattern matching
+            const fallbackMatch = line.match(/ActivityRecord{[^}]*\s+([a-zA-Z0-9.]+)\//);
+            if (fallbackMatch) {
+              topPackage = fallbackMatch[1].trim();
+              topActivity = 'MainActivity'; // Default activity name
             }
           }
           break;
         }
       }
+
+      // If still no package found, try alternative approach
+      if (!topPackage) {
+        for (const line of lines) {
+          if (line.includes('TaskRecord{') && line.includes('top=')) {
+            const match = line.match(/top=ActivityRecord{[^}]*\s+([a-zA-Z0-9.]+)\//);
+            if (match) {
+              topPackage = match[1].trim();
+              topActivity = 'MainActivity';
+              break;
+            }
+          }
+        }
+      }
+
+      console.log('=== DEBUG: Top package parsed:', { topPackage, topActivity, sampleLine: lines.find(l => l.includes('mResumedActivity')) });
 
       return {
         success: true,
@@ -146,21 +171,37 @@ export const getFps = os
       ]);
 
       // Parse FPS from SurfaceFlinger output
-      const match = result.match(/flips=(\d+)/);
       let fps = 0;
-
-      if (match) {
-        const flips = parseInt(match[1]);
-        // This is a simplified FPS calculation - in a real implementation,
-        // we'd track flips over time
+      
+      // Method 1: Look for flips count
+      const flipsMatch = result.match(/flips=(\d+)/);
+      if (flipsMatch) {
+        const flips = parseInt(flipsMatch[1]);
+        // Simple FPS calculation - this would ideally track flips over time
         fps = Math.min(flips % 120, 120); // Cap at 120 for reasonable display
       }
+      
+      // Method 2: Look for refresh rate info
+      const refreshMatch = result.match(/refresh-rate=([\d.]+)/);
+      if (refreshMatch) {
+        fps = Math.round(parseFloat(refreshMatch[1]));
+      }
+      
+      // Method 3: Look for VSync period
+      const vsyncMatch = result.match(/VSYNC period=([\d.]+)/);
+      if (vsyncMatch && fps === 0) {
+        const period = parseFloat(vsyncMatch[1]);
+        fps = Math.round(1000000000 / period); // Convert nanoseconds to Hz
+      }
+
+      console.log('=== DEBUG: FPS parsed:', { fps, flips: flipsMatch?.[1], refresh: refreshMatch?.[1], vsync: vsyncMatch?.[1] });
 
       return {
         success: true,
         data: fps
       };
     } catch (error) {
+      console.error('=== DEBUG: FPS error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
