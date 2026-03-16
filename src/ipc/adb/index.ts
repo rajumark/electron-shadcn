@@ -4,6 +4,7 @@ import { os } from "@orpc/server";
 import { z } from "zod";
 import { ADBHelper } from "@/utils/adb-helper";
 import { performance } from "./performance";
+import { files } from "./files";
 
 const execAsync = promisify(exec);
 
@@ -542,4 +543,5 @@ export const adb = {
   getBatteryInfo,
   executeCustomADBCommand,
   performance,
+  files,
 };
