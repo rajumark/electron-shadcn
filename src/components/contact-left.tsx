@@ -1,21 +1,21 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Search, X, RefreshCw, User } from "lucide-react";
-import { ipc } from "@/ipc/manager";
+import { RefreshCw, Search, User, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { ipc } from "@/ipc/manager";
 
 interface Contact {
   contact_id: string;
-  display_name: string;
   data1: string; // phone number
+  display_name: string;
 }
 
 interface ContactLeftSideProps {
-  leftWidth: number;
-  selectedContact: string;
-  onContactSelect: (contactId: string) => void;
   isDragging: boolean;
-  onDragStart: () => void;
+  leftWidth: number;
+  onContactSelect: (contactId: string) => void;
   onContactsUpdate: (contacts: Contact[]) => void;
+  onDragStart: () => void;
+  selectedContact: string;
 }
 
 export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
@@ -31,7 +31,7 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  
+
   const { selectedDevice } = useSelectedDevice();
   const [refreshKey, setRefreshKey] = useState(0);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -40,80 +40,89 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
 
   // Parse ADB response for contacts - Simple key-based approach
   const parseContactsData = (rawResponse: string): Contact[] => {
-    console.log('=== DEBUG: parseContactsData called with response length:', rawResponse?.length);
-    
-    if (!rawResponse || rawResponse.trim() === '') {
-      console.log('=== DEBUG: Empty response received');
+    console.log(
+      "=== DEBUG: parseContactsData called with response length:",
+      rawResponse?.length
+    );
+
+    if (!rawResponse || rawResponse.trim() === "") {
+      console.log("=== DEBUG: Empty response received");
       return [];
     }
-    
+
     const parsedContacts: Contact[] = [];
-    
+
     // Split by newlines first, then process each line that contains "Row:"
-    const lines = rawResponse.split('\n');
-    
+    const lines = rawResponse.split("\n");
+
     for (const line of lines) {
-      if (!line.includes('Row:') || !line.includes('contact_id=')) {
+      if (!(line.includes("Row:") && line.includes("contact_id="))) {
         continue; // Skip lines that don't contain contact data
       }
-      
-      console.log(`=== DEBUG: Processing line:`, line.substring(0, 150));
-      
+
+      console.log("=== DEBUG: Processing line:", line.substring(0, 150));
+
       try {
         // Extract all key=value pairs using regex
         const keyValuePairs = line.match(/(\w+)=([^,]+)/g);
         if (!keyValuePairs) {
-          console.log('=== DEBUG: No key=value pairs found');
+          console.log("=== DEBUG: No key=value pairs found");
           continue;
         }
-        
+
         const contact: Partial<Contact> = {};
-        
+
         for (const pair of keyValuePairs) {
-          const [key, ...valueParts] = pair.split('=');
-          const value = valueParts.join('=').trim();
-          
+          const [key, ...valueParts] = pair.split("=");
+          const value = valueParts.join("=").trim();
+
           console.log(`=== DEBUG: Found pair: ${key} = ${value}`);
-          
+
           switch (key.trim()) {
-            case 'contact_id':
+            case "contact_id":
               contact.contact_id = value;
               break;
-            case 'display_name':
-              contact.display_name = value === 'NULL' || value === '' ? undefined : value;
+            case "display_name":
+              contact.display_name =
+                value === "NULL" || value === "" ? undefined : value;
               break;
-            case 'data1':
-              contact.data1 = value === 'NULL' || value === '' ? undefined : value;
+            case "data1":
+              contact.data1 =
+                value === "NULL" || value === "" ? undefined : value;
               break;
           }
         }
-        
-        console.log(`=== DEBUG: Parsed contact:`, contact);
-        
+
+        console.log("=== DEBUG: Parsed contact:", contact);
+
         // Add contact if it has the minimum required fields
         if (contact.contact_id && (contact.display_name || contact.data1)) {
           const finalContact = {
             contact_id: contact.contact_id,
-            display_name: contact.display_name || 'No name',
-            data1: contact.data1 || 'No number'
+            display_name: contact.display_name || "No name",
+            data1: contact.data1 || "No number",
           } as Contact;
           parsedContacts.push(finalContact);
-          console.log(`=== DEBUG: ✓ Added contact: ${finalContact.display_name} (${finalContact.data1})`);
+          console.log(
+            `=== DEBUG: ✓ Added contact: ${finalContact.display_name} (${finalContact.data1})`
+          );
         } else {
-          console.log(`=== DEBUG: ✗ Skipped contact - missing required fields`);
+          console.log("=== DEBUG: ✗ Skipped contact - missing required fields");
         }
       } catch (error) {
-        console.error(`=== DEBUG: Error parsing line:`, error);
+        console.error("=== DEBUG: Error parsing line:", error);
       }
     }
-    
-    console.log(`=== DEBUG: Final parsed contacts count: ${parsedContacts.length}`);
+
+    console.log(
+      `=== DEBUG: Final parsed contacts count: ${parsedContacts.length}`
+    );
     return parsedContacts;
   };
 
   // Fetch contacts when device is selected or refresh is triggered
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       setContacts([]);
       setFilteredContacts([]);
       setHasLoadedOnce(false);
@@ -129,51 +138,76 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
 
       try {
         const adbArgs = [
-          "-s", selectedDevice.id,
-          "shell", "content", "query", 
-          "--uri", "content://com.android.contacts/data/phones", 
-          "--projection", "contact_id:display_name:data1"
+          "-s",
+          selectedDevice.id,
+          "shell",
+          "content",
+          "query",
+          "--uri",
+          "content://com.android.contacts/data/phones",
+          "--projection",
+          "contact_id:display_name:data1",
         ];
-        
-        console.log('=== DEBUG: ADB Command:', adbArgs.join(' '));
-        console.log('=== DEBUG: Full command path:', `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb ${adbArgs.join(' ')}`);
-        
+
+        console.log("=== DEBUG: ADB Command:", adbArgs.join(" "));
+        console.log(
+          "=== DEBUG: Full command path:",
+          `/Users/raju/Library/Application\\ Support/Pilotfish/platform-tools/adb ${adbArgs.join(" ")}`
+        );
+
         const response = await ipc.client.adb.executeADBCommand({
           args: adbArgs,
-          useCache: true
+          useCache: true,
         });
 
-        console.log('=== DEBUG: ADB Response type:', typeof response);
-        console.log('=== DEBUG: ADB Response length:', response?.length);
-        console.log('=== DEBUG: ADB Response (first 1000 chars):', response?.substring(0, 1000));
+        console.log("=== DEBUG: ADB Response type:", typeof response);
+        console.log("=== DEBUG: ADB Response length:", response?.length);
+        console.log(
+          "=== DEBUG: ADB Response (first 1000 chars):",
+          response?.substring(0, 1000)
+        );
 
         if (response) {
-          console.log('=== DEBUG: Raw ADB Response:', response);
-          console.log('=== DEBUG: Response length:', response?.length);
+          console.log("=== DEBUG: Raw ADB Response:", response);
+          console.log("=== DEBUG: Response length:", response?.length);
           const parsedContacts = parseContactsData(response);
-          console.log('=== DEBUG: Parsed contacts:', parsedContacts);
-          console.log('=== DEBUG: Parsed contacts count:', parsedContacts.length);
-          
+          console.log("=== DEBUG: Parsed contacts:", parsedContacts);
+          console.log(
+            "=== DEBUG: Parsed contacts count:",
+            parsedContacts.length
+          );
+
           // Sort contacts by contact_id in descending order (highest number first)
           const sortedContacts = parsedContacts.sort((a, b) => {
-            const aId = parseInt(a.contact_id) || 0;
-            const bId = parseInt(b.contact_id) || 0;
+            const aId = Number.parseInt(a.contact_id) || 0;
+            const bId = Number.parseInt(b.contact_id) || 0;
             return bId - aId; // Descending order
           });
-          
+
           // Deduplicate by contact_id (keep first occurrence)
-          const uniqueContacts = sortedContacts.filter((contact, index, array) => 
-            array.findIndex(c => c.contact_id === contact.contact_id) === index
+          const uniqueContacts = sortedContacts.filter(
+            (contact, index, array) =>
+              array.findIndex((c) => c.contact_id === contact.contact_id) ===
+              index
           );
-          
-          console.log('=== DEBUG: Sorted contacts (first 5):', sortedContacts.slice(0, 5));
-          console.log('=== DEBUG: Unique contacts count:', uniqueContacts.length);
-          
+
+          console.log(
+            "=== DEBUG: Sorted contacts (first 5):",
+            sortedContacts.slice(0, 5)
+          );
+          console.log(
+            "=== DEBUG: Unique contacts count:",
+            uniqueContacts.length
+          );
+
           // Check if data has changed
           const isSameLength = contacts.length === uniqueContacts.length;
-          const isSame = isSameLength && contacts.every((contact, index) => 
-            contact.contact_id === uniqueContacts[index]?.contact_id
-          );
+          const isSame =
+            isSameLength &&
+            contacts.every(
+              (contact, index) =>
+                contact.contact_id === uniqueContacts[index]?.contact_id
+            );
 
           if (!isSame) {
             setContacts(uniqueContacts);
@@ -182,14 +216,14 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
             onContactsUpdate(uniqueContacts);
           }
         } else {
-          throw new Error('No response from ADB command');
+          throw new Error("No response from ADB command");
         }
       } catch (error) {
         console.error("Failed to fetch contacts:", error);
         setError(
           `Failed to fetch contacts: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
         setContacts([]);
         setFilteredContacts([]);
@@ -223,54 +257,57 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
   const handleRefresh = useCallback(() => {
     if (!isRefreshing) {
       setIsRefreshing(true);
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     }
   }, [isRefreshing]);
 
-  const handleContactClick = useCallback((contactId: string) => {
-    onContactSelect(contactId);
-  }, [onContactSelect]);
+  const handleContactClick = useCallback(
+    (contactId: string) => {
+      onContactSelect(contactId);
+    },
+    [onContactSelect]
+  );
 
   return (
     <div
-      className="h-full flex flex-col overflow-hidden"
+      className="flex h-full flex-col overflow-hidden"
       style={{ width: `${leftWidth}%` }}
     >
-      <div className="flex flex-col h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
         {/* Header with Title and Refresh */}
-        <div className="flex items-center justify-between mx-2 pt-2 pb-2">
-          <h2 className="text-sm font-medium">
-            Contacts
-          </h2>
+        <div className="mx-2 flex items-center justify-between pt-2 pb-2">
+          <h2 className="font-medium text-sm">Contacts</h2>
           <div className="flex items-center gap-1">
             {/* Refresh Button */}
             <button
-              onClick={handleRefresh}
+              className="rounded-md p-1.5 transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isRefreshing || !selectedDevice}
-              className="p-1.5 hover:bg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleRefresh}
               title="Refresh contacts"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+              />
             </button>
           </div>
         </div>
 
         {/* Search Input */}
-        <div className="mb-2 mx-2 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="relative mx-2 mb-2">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-muted-foreground" />
           </div>
           <input
-            type="text"
-            placeholder={`Search in ${contacts.length} contacts`}
-            value={searchQuery}
+            className="w-full rounded-md border border-border py-1 pr-10 pl-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder={`Search in ${contacts.length} contacts`}
+            type="text"
+            value={searchQuery}
           />
           {searchQuery && (
             <button
+              className="absolute inset-y-0 right-0 flex items-center pr-3 transition-colors hover:text-foreground"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -278,37 +315,39 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
         </div>
 
         {/* Contacts List Container */}
-        <div className="flex-1 flex flex-col overflow-hidden mx-2">
+        <div className="mx-2 flex flex-1 flex-col overflow-hidden">
           {loading ? (
-            <div className="text-center py-4">
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              <p className="text-xs text-muted-foreground mt-2">Loading contacts...</p>
+            <div className="py-4 text-center">
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-primary border-b-2" />
+              <p className="mt-2 text-muted-foreground text-xs">
+                Loading contacts...
+              </p>
             </div>
           ) : filteredContacts.length > 0 ? (
-            <div ref={contactListRef} className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto" ref={contactListRef}>
               {filteredContacts.map((contact) => (
                 <div
-                  key={contact.contact_id}
-                  onClick={() => handleContactClick(contact.contact_id)}
-                  className={`p-3 border-b border-border hover:bg-muted cursor-pointer transition-colors ${
+                  className={`cursor-pointer border-border border-b p-3 transition-colors hover:bg-muted ${
                     selectedContact === contact.contact_id ? "bg-muted" : ""
                   }`}
+                  key={contact.contact_id}
+                  onClick={() => handleContactClick(contact.contact_id)}
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-1">
                       <User className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium truncate">
+                        <p className="truncate font-medium text-sm">
                           {contact.display_name}
                         </p>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           ID: {contact.contact_id}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-muted-foreground truncate">
+                      <div className="mt-1 flex items-center justify-between">
+                        <p className="truncate text-muted-foreground text-xs">
                           {contact.data1}
                         </p>
                       </div>
@@ -318,14 +357,16 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
-                {searchQuery.trim() ? "No contacts found matching your search" : "No contacts found"}
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
+                {searchQuery.trim()
+                  ? "No contacts found matching your search"
+                  : "No contacts found"}
               </p>
               {searchQuery.trim() && contacts.length > 0 && (
                 <button
+                  className="rounded border border-border px-3 py-1 text-xs transition-colors hover:bg-muted"
                   onClick={() => setSearchQuery("")}
-                  className="text-xs px-3 py-1 border border-border rounded hover:bg-muted transition-colors"
                 >
                   Clear Filter
                 </button>
@@ -337,11 +378,11 @@ export const ContactLeftSide: React.FC<ContactLeftSideProps> = ({
 
       {/* Drag Handle */}
       <div
-        className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-primary transition-colors ${
+        className={`absolute top-0 right-0 h-full w-1 cursor-col-resize bg-transparent transition-colors hover:bg-primary ${
           isDragging ? "bg-primary" : ""
         }`}
         onMouseDown={onDragStart}
-        style={{ right: '-0.5px' }}
+        style={{ right: "-0.5px" }}
       />
     </div>
   );

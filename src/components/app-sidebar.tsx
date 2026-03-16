@@ -1,4 +1,43 @@
 import {
+  AlignLeft,
+  Bell,
+  Bone,
+  Calendar,
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  CircleDot,
+  Grid3x3,
+  Layers,
+  Layout,
+  List,
+  Maximize2,
+  Menu,
+  Minus,
+  MoreHorizontal,
+  MousePointer,
+  Move,
+  Navigation,
+  Package,
+  Palette,
+  PanelLeft,
+  Plus,
+  Pointer,
+  RectangleHorizontal,
+  RotateCw,
+  Search,
+  Sliders,
+  Square,
+  Table,
+  Tag,
+  Terminal,
+  ToggleLeft,
+  TrendingUp,
+  Type,
+  User,
+} from "lucide-react";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -9,55 +48,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { 
-  Home, 
-  FileText, 
-  Settings, 
-  Terminal, 
-  Code, 
-  Palette, 
-  Layout, 
-  Form,
-  Table,
-  Square,
-  Circle,
-  MousePointer,
-  ChevronDown,
-  ChevronRight,
-  Triangle,
-  Bell,
-  User,
-  CheckSquare,
-  CircleDot,
-  TrendingUp,
-  Bone,
-  Minus,
-  PanelLeft,
-  Navigation,
-  Tag,
-  Pointer,
-  RectangleHorizontal,
-  Type,
-  List,
-  ToggleLeft,
-  AlignLeft,
-  Calendar,
-  Layers,
-  Grid3x3,
-  Maximize2,
-  MoreHorizontal,
-  Move,
-  Package,
-  Plus,
-  RotateCw,
-  Search,
-  Sliders,
-  Sun,
-  Volume2,
-  X,
-  Menu
-} from "lucide-react"
+} from "@/components/ui/sidebar";
 
 const components = [
   { name: "Accordion", icon: ChevronDown, path: "#accordion" },
@@ -114,13 +105,16 @@ const components = [
   { name: "Toggle", icon: ToggleLeft, path: "#toggle" },
   { name: "Toggle Group", icon: Grid3x3, path: "#toggle-group" },
   { name: "Tooltip", icon: MousePointer, path: "#tooltip" },
-]
+];
 
 export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+        <SidebarMenuButton
+          className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+          size="lg"
+        >
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             <Palette className="size-4" />
           </div>
@@ -160,5 +154,5 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

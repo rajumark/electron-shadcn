@@ -1,23 +1,25 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { Search, X, RefreshCw } from "lucide-react";
-import { ipc } from "@/ipc/manager";
+import { RefreshCw, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { ipc } from "@/ipc/manager";
 
 interface PackageInfo {
-  name: string;
   channelCount: number;
+  name: string;
   uid: number;
 }
 
 interface NotificationChannelLeftSideProps {
-  leftWidth: number;
-  selectedPackage: string;
-  onPackageSelect: (pkg: string) => void;
   isDragging: boolean;
+  leftWidth: number;
   onDragStart: () => void;
+  onPackageSelect: (pkg: string) => void;
+  selectedPackage: string;
 }
 
-export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSideProps> = ({
+export const NotificationChannelLeftSide: React.FC<
+  NotificationChannelLeftSideProps
+> = ({
   leftWidth,
   selectedPackage,
   onPackageSelect,
@@ -39,35 +41,35 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
 
   // Parse notification channels from dumpsys output and extract unique packages
   const parseNotificationPackages = (output: string): PackageInfo[] => {
-    const lines = output.split('\n');
+    const lines = output.split("\n");
     const packageMap = new Map<string, PackageInfo>();
     const channelMap = new Map<string, any>(); // Use Map to deduplicate channels
     let currentPackage = "";
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
+
       // Match AppSettings lines to get package and uid
       const appSettingsMatch = line.match(/AppSettings: ([^ ]+) \((\d+)\)/);
       if (appSettingsMatch) {
         currentPackage = appSettingsMatch[1];
-        const uid = parseInt(appSettingsMatch[2]);
-        
+        const uid = Number.parseInt(appSettingsMatch[2]);
+
         if (!packageMap.has(currentPackage)) {
           packageMap.set(currentPackage, {
             name: currentPackage,
             channelCount: 0,
-            uid: uid,
+            uid,
           });
         }
       }
-      
+
       // Match NotificationChannel lines to count channels per package (with deduplication)
       const channelMatch = line.match(/NotificationChannel\{mId='([^']+)',/);
       if (channelMatch && currentPackage && packageMap.has(currentPackage)) {
         // Create unique key for deduplication
         const uniqueKey = `${currentPackage}:${channelMatch[1]}`;
-        
+
         // Only count if we haven't seen this channel before
         if (!channelMap.has(uniqueKey)) {
           channelMap.set(uniqueKey, true); // Mark as seen
@@ -76,14 +78,16 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
         }
       }
     }
-    
+
     // Filter out packages with 0 channels
-    return Array.from(packageMap.values()).filter(pkg => pkg.channelCount > 0);
+    return Array.from(packageMap.values()).filter(
+      (pkg) => pkg.channelCount > 0
+    );
   };
 
   // Fetch notification packages when device is selected or refresh is triggered
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       setPackages([]);
       setFilteredPackages([]);
       setHasLoadedOnce(false);
@@ -103,11 +107,13 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
         });
 
         const parsedPackages = parseNotificationPackages(output);
-        
+
         const isSameLength = packages.length === parsedPackages.length;
         const isSame =
           isSameLength &&
-          packages.every((pkg, index) => pkg.name === parsedPackages[index].name);
+          packages.every(
+            (pkg, index) => pkg.name === parsedPackages[index].name
+          );
 
         if (!isSame) {
           setPackages(parsedPackages);
@@ -119,7 +125,7 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
         setError(
           `Failed to fetch notification packages: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
         setPackages([]);
         setFilteredPackages([]);
@@ -138,11 +144,11 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -152,13 +158,13 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
 
   // Auto-refresh packages every 10 seconds while a valid device is selected
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       return;
     }
 
     const interval = setInterval(() => {
       setRefreshKey((prev) => prev + 1);
-    }, 10000);
+    }, 10_000);
 
     return () => {
       clearInterval(interval);
@@ -170,7 +176,7 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
     if (!debouncedSearchQuery.trim()) {
       return packages;
     }
-    return packages.filter(pkg => 
+    return packages.filter((pkg) =>
       pkg.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
     );
   }, [packages, debouncedSearchQuery]);
@@ -178,7 +184,7 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
   // Update filtered packages when memoized result changes
   useEffect(() => {
     setFilteredPackages(memoizedFilteredPackages);
-    
+
     // Scroll to top instantly when search results change
     if (packagesListRef.current) {
       packagesListRef.current.scrollTop = 0;
@@ -186,27 +192,28 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
   }, [memoizedFilteredPackages]);
 
   const handleRefreshPackages = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
-  const handlePackageClick = useCallback((packageName: string) => {
-    onPackageSelect(packageName);
-  }, [onPackageSelect]);
+  const handlePackageClick = useCallback(
+    (packageName: string) => {
+      onPackageSelect(packageName);
+    },
+    [onPackageSelect]
+  );
 
   return (
     <div
-      className="h-full flex flex-col overflow-hidden"
+      className="flex h-full flex-col overflow-hidden"
       style={{ width: `${leftWidth}%` }}
     >
-      <div className="flex flex-col h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
         {/* Header with Title and Refresh */}
-        <div className="flex items-center justify-between mx-2 pt-2 pb-2">
-          <h2 className="text-sm font-medium">
-            Packages ({packages.length})
-          </h2>
+        <div className="mx-2 flex items-center justify-between pt-2 pb-2">
+          <h2 className="font-medium text-sm">Packages ({packages.length})</h2>
           <button
+            className="rounded-md p-1.5 transition-colors hover:bg-muted"
             onClick={handleRefreshPackages}
-            className="p-1.5 hover:bg-muted rounded-md transition-colors"
             title="Refresh packages"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -214,21 +221,21 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
         </div>
 
         {/* Search Input */}
-        <div className="mb-2 mx-2 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="relative mx-2 mb-2">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-muted-foreground" />
           </div>
           <input
-            type="text"
-            placeholder={`Search in ${packages.length} packages`}
-            value={searchQuery}
+            className="w-full rounded-md border border-border py-1 pr-10 pl-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder={`Search in ${packages.length} packages`}
+            type="text"
+            value={searchQuery}
           />
           {searchQuery && (
             <button
+              className="absolute inset-y-0 right-0 flex items-center pr-3 transition-colors hover:text-foreground"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -237,41 +244,40 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
 
         {/* Error Display */}
         {error && (
-          <div className="mb-2 mx-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-xs text-destructive">{error}</p>
+          <div className="mx-2 mb-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3">
+            <p className="text-destructive text-xs">{error}</p>
           </div>
         )}
 
         {/* Packages List Container */}
-        <div className="flex-1 flex flex-col overflow-hidden mx-2">
+        <div className="mx-2 flex flex-1 flex-col overflow-hidden">
           {loadingPackages ? (
-            <div className="text-center py-4">
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
+            <div className="py-4 text-center">
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-primary border-b-2" />
+              <p className="mt-2 text-muted-foreground text-xs">
+                Loading packages...
+              </p>
             </div>
           ) : filteredPackages.length > 0 ? (
-            <div
-              ref={packagesListRef}
-              className="flex-1 overflow-auto"
-            >
+            <div className="flex-1 overflow-auto" ref={packagesListRef}>
               {filteredPackages.map((pkg) => (
                 <div
-                  key={pkg.name}
-                  className={`p-3 border-b border-border cursor-pointer hover:bg-muted/50 transition-colors ${
+                  className={`cursor-pointer border-border border-b p-3 transition-colors hover:bg-muted/50 ${
                     selectedPackage === pkg.name ? "bg-muted" : ""
                   }`}
+                  key={pkg.name}
                   onClick={() => handlePackageClick(pkg.name)}
                 >
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium font-mono truncate flex-1">
+                      <span className="flex-1 truncate font-medium font-mono text-xs">
                         {pkg.name}
                       </span>
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                      <span className="rounded bg-primary/10 px-2 py-1 text-primary text-xs">
                         {pkg.channelCount} channels
                       </span>
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       UID: {pkg.uid}
                     </div>
                   </div>
@@ -279,22 +285,24 @@ export const NotificationChannelLeftSide: React.FC<NotificationChannelLeftSidePr
               ))}
             </div>
           ) : selectedDevice ? (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
-                {searchQuery.trim() ? "No packages found matching your search" : "No notification packages found"}
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
+                {searchQuery.trim()
+                  ? "No packages found matching your search"
+                  : "No notification packages found"}
               </p>
               {searchQuery.trim() && packages.length > 0 && (
                 <button
+                  className="rounded border border-border px-3 py-1 text-xs transition-colors hover:bg-muted"
                   onClick={() => setSearchQuery("")}
-                  className="text-xs px-3 py-1 border border-border rounded hover:bg-muted transition-colors"
                 >
                   Clear Filter
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
                 Select a device to view notification packages
               </p>
             </div>

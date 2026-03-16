@@ -1,36 +1,38 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { Search, X, RefreshCw } from "lucide-react";
-import { ipc } from "@/ipc/manager";
+import { RefreshCw, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { ipc } from "@/ipc/manager";
 
 interface NotificationRecord {
-  key: string;
-  pkg: string;
-  user: string;
-  id: string;
-  tag: string | null;
-  importance: number;
   channel: string;
   flags: string[];
-  visibility: string;
-  uid: number;
-  userId: number;
+  id: string;
+  importance: number;
+  key: string;
   opPkg: string;
+  pkg: string;
   postTime: number;
-  title?: string;
-  text?: string;
   subText?: string;
+  tag: string | null;
+  text?: string;
+  title?: string;
+  uid: number;
+  user: string;
+  userId: number;
+  visibility: string;
 }
 
 interface NotificationRecordLeftSideProps {
-  leftWidth: number;
-  selectedNotificationRecord: string;
-  onNotificationRecordSelect: (record: string) => void;
   isDragging: boolean;
+  leftWidth: number;
   onDragStart: () => void;
+  onNotificationRecordSelect: (record: string) => void;
+  selectedNotificationRecord: string;
 }
 
-export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProps> = ({
+export const NotificationRecordLeftSide: React.FC<
+  NotificationRecordLeftSideProps
+> = ({
   leftWidth,
   selectedNotificationRecord,
   onNotificationRecordSelect,
@@ -38,7 +40,9 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
   onDragStart,
 }) => {
   const [records, setRecords] = useState<NotificationRecord[]>([]);
-  const [filteredRecords, setFilteredRecords] = useState<NotificationRecord[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<NotificationRecord[]>(
+    []
+  );
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [loadingRecords, setLoadingRecords] = useState(false);
@@ -53,13 +57,15 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
   // Parse notification dumpsys output
   const parseNotificationDump = (output: string): NotificationRecord[] => {
     const records: NotificationRecord[] = [];
-    const lines = output.split('\n');
-    
+    const lines = output.split("\n");
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Match NotificationRecord lines - more flexible regex that handles varying formats
-      const recordMatch = line.match(/NotificationRecord\([^:]+: pkg=([^ ]+) user=([^ ]+) id=([^ ]+) tag=([^ ]+) importance=(\d+) key=([^:]+): Notification\(channel=([^ ]+)/);
+      const recordMatch = line.match(
+        /NotificationRecord\([^:]+: pkg=([^ ]+) user=([^ ]+) id=([^ ]+) tag=([^ ]+) importance=(\d+) key=([^:]+): Notification\(channel=([^ ]+)/
+      );
       if (recordMatch) {
         const record: NotificationRecord = {
           key: recordMatch[6],
@@ -67,7 +73,7 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
           user: recordMatch[2],
           id: recordMatch[3],
           tag: recordMatch[4] === "null" ? null : recordMatch[4],
-          importance: parseInt(recordMatch[5]),
+          importance: Number.parseInt(recordMatch[5]),
           channel: recordMatch[7],
           flags: [],
           visibility: "PRIVATE",
@@ -76,75 +82,86 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
           opPkg: "",
           postTime: 0,
         };
-        
+
         // Look for uid, opPkg, postTime, and content in next few lines
         for (let j = i + 1; j < Math.min(i + 100, lines.length); j++) {
           const currentLine = lines[j];
-          
+
           const uidMatch = currentLine.match(/uid=(\d+)/);
           if (uidMatch) {
-            record.uid = parseInt(uidMatch[1]);
+            record.uid = Number.parseInt(uidMatch[1]);
           }
-          
+
           const opPkgMatch = currentLine.match(/opPkg=(.+)/);
           if (opPkgMatch) {
             record.opPkg = opPkgMatch[1];
           }
-          
+
           const postTimeMatch = currentLine.match(/postTime=(\d+)/);
           if (postTimeMatch) {
-            record.postTime = parseInt(postTimeMatch[1]);
+            record.postTime = Number.parseInt(postTimeMatch[1]);
           }
-          
+
           // Extract flags
           const flagsMatch = currentLine.match(/flags=([^ ]+)/);
           if (flagsMatch) {
-            record.flags = flagsMatch[1].split('|');
+            record.flags = flagsMatch[1].split("|");
           }
-          
+
           // Extract visibility
-          const visMatch = currentLine.match(/vis=([^ \)]+)/);
+          const visMatch = currentLine.match(/vis=([^ )]+)/);
           if (visMatch) {
             record.visibility = visMatch[1];
           }
-          
+
           // Extract title and text from extras
-          const titleMatch = currentLine.match(/android\.title=String \[length=\d+\] (.+)/);
+          const titleMatch = currentLine.match(
+            /android\.title=String \[length=\d+\] (.+)/
+          );
           if (titleMatch) {
             record.title = titleMatch[1].trim();
           }
-          
-          const textMatch = currentLine.match(/android\.text=String \[length=\d+\] (.+)/);
+
+          const textMatch = currentLine.match(
+            /android\.text=String \[length=\d+\] (.+)/
+          );
           if (textMatch) {
             record.text = textMatch[1].trim();
           }
-          
-          const bigTextMatch = currentLine.match(/android\.bigText=String \[length=\d+\] (.+)/);
+
+          const bigTextMatch = currentLine.match(
+            /android\.bigText=String \[length=\d+\] (.+)/
+          );
           if (bigTextMatch && !record.text) {
             record.text = bigTextMatch[1].trim();
           }
-          
-          const subTextMatch = currentLine.match(/android\.subText=String \[length=\d+\] (.+)/);
+
+          const subTextMatch = currentLine.match(
+            /android\.subText=String \[length=\d+\] (.+)/
+          );
           if (subTextMatch) {
             record.subText = subTextMatch[1].trim();
           }
-          
+
           // Stop when we hit the next record
-          if (currentLine.includes("NotificationRecord(") && !currentLine.includes(record.key)) {
+          if (
+            currentLine.includes("NotificationRecord(") &&
+            !currentLine.includes(record.key)
+          ) {
             break;
           }
         }
-        
+
         records.push(record);
       }
     }
-    
+
     return records;
   };
 
   // Fetch notification records when device is selected or refresh is triggered
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       setRecords([]);
       setFilteredRecords([]);
       setHasLoadedOnce(false);
@@ -164,11 +181,13 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
         });
 
         const parsedRecords = parseNotificationDump(output);
-        
+
         const isSameLength = records.length === parsedRecords.length;
         const isSame =
           isSameLength &&
-          records.every((record, index) => record.key === parsedRecords[index].key);
+          records.every(
+            (record, index) => record.key === parsedRecords[index].key
+          );
 
         if (!isSame) {
           setRecords(parsedRecords);
@@ -180,7 +199,7 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
         setError(
           `Failed to fetch notification records: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
         setRecords([]);
         setFilteredRecords([]);
@@ -199,11 +218,11 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -213,7 +232,7 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
 
   // Auto-refresh records every 5 seconds while a valid device is selected
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       return;
     }
 
@@ -231,18 +250,27 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
     if (!debouncedSearchQuery.trim()) {
       return records;
     }
-    return records.filter(record => 
-      record.pkg.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      record.channel.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      (record.title && record.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) ||
-      (record.text && record.text.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
+    return records.filter(
+      (record) =>
+        record.pkg.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        record.channel
+          .toLowerCase()
+          .includes(debouncedSearchQuery.toLowerCase()) ||
+        (record.title &&
+          record.title
+            .toLowerCase()
+            .includes(debouncedSearchQuery.toLowerCase())) ||
+        (record.text &&
+          record.text
+            .toLowerCase()
+            .includes(debouncedSearchQuery.toLowerCase()))
     );
   }, [records, debouncedSearchQuery]);
 
   // Update filtered records when memoized result changes
   useEffect(() => {
     setFilteredRecords(memoizedFilteredRecords);
-    
+
     // Scroll to top instantly when search results change
     if (recordsListRef.current) {
       recordsListRef.current.scrollTop = 0;
@@ -250,27 +278,30 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
   }, [memoizedFilteredRecords]);
 
   const handleRefreshRecords = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
-  const handleRecordClick = useCallback((recordKey: string) => {
-    onNotificationRecordSelect(recordKey);
-  }, [onNotificationRecordSelect]);
+  const handleRecordClick = useCallback(
+    (recordKey: string) => {
+      onNotificationRecordSelect(recordKey);
+    },
+    [onNotificationRecordSelect]
+  );
 
   return (
     <div
-      className="h-full flex flex-col overflow-hidden"
+      className="flex h-full flex-col overflow-hidden"
       style={{ width: `${leftWidth}%` }}
     >
-      <div className="flex flex-col h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
         {/* Header with Title and Refresh */}
-        <div className="flex items-center justify-between mx-2 pt-2 pb-2">
-          <h2 className="text-sm font-medium">
+        <div className="mx-2 flex items-center justify-between pt-2 pb-2">
+          <h2 className="font-medium text-sm">
             Notification Records ({records.length})
           </h2>
           <button
+            className="rounded-md p-1.5 transition-colors hover:bg-muted"
             onClick={handleRefreshRecords}
-            className="p-1.5 hover:bg-muted rounded-md transition-colors"
             title="Refresh records"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -278,21 +309,21 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
         </div>
 
         {/* Search Input */}
-        <div className="mb-2 mx-2 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="relative mx-2 mb-2">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-muted-foreground" />
           </div>
           <input
-            type="text"
-            placeholder={`Search in ${records.length} records`}
-            value={searchQuery}
+            className="w-full rounded-md border border-border py-1 pr-10 pl-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder={`Search in ${records.length} records`}
+            type="text"
+            value={searchQuery}
           />
           {searchQuery && (
             <button
+              className="absolute inset-y-0 right-0 flex items-center pr-3 transition-colors hover:text-foreground"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -301,55 +332,54 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
 
         {/* Error Display */}
         {error && (
-          <div className="mb-2 mx-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-xs text-destructive">{error}</p>
+          <div className="mx-2 mb-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3">
+            <p className="text-destructive text-xs">{error}</p>
           </div>
         )}
 
         {/* Records List Container */}
-        <div className="flex-1 flex flex-col overflow-hidden mx-2">
+        <div className="mx-2 flex flex-1 flex-col overflow-hidden">
           {loadingRecords ? (
-            <div className="text-center py-4">
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              <p className="text-xs text-muted-foreground mt-2">Loading notification records...</p>
+            <div className="py-4 text-center">
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-primary border-b-2" />
+              <p className="mt-2 text-muted-foreground text-xs">
+                Loading notification records...
+              </p>
             </div>
           ) : filteredRecords.length > 0 ? (
-            <div
-              ref={recordsListRef}
-              className="flex-1 overflow-auto"
-            >
+            <div className="flex-1 overflow-auto" ref={recordsListRef}>
               {filteredRecords.map((record) => (
                 <div
-                  key={record.key}
-                  className={`p-2 border-b border-border cursor-pointer hover:bg-muted/50 transition-colors ${
+                  className={`cursor-pointer border-border border-b p-2 transition-colors hover:bg-muted/50 ${
                     selectedNotificationRecord === record.key ? "bg-muted" : ""
                   }`}
+                  key={record.key}
                   onClick={() => handleRecordClick(record.key)}
                 >
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium font-mono truncate flex-1">
+                      <span className="flex-1 truncate font-medium font-mono text-xs">
                         {record.pkg}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-2">
+                      <span className="ml-2 text-muted-foreground text-xs">
                         {record.importance}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground truncate flex-1">
+                      <span className="flex-1 truncate text-muted-foreground text-xs">
                         {record.channel}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-2">
+                      <span className="ml-2 text-muted-foreground text-xs">
                         ID: {record.id}
                       </span>
                     </div>
                     {record.title && (
-                      <div className="text-xs text-foreground truncate">
+                      <div className="truncate text-foreground text-xs">
                         {record.title}
                       </div>
                     )}
                     {record.text && (
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="truncate text-muted-foreground text-xs">
                         {record.text}
                       </div>
                     )}
@@ -358,22 +388,24 @@ export const NotificationRecordLeftSide: React.FC<NotificationRecordLeftSideProp
               ))}
             </div>
           ) : selectedDevice ? (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
-                {searchQuery.trim() ? "No notification records found matching your search" : "No notification records found"}
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
+                {searchQuery.trim()
+                  ? "No notification records found matching your search"
+                  : "No notification records found"}
               </p>
               {searchQuery.trim() && records.length > 0 && (
                 <button
+                  className="rounded border border-border px-3 py-1 text-xs transition-colors hover:bg-muted"
                   onClick={() => setSearchQuery("")}
-                  className="text-xs px-3 py-1 border border-border rounded hover:bg-muted transition-colors"
                 >
                   Clear Filter
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
                 Select a device to view notification records
               </p>
             </div>

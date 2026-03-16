@@ -8,9 +8,9 @@ interface Device {
 
 interface DeviceStore {
   devices: Device[];
-  selectedDevice: Device | null;
-  loading: boolean;
   error: string | null;
+  loading: boolean;
+  selectedDevice: Device | null;
 }
 
 export const useDeviceStore = create<DeviceStore>((set, get) => ({
@@ -21,7 +21,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 
   fetchDevices: async () => {
     set({ loading: true, error: null });
-    
+
     try {
       const result = await ipc.client.adb.executeADBCommand({
         args: ["devices"],
@@ -43,27 +43,30 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           }))
         );
 
-        set({ 
+        set({
           devices: devicesWithNames,
-          selectedDevice: devicesWithNames.length > 0 && !get().selectedDevice ? devicesWithNames[0] : get().selectedDevice,
+          selectedDevice:
+            devicesWithNames.length > 0 && !get().selectedDevice
+              ? devicesWithNames[0]
+              : get().selectedDevice,
           loading: false,
-          error: null 
+          error: null,
         });
       }
     } catch (err) {
       console.error("Failed to fetch devices:", err);
-      set({ 
-        devices: [], 
+      set({
+        devices: [],
         selectedDevice: null,
-        loading: false, 
-        error: "Failed to fetch devices" 
+        loading: false,
+        error: "Failed to fetch devices",
       });
     }
   },
 
   selectDevice: (deviceId: string) => {
     const { devices } = get();
-    const device = devices.find(d => d.id === deviceId);
+    const device = devices.find((d) => d.id === deviceId);
     if (device) {
       set({ selectedDevice: device });
     }
@@ -78,7 +81,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 async function getDeviceName(deviceId: string): Promise<string> {
   // Cache device names to avoid repeated ADB calls
   const nameMap: Record<string, string> = {};
-  
+
   if (nameMap[deviceId]) {
     return nameMap[deviceId];
   }
@@ -86,21 +89,22 @@ async function getDeviceName(deviceId: string): Promise<string> {
   try {
     // Get device manufacturer and model
     const manufacturer = await ipc.client.adb.executeADBCommand({
-      args: ["-s", deviceId, "shell", "getprop", "ro.product.manufacturer"]
+      args: ["-s", deviceId, "shell", "getprop", "ro.product.manufacturer"],
     });
-    
+
     const model = await ipc.client.adb.executeADBCommand({
-      args: ["-s", deviceId, "shell", "getprop", "ro.product.model"]
+      args: ["-s", deviceId, "shell", "getprop", "ro.product.model"],
     });
 
     const brand = manufacturer?.trim() || "Unknown";
     const deviceModel = model?.trim() || "Unknown";
-    
-    const deviceName = `${brand} ${deviceModel}`.trim() || `Device ${deviceId.substring(0, 8)}`;
-    
+
+    const deviceName =
+      `${brand} ${deviceModel}`.trim() || `Device ${deviceId.substring(0, 8)}`;
+
     // Cache result
     nameMap[deviceId] = deviceName;
-    
+
     return deviceName;
   } catch (error) {
     console.error(`Failed to get device name for ${deviceId}:`, error);

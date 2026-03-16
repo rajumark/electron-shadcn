@@ -19,5 +19,5 @@ export const packageStore = {
 
   async clearAllPinned(): Promise<string[]> {
     return await ipc.client.store.clearAllPinned();
-  }
+  },
 };

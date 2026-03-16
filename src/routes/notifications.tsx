@@ -1,26 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { NotificationRecordLeftSide } from "@/components/notification-record-left";
-import { NotificationRecordRightSide } from "@/components/notification-record-right";
 import { NotificationChannelLeftSide } from "@/components/notification-channel-left";
 import { NotificationChannelMiddleSide } from "@/components/notification-channel-middle";
 import { NotificationChannelRightSide } from "@/components/notification-channel-right";
-import { ipc } from "@/ipc/manager";
+import { NotificationRecordLeftSide } from "@/components/notification-record-left";
+import { NotificationRecordRightSide } from "@/components/notification-record-right";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { ipc } from "@/ipc/manager";
 
 function NotificationsPage() {
   const { t } = useTranslation();
   const [leftWidth, setLeftWidth] = useState(30);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedNotificationRecord, setSelectedNotificationRecord] = useState("");
-  const [selectedNotificationChannel, setSelectedNotificationChannel] = useState("");
+  const [selectedNotificationRecord, setSelectedNotificationRecord] =
+    useState("");
+  const [selectedNotificationChannel, setSelectedNotificationChannel] =
+    useState("");
   const { selectedDevice } = useSelectedDevice();
   const [selectedPackage, setSelectedPackage] = useState("");
   const [activeTab, setActiveTab] = useState("records");
@@ -31,19 +28,22 @@ function NotificationsPage() {
     setIsDragging(true);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!(isDragging && containerRef.current)) {
-      return;
-    }
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!(isDragging && containerRef.current)) {
+        return;
+      }
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const newLeftWidth =
-      ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newLeftWidth =
+        ((e.clientX - containerRect.left) / containerRect.width) * 100;
 
-    if (newLeftWidth >= 20 && newLeftWidth <= 80) {
-      setLeftWidth(newLeftWidth);
-    }
-  }, [isDragging]);
+      if (newLeftWidth >= 20 && newLeftWidth <= 80) {
+        setLeftWidth(newLeftWidth);
+      }
+    },
+    [isDragging]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -67,76 +67,107 @@ function NotificationsPage() {
 
   // Parse notification channels from dumpsys output
   const parseNotificationChannels = (output: string): any[] => {
-    const lines = output.split('\n');
+    const lines = output.split("\n");
     const channels: any[] = [];
     let currentPackage = "";
     const channelMap = new Map<string, any>(); // Use Map to deduplicate by package:channelId
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      
+
       // Match AppSettings lines to get package and uid
       const appSettingsMatch = line.match(/AppSettings: ([^ ]+) \((\d+)\)/);
       if (appSettingsMatch) {
         currentPackage = appSettingsMatch[1];
         continue;
       }
-      
+
       // Match NotificationChannel lines - more flexible regex
       const channelMatch = line.match(/NotificationChannel\{mId='([^']+)',/);
       if (channelMatch && currentPackage) {
         // Create unique key for deduplication
         const uniqueKey = `${currentPackage}:${channelMatch[1]}`;
-        
+
         // Skip if we already have this channel
         if (channelMap.has(uniqueKey)) {
           continue;
         }
-        
+
         // Extract all the channel properties in a more flexible way
         const channelLine = line;
         const channel: any = {
           packageName: currentPackage,
           id: channelMatch[1],
         };
-        
+
         // Extract other properties with individual regex matches
         const nameMatch = channelLine.match(/mName=([^,]+)/);
-        if (nameMatch) channel.name = nameMatch[1].replace(/\.\.\./g, '');
-        
+        if (nameMatch) {
+          channel.name = nameMatch[1].replace(/\.\.\./g, "");
+        }
+
         const descMatch = channelLine.match(/mDescription=([^,]+)/);
-        if (descMatch) channel.description = descMatch[1] === "" ? undefined : descMatch[1];
-        
+        if (descMatch) {
+          channel.description = descMatch[1] === "" ? undefined : descMatch[1];
+        }
+
         const impMatch = channelLine.match(/mImportance=(\d+)/);
-        if (impMatch) channel.importance = parseInt(impMatch[1]);
-        
+        if (impMatch) {
+          channel.importance = Number.parseInt(impMatch[1]);
+        }
+
         const bypassMatch = channelLine.match(/mBypassDnd=(true|false)/);
-        if (bypassMatch) channel.bypassDnd = bypassMatch[1] === "true";
-        
-        const visibilityMatch = channelLine.match(/mLockscreenVisibility=(-?\d+)/);
-        if (visibilityMatch) channel.lockscreenVisibility = parseInt(visibilityMatch[1]);
-        
+        if (bypassMatch) {
+          channel.bypassDnd = bypassMatch[1] === "true";
+        }
+
+        const visibilityMatch = channelLine.match(
+          /mLockscreenVisibility=(-?\d+)/
+        );
+        if (visibilityMatch) {
+          channel.lockscreenVisibility = Number.parseInt(visibilityMatch[1]);
+        }
+
         const soundMatch = channelLine.match(/mSound=([^,]+)/);
-        if (soundMatch) channel.sound = soundMatch[1];
-        
+        if (soundMatch) {
+          channel.sound = soundMatch[1];
+        }
+
         const lightsMatch = channelLine.match(/mLights=(true|false)/);
-        if (lightsMatch) channel.lights = lightsMatch[1] === "true";
-        
+        if (lightsMatch) {
+          channel.lights = lightsMatch[1] === "true";
+        }
+
         const lightColorMatch = channelLine.match(/mLightColor=(\d+)/);
-        if (lightColorMatch) channel.lightColor = parseInt(lightColorMatch[1]);
-        
-        const vibEnabledMatch = channelLine.match(/mVibrationEnabled=(true|false)/);
-        if (vibEnabledMatch) channel.vibrationEnabled = vibEnabledMatch[1] === "true";
-        
+        if (lightColorMatch) {
+          channel.lightColor = Number.parseInt(lightColorMatch[1]);
+        }
+
+        const vibEnabledMatch = channelLine.match(
+          /mVibrationEnabled=(true|false)/
+        );
+        if (vibEnabledMatch) {
+          channel.vibrationEnabled = vibEnabledMatch[1] === "true";
+        }
+
         const badgeMatch = channelLine.match(/mShowBadge=(true|false)/);
-        if (badgeMatch) channel.showBadge = badgeMatch[1] === "true";
-        
+        if (badgeMatch) {
+          channel.showBadge = badgeMatch[1] === "true";
+        }
+
         const deletedMatch = channelLine.match(/mDeleted=(true|false)/);
-        if (deletedMatch) channel.deleted = deletedMatch[1] === "true";
-        
+        if (deletedMatch) {
+          channel.deleted = deletedMatch[1] === "true";
+        }
+
         const groupMatch = channelLine.match(/mGroup='([^']*)'/);
-        if (groupMatch) channel.group = groupMatch[1] === "null" || groupMatch[1] === "" ? undefined : groupMatch[1];
-        
+        if (groupMatch) {
+          channel.group =
+            groupMatch[1] === "null" || groupMatch[1] === ""
+              ? undefined
+              : groupMatch[1];
+        }
+
         // Set defaults for other properties
         channel.vibrationPattern = undefined;
         channel.userLockedFields = 0;
@@ -149,19 +180,19 @@ function NotificationsPage() {
         channel.demoted = false;
         channel.importantConvo = false;
         channel.lastNotificationUpdateTimeMs = 0;
-        
+
         // Add to map for deduplication
         channelMap.set(uniqueKey, channel);
       }
     }
-    
+
     // Convert Map to array and return
     return Array.from(channelMap.values());
   };
 
   // Fetch notification channels when device is selected
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       setNotificationChannels([]);
       return;
     }
@@ -185,73 +216,82 @@ function NotificationsPage() {
   }, [selectedDevice]);
 
   // Memoize channels to prevent unnecessary re-renders
-  const memoizedChannels = useMemo(() => notificationChannels, [notificationChannels]);
+  const memoizedChannels = useMemo(
+    () => notificationChannels,
+    [notificationChannels]
+  );
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList variant="line" className="mx-4 mt-2">
+        <Tabs
+          className="flex h-full flex-col"
+          onValueChange={setActiveTab}
+          value={activeTab}
+        >
+          <TabsList className="mx-4 mt-2" variant="line">
             <TabsTrigger value="records">Notification Records</TabsTrigger>
             <TabsTrigger value="channels">Notification Channels</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="records" className="flex-1 mt-0 overflow-hidden">
+
+          <TabsContent className="mt-0 flex-1 overflow-hidden" value="records">
             <div className="flex h-full overflow-hidden">
-              <div className="relative flex flex-1 min-w-0" ref={containerRef}>
+              <div className="relative flex min-w-0 flex-1" ref={containerRef}>
                 <NotificationRecordLeftSide
-                  leftWidth={leftWidth}
-                  selectedNotificationRecord={selectedNotificationRecord}
-                  onNotificationRecordSelect={setSelectedNotificationRecord}
                   isDragging={isDragging}
+                  leftWidth={leftWidth}
                   onDragStart={handleMouseDown}
+                  onNotificationRecordSelect={setSelectedNotificationRecord}
+                  selectedNotificationRecord={selectedNotificationRecord}
                 />
 
                 <div
-                  className="relative cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors"
-                  style={{ width: '0.5px' }}
+                  className="relative cursor-col-resize bg-gray-300 transition-colors hover:bg-gray-400"
                   onMouseDown={handleMouseDown}
+                  style={{ width: "0.5px" }}
                 />
 
-                <NotificationRecordRightSide selectedNotificationRecord={selectedNotificationRecord} />
+                <NotificationRecordRightSide
+                  selectedNotificationRecord={selectedNotificationRecord}
+                />
               </div>
             </div>
           </TabsContent>
-          
-          <TabsContent value="channels" className="flex-1 mt-0 overflow-hidden">
+
+          <TabsContent className="mt-0 flex-1 overflow-hidden" value="channels">
             <div className="flex h-full overflow-hidden">
-              <div className="relative flex flex-1 min-w-0" ref={containerRef}>
+              <div className="relative flex min-w-0 flex-1" ref={containerRef}>
                 <NotificationChannelLeftSide
-                  leftWidth={leftWidth}
-                  selectedPackage={selectedPackage}
-                  onPackageSelect={setSelectedPackage}
                   isDragging={isDragging}
+                  leftWidth={leftWidth}
                   onDragStart={handleMouseDown}
+                  onPackageSelect={setSelectedPackage}
+                  selectedPackage={selectedPackage}
                 />
 
                 <div
-                  className="relative cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors"
-                  style={{ width: '0.5px' }}
+                  className="relative cursor-col-resize bg-gray-300 transition-colors hover:bg-gray-400"
                   onMouseDown={handleMouseDown}
+                  style={{ width: "0.5px" }}
                 />
 
                 <NotificationChannelMiddleSide
-                  selectedPackage={selectedPackage}
-                  selectedNotificationChannel={selectedNotificationChannel}
-                  onNotificationChannelSelect={setSelectedNotificationChannel}
                   channels={memoizedChannels}
+                  onNotificationChannelSelect={setSelectedNotificationChannel}
+                  selectedNotificationChannel={selectedNotificationChannel}
+                  selectedPackage={selectedPackage}
                 />
 
                 <div
-                  className="relative cursor-col-resize bg-gray-300 hover:bg-gray-400 transition-colors"
-                  style={{ width: '0.5px' }}
+                  className="relative cursor-col-resize bg-gray-300 transition-colors hover:bg-gray-400"
                   onMouseDown={handleMouseDown}
+                  style={{ width: "0.5px" }}
                 />
 
-                <NotificationChannelRightSide 
-  selectedNotificationChannel={selectedNotificationChannel} 
-  channels={memoizedChannels}
-/>
+                <NotificationChannelRightSide
+                  channels={memoizedChannels}
+                  selectedNotificationChannel={selectedNotificationChannel}
+                />
               </div>
             </div>
           </TabsContent>

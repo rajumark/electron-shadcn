@@ -1,23 +1,23 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { Search, X, Filter } from "lucide-react";
-import { ipc } from "@/ipc/manager";
-import { useSelectedDevice } from "@/hooks/use-selected-device";
-import { packageStore } from "@/utils/store";
+import { Filter, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PackageList } from "@/components/package-list";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PackageList } from "@/components/package-list";
 import { usePackageContextMenu } from "@/hooks/use-package-context-menu";
+import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { ipc } from "@/ipc/manager";
+import { packageStore } from "@/utils/store";
 
 interface AppsLeftSideProps {
-  leftWidth: number;
-  selectedPackage: string;
-  onPackageSelect: (pkg: string) => void;
   isDragging: boolean;
+  leftWidth: number;
   onDragStart: () => void;
+  onPackageSelect: (pkg: string) => void;
+  selectedPackage: string;
 }
 
 export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
@@ -38,10 +38,10 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const packageListRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  
+
   // Filter state
   const [filterType, setFilterType] = useState<string>("all"); // all, user, system, disabled
-  
+
   // Filter options
   const filterOptions = [
     { id: "all", label: "All apps", command: "pm list packages" },
@@ -49,12 +49,12 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     { id: "system", label: "System apps", command: "pm list packages -s" },
     { id: "disabled", label: "Disabled apps", command: "pm list packages -d" },
   ];
-  
+
   const { selectedDevice } = useSelectedDevice();
 
   // Fetch packages when device is selected or refresh is triggered
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       setPackages([]);
       setFilteredPackages([]);
       setHasLoadedOnce(false);
@@ -98,7 +98,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
         setError(
           `Failed to fetch packages: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`,
+          }`
         );
         setPackages([]);
         setFilteredPackages([]);
@@ -117,11 +117,11 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300); // 150ms delay for instant UI feel
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -131,7 +131,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
 
   // Auto-refresh packages every 3 seconds while a valid device is selected
   useEffect(() => {
-    if (!selectedDevice || !selectedDevice.id?.trim()) {
+    if (!(selectedDevice && selectedDevice.id?.trim())) {
       return;
     }
 
@@ -144,7 +144,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     };
   }, [selectedDevice]);
 
-  // Load pinned packages on mount 
+  // Load pinned packages on mount
   useEffect(() => {
     const loadPinnedPackages = async () => {
       const pinned = await packageStore.getPinnedPackages();
@@ -158,7 +158,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     if (!debouncedSearchQuery.trim()) {
       return packages;
     }
-    return packages.filter(pkg => 
+    return packages.filter((pkg) =>
       pkg.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
     );
   }, [packages, debouncedSearchQuery]);
@@ -166,7 +166,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
   // Update filtered packages when memoized result changes
   useEffect(() => {
     setFilteredPackages(memoizedFilteredPackages);
-    
+
     // Scroll to top instantly when search results change
     if (packageListRef.current) {
       packageListRef.current.scrollTop = 0;
@@ -174,12 +174,15 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
   }, [memoizedFilteredPackages]);
 
   const handleRefreshPackages = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
-  const handlePackageClick = useCallback((pkg: string) => {
-    onPackageSelect(pkg);
-  }, [onPackageSelect]);
+  const handlePackageClick = useCallback(
+    (pkg: string) => {
+      onPackageSelect(pkg);
+    },
+    [onPackageSelect]
+  );
 
   const handleAppUninstalled = useCallback(
     (pkg: string) => {
@@ -189,7 +192,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
         onPackageSelect("");
       }
     },
-    [selectedPackage, onPackageSelect],
+    [selectedPackage, onPackageSelect]
   );
 
   const { handleContextMenuAction } = usePackageContextMenu({
@@ -203,34 +206,35 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
 
   return (
     <div
-      className="h-full flex flex-col overflow-hidden"
+      className="flex h-full flex-col overflow-hidden"
       style={{ width: `${leftWidth}%` }}
     >
-      <div className="flex flex-col h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
         {/* Header with Title and Filter */}
-        <div className="flex items-center justify-between mx-2 pt-2 pb-2">
-          <h2 className="text-sm font-medium">
-            {filterOptions.find(option => option.id === filterType)?.label || "Apps"}
+        <div className="mx-2 flex items-center justify-between pt-2 pb-2">
+          <h2 className="font-medium text-sm">
+            {filterOptions.find((option) => option.id === filterType)?.label ||
+              "Apps"}
           </h2>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-1.5 hover:bg-muted rounded-md transition-colors relative">
+              <button className="relative rounded-md p-1.5 transition-colors hover:bg-muted">
                 <Filter className="h-3.5 w-3.5" />
                 {filterType !== "all" && (
-                  <div className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></div>
+                  <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {filterOptions.map((option) => (
                 <DropdownMenuItem
+                  className="flex items-center justify-between"
                   key={option.id}
                   onClick={() => setFilterType(option.id)}
-                  className="flex items-center justify-between"
                 >
                   <span>{option.label}</span>
                   {filterType === option.id && (
-                    <div className="h-2 w-2 bg-primary rounded-full"></div>
+                    <div className="h-2 w-2 rounded-full bg-primary" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -239,21 +243,21 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
         </div>
 
         {/* Search Input */}
-        <div className="mb-2 mx-2 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="relative mx-2 mb-2">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <Search className="h-4 w-4 text-muted-foreground" />
           </div>
           <input
-            type="text"
-            placeholder={`Search in ${packages.length} items`}
-            value={searchQuery}
+            className="w-full rounded-md border border-border py-1 pr-10 pl-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-1 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder={`Search in ${packages.length} items`}
+            type="text"
+            value={searchQuery}
           />
           {searchQuery && (
             <button
+              className="absolute inset-y-0 right-0 flex items-center pr-3 transition-colors hover:text-foreground"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
@@ -262,44 +266,48 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
 
         {/* Error Display */}
         {error && (
-          <div className="mb-2 mx-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-xs text-destructive">{error}</p>
+          <div className="mx-2 mb-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3">
+            <p className="text-destructive text-xs">{error}</p>
           </div>
         )}
 
         {/* Package List Container */}
-        <div className="flex-1 flex flex-col overflow-hidden mx-2">
+        <div className="mx-2 flex flex-1 flex-col overflow-hidden">
           {loadingPackages ? (
-            <div className="text-center py-4">
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-              <p className="text-xs text-muted-foreground mt-2">Loading packages...</p>
+            <div className="py-4 text-center">
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-primary border-b-2" />
+              <p className="mt-2 text-muted-foreground text-xs">
+                Loading packages...
+              </p>
             </div>
           ) : filteredPackages.length > 0 ? (
             <PackageList
-              ref={packageListRef}
-              packages={filteredPackages}
-              selectedPackage={selectedPackage}
-              onPackageClick={handlePackageClick}
               onContextMenuAction={handleContextMenuAction}
+              onPackageClick={handlePackageClick}
+              packages={filteredPackages}
               pinnedPackages={pinnedPackages}
+              ref={packageListRef}
+              selectedPackage={selectedPackage}
             />
           ) : selectedDevice ? (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
-                {searchQuery.trim() ? "No packages found matching your search" : "No packages found or failed to load"}
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
+                {searchQuery.trim()
+                  ? "No packages found matching your search"
+                  : "No packages found or failed to load"}
               </p>
               {searchQuery.trim() && packages.length > 0 && (
                 <button
+                  className="rounded border border-border px-3 py-1 text-xs transition-colors hover:bg-muted"
                   onClick={() => setSearchQuery("")}
-                  className="text-xs px-3 py-1 border border-border rounded hover:bg-muted transition-colors"
                 >
                   Clear Filter
                 </button>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center mx-2">
-              <p className="text-xs text-muted-foreground text-center py-4">
+            <div className="mx-2 flex flex-col items-center justify-center">
+              <p className="py-4 text-center text-muted-foreground text-xs">
                 Select a device to view installed packages
               </p>
             </div>

@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
 import { Smartphone, X } from "lucide-react";
-import { ipc } from "@/ipc/manager";
+import { useCallback, useEffect, useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ipc } from "@/ipc/manager";
 
 interface Device {
   id: string;
@@ -15,40 +15,45 @@ export function SimpleDeviceList() {
   const [error, setError] = useState<string | null>(null);
   const { selectedDevice, setSelectedDevice } = useSelectedDevice();
 
-  const getDeviceName = useCallback(async (deviceId: string): Promise<string> => {
-    // Cache device names to avoid repeated ADB calls
-    const nameMap: Record<string, string> = {};
-    
-    if (nameMap[deviceId]) {
-      return nameMap[deviceId];
-    }
+  const getDeviceName = useCallback(
+    async (deviceId: string): Promise<string> => {
+      // Cache device names to avoid repeated ADB calls
+      const nameMap: Record<string, string> = {};
 
-    try {
-      // Get device manufacturer and model
-      const manufacturer = await ipc.client.adb.executeADBCommand({
-        args: ["-s", deviceId, "shell", "getprop", "ro.product.manufacturer"]
-      });
-      
-      const model = await ipc.client.adb.executeADBCommand({
-        args: ["-s", deviceId, "shell", "getprop", "ro.product.model"]
-      });
+      if (nameMap[deviceId]) {
+        return nameMap[deviceId];
+      }
 
-      const brand = manufacturer?.trim() || "Unknown";
-      const deviceModel = model?.trim() || "Unknown";
-      
-      const deviceName = `${brand} ${deviceModel}`.trim() || `Device ${deviceId.substring(0, 8)}`;
-      
-      // Cache result
-      nameMap[deviceId] = deviceName;
-      
-      return deviceName;
-    } catch (error) {
-      console.error(`Failed to get device name for ${deviceId}:`, error);
-      const fallbackName = `Device ${deviceId.substring(0, 8)}`;
-      nameMap[deviceId] = fallbackName;
-      return fallbackName;
-    }
-  }, []);
+      try {
+        // Get device manufacturer and model
+        const manufacturer = await ipc.client.adb.executeADBCommand({
+          args: ["-s", deviceId, "shell", "getprop", "ro.product.manufacturer"],
+        });
+
+        const model = await ipc.client.adb.executeADBCommand({
+          args: ["-s", deviceId, "shell", "getprop", "ro.product.model"],
+        });
+
+        const brand = manufacturer?.trim() || "Unknown";
+        const deviceModel = model?.trim() || "Unknown";
+
+        const deviceName =
+          `${brand} ${deviceModel}`.trim() ||
+          `Device ${deviceId.substring(0, 8)}`;
+
+        // Cache result
+        nameMap[deviceId] = deviceName;
+
+        return deviceName;
+      } catch (error) {
+        console.error(`Failed to get device name for ${deviceId}:`, error);
+        const fallbackName = `Device ${deviceId.substring(0, 8)}`;
+        nameMap[deviceId] = fallbackName;
+        return fallbackName;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
@@ -89,12 +94,18 @@ export function SimpleDeviceList() {
           const finalDevices = [...devicesWithNames];
 
           setDevices(finalDevices);
-          
+
           // Auto-select first device if none selected, or if selected device is no longer available
-          if (finalDevices.length > 0 && (!selectedDevice || !finalDevices.some(d => d.id === selectedDevice.id))) {
+          if (
+            finalDevices.length > 0 &&
+            !(
+              selectedDevice &&
+              finalDevices.some((d) => d.id === selectedDevice.id)
+            )
+          ) {
             setSelectedDevice(finalDevices[0]);
           }
-          
+
           setError(null);
         }
       } catch (err) {
@@ -121,10 +132,12 @@ export function SimpleDeviceList() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b">
-        <div className="animate-pulse flex items-center gap-2">
+      <div className="flex items-center gap-2 border-b bg-muted px-4 py-2">
+        <div className="flex animate-pulse items-center gap-2">
           <Smartphone className="h-4 w-4" />
-          <span className="text-sm text-muted-foreground">Loading devices...</span>
+          <span className="text-muted-foreground text-sm">
+            Loading devices...
+          </span>
         </div>
       </div>
     );
@@ -132,42 +145,47 @@ export function SimpleDeviceList() {
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b">
+      <div className="flex items-center gap-2 border-b bg-muted px-4 py-2">
         <X className="h-4 w-4 text-destructive" />
-        <span className="text-sm text-destructive">{error}</span>
+        <span className="text-destructive text-sm">{error}</span>
       </div>
     );
   }
 
   if (devices.length === 0) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-muted border-b">
+      <div className="flex items-center gap-2 border-b bg-muted px-4 py-2">
         <Smartphone className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">No devices connected</span>
+        <span className="text-muted-foreground text-sm">
+          No devices connected
+        </span>
       </div>
     );
   }
 
   return (
     <>
-      <Tabs value={selectedDevice?.id || ""} onValueChange={(value) => {
-        const device = devices.find(d => d.id === value);
-        if (device) setSelectedDevice(device);
-      }} className="w-full">
+      <Tabs
+        className="w-full"
+        onValueChange={(value) => {
+          const device = devices.find((d) => d.id === value);
+          if (device) {
+            setSelectedDevice(device);
+          }
+        }}
+        value={selectedDevice?.id || ""}
+      >
         <TabsList variant="line">
           {devices.map((device) => (
-            <TabsTrigger
-              key={device.id}
-              value={device.id}
-            >
+            <TabsTrigger key={device.id} value={device.id}>
               {device.name}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
-      
+
       {/* Horizontal Divider */}
-      <div className="w-full h-px bg-gray-300" />
+      <div className="h-px w-full bg-gray-300" />
     </>
   );
 }

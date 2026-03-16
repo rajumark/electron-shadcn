@@ -1,30 +1,33 @@
-import { useState, useEffect, useCallback } from "react";
-import { Search, X, Loader2, Settings, RotateCcw, Info, RefreshCw } from "lucide-react";
-import { useSelectedDevice } from "@/hooks/use-selected-device";
-import { ipc } from "@/ipc/manager";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  Info,
+  Loader2,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  Settings,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { ipc } from "@/ipc/manager";
 
 interface Permission {
-  section: string;
-  permission: string;
-  granted?: boolean;
   details?: string;
   flags?: string;
+  granted?: boolean;
+  permission: string;
+  section: string;
 }
 
 interface AppDetailsPermissionsProps {
@@ -35,7 +38,9 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
   packageName,
 }) => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [filteredPermissions, setFilteredPermissions] = useState<Permission[]>([]);
+  const [filteredPermissions, setFilteredPermissions] = useState<Permission[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("runtime permissions");
@@ -44,30 +49,68 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
 
   const permissionTypes = [
     "runtime permissions",
-    "install permissions", 
+    "install permissions",
     "requested permissions",
     "declared permissions",
   ];
 
   const settingsOptions = [
-    { name: "Display over other apps", intent: "android.settings.ACTION_MANAGE_OVERLAY_PERMISSION" },
-    { name: "Notifications", intent: "android.settings.ACTION_APP_NOTIFICATION_SETTINGS" },
-    { name: "Storage", intent: "android.settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION" },
-    { name: "Location", intent: "android.settings.ACTION_LOCATION_SOURCE_SETTINGS" },
-    { name: "Camera", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
-    { name: "Microphone", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
-    { name: "Contacts", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
-    { name: "SMS", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
-    { name: "Phone", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
-    { name: "Calendar", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
-    { name: "Photos & Videos", intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS" },
+    {
+      name: "Display over other apps",
+      intent: "android.settings.ACTION_MANAGE_OVERLAY_PERMISSION",
+    },
+    {
+      name: "Notifications",
+      intent: "android.settings.ACTION_APP_NOTIFICATION_SETTINGS",
+    },
+    {
+      name: "Storage",
+      intent: "android.settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION",
+    },
+    {
+      name: "Location",
+      intent: "android.settings.ACTION_LOCATION_SOURCE_SETTINGS",
+    },
+    {
+      name: "Camera",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
+    {
+      name: "Microphone",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
+    {
+      name: "Contacts",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
+    {
+      name: "SMS",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
+    {
+      name: "Phone",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
+    {
+      name: "Calendar",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
+    {
+      name: "Photos & Videos",
+      intent: "android.settings.ACTION_APPLICATION_DETAILS_SETTINGS",
+    },
     { name: "VPN", intent: "android.settings.ACTION_VPN_SETTINGS" },
-    { name: "Battery", intent: "android.settings.ACTION_BATTERY_SAVER_SETTINGS" },
+    {
+      name: "Battery",
+      intent: "android.settings.ACTION_BATTERY_SAVER_SETTINGS",
+    },
   ];
 
   const fetchPermissions = useCallback(async () => {
-    if (!packageName) return;
-    
+    if (!packageName) {
+      return;
+    }
+
     setLoading(true);
     try {
       const command = selectedDevice?.id
@@ -102,7 +145,9 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
   };
 
   const parsePermissionsContent = (result: string): Permission[] => {
-    if (!result) return [];
+    if (!result) {
+      return [];
+    }
 
     const permissionsList: Permission[] = [];
     const lines = result.split("\n");
@@ -119,64 +164,80 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
         currentSection = "runtime permissions";
       }
 
-      if (currentSection === "declared permissions" && line.includes(": prot=")) {
+      if (
+        currentSection === "declared permissions" &&
+        line.includes(": prot=")
+      ) {
         const [permission, details] = line.split(": prot=");
         permissionsList.push({
           section: currentSection,
           permission: permission.trim(),
           details: details.trim(),
         });
-      } else if (currentSection === "install permissions" && line.includes(": granted=")) {
+      } else if (
+        currentSection === "install permissions" &&
+        line.includes(": granted=")
+      ) {
         const [permission, details] = line.split(": granted=");
         permissionsList.push({
           section: currentSection,
           permission: permission.trim(),
           granted: details.trim() === "true",
         });
-      } else if (currentSection === "runtime permissions" && line.includes(": granted=")) {
+      } else if (
+        currentSection === "runtime permissions" &&
+        line.includes(": granted=")
+      ) {
         // Handle runtime permissions format: "android.permission.NAME: granted=false, flags=[...]"
         const trimmedLine = line.trim();
         if (trimmedLine.startsWith("android.permission.")) {
           const colonIndex = trimmedLine.indexOf(":");
           const permission = trimmedLine.substring(0, colonIndex);
           const rest = trimmedLine.substring(colonIndex + 1);
-          
+
           // Extract granted status
           const grantedMatch = rest.match(/granted=(true|false)/);
           const granted = grantedMatch ? grantedMatch[1] === "true" : false;
-          
+
           permissionsList.push({
             section: currentSection,
             permission: permission.trim(),
-            granted: granted,
+            granted,
           });
         }
-      } else if (currentSection === "requested permissions" && line.trim()) {
-        if (!line.includes(":")) {
-          permissionsList.push({
-            section: currentSection,
-            permission: line.trim(),
-          });
-        }
+      } else if (
+        currentSection === "requested permissions" &&
+        line.trim() &&
+        !line.includes(":")
+      ) {
+        permissionsList.push({
+          section: currentSection,
+          permission: line.trim(),
+        });
       }
     }
 
     return permissionsList;
   };
 
-  const modifyPermission = async (permissionName: string, isGranted: boolean) => {
-    if (!packageName) return;
+  const modifyPermission = async (
+    permissionName: string,
+    isGranted: boolean
+  ) => {
+    if (!packageName) {
+      return;
+    }
 
-    console.log(`=== MODIFYING PERMISSION ===`);
+    console.log("=== MODIFYING PERMISSION ===");
     console.log(`Permission: ${permissionName}`);
-    console.log(`Action: ${isGranted ? 'grant' : 'revoke'}`);
+    console.log(`Action: ${isGranted ? "grant" : "revoke"}`);
     console.log(`Package: ${packageName}`);
 
     setActionLoading(isGranted ? "grant" : "revoke");
     try {
       // Clear cache before modifying to ensure fresh state
       await ipc.client.adb.clearADBCache();
-      
+
       const action = isGranted ? "grant" : "revoke";
       const command = selectedDevice?.id
         ? `-s ${selectedDevice.id} shell pm ${action} ${packageName} ${permissionName}`
@@ -189,18 +250,21 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
         useCache: false, // Don't cache this command
       });
 
-      console.log(`Command result:`, result);
+      console.log("Command result:", result);
 
       console.log(`Permission ${action}ed successfully: ${permissionName}`);
-      
+
       // Add a small delay before refreshing to ensure the change is applied
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log(`=== REFRESHING PERMISSIONS AFTER CHANGE ===`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log("=== REFRESHING PERMISSIONS AFTER CHANGE ===");
       await fetchPermissions(); // Refresh list after change
-      console.log(`=== PERMISSIONS REFRESHED ===`);
+      console.log("=== PERMISSIONS REFRESHED ===");
     } catch (error) {
-      console.error(`Failed to ${isGranted ? "grant" : "revoke"} permission: ${permissionName}`, error);
+      console.error(
+        `Failed to ${isGranted ? "grant" : "revoke"} permission: ${permissionName}`,
+        error
+      );
     } finally {
       setActionLoading(null);
     }
@@ -211,9 +275,12 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
     try {
       // Clear cache before batch operations to ensure fresh state
       await ipc.client.adb.clearADBCache();
-      
+
       for (const permission of permissions) {
-        if (permission.section === "runtime permissions" && !permission.granted) {
+        if (
+          permission.section === "runtime permissions" &&
+          !permission.granted
+        ) {
           await modifyPermission(permission.permission, true);
         }
       }
@@ -227,9 +294,12 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
     try {
       // Clear cache before batch operations to ensure fresh state
       await ipc.client.adb.clearADBCache();
-      
+
       for (const permission of permissions) {
-        if (permission.section === "runtime permissions" && permission.granted) {
+        if (
+          permission.section === "runtime permissions" &&
+          permission.granted
+        ) {
           await modifyPermission(permission.permission, false);
         }
       }
@@ -274,11 +344,13 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
   };
 
   const openSettings = async (intent: string) => {
-    if (!selectedDevice?.id) return;
-    
+    if (!selectedDevice?.id) {
+      return;
+    }
+
     try {
       const intentCommand = `-s ${selectedDevice.id} shell am start -a ${intent}`;
-      
+
       // Force stop settings first
       const forceStopCommand = `-s ${selectedDevice.id} shell am force-stop com.android.settings`;
       await ipc.client.adb.executeADBCommand({
@@ -297,13 +369,19 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
 
   // Filter permissions based on search and filter, and remove duplicates
   useEffect(() => {
-    const uniquePermissions = permissions.filter((item, index, self) => 
-      index === self.findIndex((p) => p.permission === item.permission && p.section === item.section)
+    const uniquePermissions = permissions.filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex(
+          (p) => p.permission === item.permission && p.section === item.section
+        )
     );
-    
-    const filtered = uniquePermissions.filter(item => {
+
+    const filtered = uniquePermissions.filter((item) => {
       const matchesFilter = item.section.toLowerCase().includes(selectedFilter);
-      const matchesSearch = item.permission.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = item.permission
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
       return matchesFilter && matchesSearch;
     });
     setFilteredPermissions(filtered);
@@ -314,24 +392,25 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
     fetchPermissions();
   }, [fetchPermissions]);
 
-  const hasRuntimePermissions = permissions.some(item => item.section === "runtime permissions");
+  const hasRuntimePermissions = permissions.some(
+    (item) => item.section === "runtime permissions"
+  );
   const totalPermissions = filteredPermissions.length;
-  const grantedPermissions = filteredPermissions.filter(item => item.granted).length;
+  const grantedPermissions = filteredPermissions.filter(
+    (item) => item.granted
+  ).length;
   const nonGrantedPermissions = totalPermissions - grantedPermissions;
 
   return (
-    <div className="p-0 h-full flex flex-col">
+    <div className="flex h-full flex-col p-0">
       {/* Filter Chips */}
-      <div className="mb-0 mt-0">
-        <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-          <TabsList variant="line" className="w-fit">
+      <div className="mt-0 mb-0">
+        <Tabs onValueChange={setSelectedFilter} value={selectedFilter}>
+          <TabsList className="w-fit" variant="line">
             {permissionTypes.map((type) => (
-              <TabsTrigger
-                key={type}
-                value={type}
-                className="text-xs"
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1).replace(" permissions", "")}
+              <TabsTrigger className="text-xs" key={type} value={type}>
+                {type.charAt(0).toUpperCase() +
+                  type.slice(1).replace(" permissions", "")}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -340,17 +419,17 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
         <Input
+          className="pr-10 pl-10"
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search permissions..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-10"
         />
         {searchTerm && (
           <button
+            className="absolute top-1/2 right-3 -translate-y-1/2 transform"
             onClick={() => setSearchTerm("")}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2"
           >
             <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           </button>
@@ -359,17 +438,19 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
 
       {/* Permission Summary */}
       {totalPermissions > 0 && (
-        <div className="mb-4 p-3 bg-muted rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium">Summary:</span> Total: {totalPermissions}
-            {(selectedFilter === "runtime permissions" || selectedFilter === "install permissions") && (
+        <div className="mb-4 rounded-lg bg-muted p-3">
+          <p className="text-muted-foreground text-sm">
+            <span className="font-medium">Summary:</span> Total:{" "}
+            {totalPermissions}
+            {(selectedFilter === "runtime permissions" ||
+              selectedFilter === "install permissions") && (
               <>
                 {" | Granted: "}
-                <Badge variant="secondary" className="ml-1">
+                <Badge className="ml-1" variant="secondary">
                   {grantedPermissions}
                 </Badge>
                 {" | Not Granted: "}
-                <Badge variant="outline" className="ml-1">
+                <Badge className="ml-1" variant="outline">
                   {nonGrantedPermissions}
                 </Badge>
               </>
@@ -380,76 +461,72 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
 
       {/* Action Buttons */}
       {hasRuntimePermissions && (
-        <div className="flex gap-2 mb-4 flex-wrap">
+        <div className="mb-4 flex flex-wrap gap-2">
           <Button
+            disabled={loading}
+            onClick={refreshPermissions}
             size="sm"
             variant="outline"
-            onClick={refreshPermissions}
-            disabled={loading}
           >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="mr-2 h-4 w-4" />
             )}
             Refresh
           </Button>
           <Button
-            size="sm"
-            onClick={grantAllPermissions}
-            disabled={actionLoading !== null}
             className="bg-green-600 hover:bg-green-700"
+            disabled={actionLoading !== null}
+            onClick={grantAllPermissions}
+            size="sm"
           >
             {actionLoading === "grant-all" ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
             Grant All
           </Button>
           <Button
-            size="sm"
-            onClick={revokeAllPermissions}
-            disabled={actionLoading !== null}
             className="bg-red-600 hover:bg-red-700"
+            disabled={actionLoading !== null}
+            onClick={revokeAllPermissions}
+            size="sm"
           >
             {actionLoading === "revoke-all" ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
             Revoke All
           </Button>
           <Button
+            disabled={actionLoading !== null}
+            onClick={restartApp}
             size="sm"
             variant="outline"
-            onClick={restartApp}
-            disabled={actionLoading !== null}
           >
             {actionLoading === "restart" ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <RotateCcw className="h-4 w-4 mr-2" />
+              <RotateCcw className="mr-2 h-4 w-4" />
             )}
             Restart App
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={openAppInfo}
-          >
-            <Info className="h-4 w-4 mr-2" />
+          <Button onClick={openAppInfo} size="sm" variant="outline">
+            <Info className="mr-2 h-4 w-4" />
             App Info
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64">
               {settingsOptions.map((option) => (
                 <DropdownMenuItem
+                  className="flex items-center justify-between"
                   key={option.intent}
                   onClick={() => openSettings(option.intent)}
-                  className="flex items-center justify-between"
                 >
                   {option.name}
                 </DropdownMenuItem>
@@ -462,34 +539,42 @@ const AppDetailsPermissions: React.FC<AppDetailsPermissionsProps> = ({
       {/* Permissions List */}
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-32">
+          <div className="flex h-32 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : filteredPermissions.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="py-8 text-center text-muted-foreground">
             No permissions found.
           </div>
         ) : (
           <div className="space-y-2">
             {filteredPermissions.map((item, index) => (
               <div
+                className="flex items-center justify-between rounded-lg border bg-card p-3"
                 key={index}
-                className="flex items-center justify-between p-3 rounded-lg border bg-card"
               >
                 {/* Permission Switch */}
-                {(item.section === "runtime permissions" || item.section === "install permissions") && (
+                {(item.section === "runtime permissions" ||
+                  item.section === "install permissions") && (
                   <Switch
-                    checked={item.granted || false}
-                    onCheckedChange={(checked) => modifyPermission(item.permission, checked)}
-                    disabled={item.section === "install permissions" || actionLoading !== null}
+                    checked={item.granted}
                     className="mr-3"
+                    disabled={
+                      item.section === "install permissions" ||
+                      actionLoading !== null
+                    }
+                    onCheckedChange={(checked) =>
+                      modifyPermission(item.permission, checked)
+                    }
                   />
                 )}
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-mono truncate">{item.permission}</p>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-mono text-sm">
+                    {item.permission}
+                  </p>
                   {item.details && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 text-muted-foreground text-xs">
                       {item.details}
                     </p>
                   )}

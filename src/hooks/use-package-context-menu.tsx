@@ -1,15 +1,15 @@
 import { useCallback } from "react";
+import { toast } from "sonner";
 import { ipc } from "@/ipc/manager";
 import { packageStore } from "@/utils/store";
-import { toast } from "sonner";
 
 interface UsePackageContextMenuParams {
+  onAppUninstalled?: (pkg: string) => void;
   selectedDevice: { id: string } | null;
+  setError: (message: string) => void;
   setPinnedPackages: (packages: string[]) => void;
   setRefreshKey: (updater: (prev: number) => number) => void;
-  setError: (message: string) => void;
   setSearchQuery: (value: string) => void;
-  onAppUninstalled?: (pkg: string) => void;
 }
 
 export function usePackageContextMenu({
@@ -34,11 +34,7 @@ export function usePackageContextMenu({
         const updatedPinned = await packageStore.getPinnedPackages();
         setPinnedPackages(updatedPinned);
         setRefreshKey((prev) => prev + 1);
-        toast.success(
-          isCurrentlyPinned
-            ? `Unpinned ${pkg}`
-            : `Pinned ${pkg}`,
-        );
+        toast.success(isCurrentlyPinned ? `Unpinned ${pkg}` : `Pinned ${pkg}`);
         return;
       }
 
@@ -74,14 +70,7 @@ export function usePackageContextMenu({
           }
           case "force_stop": {
             await ipc.client.adb.executeADBCommand({
-              args: [
-                "-s",
-                selectedDevice.id,
-                "shell",
-                "am",
-                "force-stop",
-                pkg,
-              ],
+              args: ["-s", selectedDevice.id, "shell", "am", "force-stop", pkg],
               useCache: false,
             });
             toast.success(`Force stopped ${pkg}`);
@@ -89,14 +78,7 @@ export function usePackageContextMenu({
           }
           case "restart": {
             await ipc.client.adb.executeADBCommand({
-              args: [
-                "-s",
-                selectedDevice.id,
-                "shell",
-                "am",
-                "force-stop",
-                pkg,
-              ],
+              args: ["-s", selectedDevice.id, "shell", "am", "force-stop", pkg],
               useCache: false,
             });
             await ipc.client.adb.executeADBCommand({
@@ -118,21 +100,14 @@ export function usePackageContextMenu({
           }
           case "clear_data": {
             const confirmed = window.confirm(
-              `Clear data for "${pkg}"?\n\nThis will erase the app's data and reset it as if it was just installed.`,
+              `Clear data for "${pkg}"?\n\nThis will erase the app's data and reset it as if it was just installed.`
             );
             if (!confirmed) {
               break;
             }
 
             await ipc.client.adb.executeADBCommand({
-              args: [
-                "-s",
-                selectedDevice.id,
-                "shell",
-                "pm",
-                "clear",
-                pkg,
-              ],
+              args: ["-s", selectedDevice.id, "shell", "pm", "clear", pkg],
               useCache: false,
             });
             toast.success(`Cleared data for ${pkg}`);
@@ -140,28 +115,21 @@ export function usePackageContextMenu({
           }
           case "uninstall": {
             const confirmed = window.confirm(
-              `Uninstall "${pkg}" from the selected device?\n\nThe app and its data will be removed.`,
+              `Uninstall "${pkg}" from the selected device?\n\nThe app and its data will be removed.`
             );
             if (!confirmed) {
               break;
             }
 
             await ipc.client.adb.executeADBCommand({
-              args: [
-                "-s",
-                selectedDevice.id,
-                "shell",
-                "pm",
-                "uninstall",
-                pkg,
-              ],
+              args: ["-s", selectedDevice.id, "shell", "pm", "uninstall", pkg],
               useCache: false,
             });
             if (onAppUninstalled) {
               onAppUninstalled(pkg);
             }
             // Wait 1 extra second after uninstall completes before refreshing
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
             setRefreshKey((prev) => prev + 1);
             toast.success(`Uninstalled ${pkg}`);
             break;
@@ -201,14 +169,7 @@ export function usePackageContextMenu({
           }
           case "enable": {
             await ipc.client.adb.executeADBCommand({
-              args: [
-                "-s",
-                selectedDevice.id,
-                "shell",
-                "pm",
-                "enable",
-                pkg,
-              ],
+              args: ["-s", selectedDevice.id, "shell", "pm", "enable", pkg],
               useCache: false,
             });
             toast.success(`Enabled ${pkg}`);
@@ -257,7 +218,7 @@ export function usePackageContextMenu({
           case "open_in_playstore_site": {
             window.open(
               `https://play.google.com/store/apps/details?id=${pkg}`,
-              "_blank",
+              "_blank"
             );
             toast.info("Opened Play Store page in browser");
             break;
@@ -268,7 +229,9 @@ export function usePackageContextMenu({
             break;
           }
           case "permissions": {
-            setError("Permissions details view is not implemented in this app yet.");
+            setError(
+              "Permissions details view is not implemented in this app yet."
+            );
             toast.info("Permissions view is not implemented yet.");
             break;
           }
@@ -283,19 +246,13 @@ export function usePackageContextMenu({
         }
       } catch (err) {
         console.error("Failed to perform ADB action:", err);
-        const message =
-          err instanceof Error ? err.message : "Unknown error";
-        setError(
-          `Failed to perform action "${action}" on ${pkg}: ${message}`,
-        );
-        toast.error(
-          `Action "${action}" failed on ${pkg}: ${message}`,
-        );
+        const message = err instanceof Error ? err.message : "Unknown error";
+        setError(`Failed to perform action "${action}" on ${pkg}: ${message}`);
+        toast.error(`Action "${action}" failed on ${pkg}: ${message}`);
       }
     },
-    [selectedDevice, setPinnedPackages, setRefreshKey, setError],
+    [selectedDevice, setPinnedPackages, setRefreshKey, setError]
   );
 
   return { handleContextMenuAction };
 }
-

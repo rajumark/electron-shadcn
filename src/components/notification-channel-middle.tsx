@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { Search, X, Settings, AlertCircle } from "lucide-react";
-import { ipc } from "@/ipc/manager";
-import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { AlertCircle, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,84 +9,95 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useSelectedDevice } from "@/hooks/use-selected-device";
+import { ipc } from "@/ipc/manager";
 
 interface NotificationChannel {
-  id: string;
-  name: string;
-  description?: string;
-  importance: number;
+  allowBubbles: number;
+  blockableSystem: boolean;
   bypassDnd: boolean;
-  lockscreenVisibility: number;
-  sound: string;
-  lights: boolean;
-  lightColor: number;
-  vibrationPattern?: string;
-  vibrationEnabled: boolean;
-  showBadge: boolean;
+  conversationId?: string;
   deleted: boolean;
+  demoted: boolean;
+  description?: string;
   group?: string;
+  id: string;
+  importance: number;
+  importanceLockedDefaultApp: boolean;
+  importantConvo: boolean;
+  lastNotificationUpdateTimeMs: number;
+  lightColor: number;
+  lights: boolean;
+  lockscreenVisibility: number;
+  name: string;
+  originalImp: number;
   packageName: string;
+  showBadge: boolean;
+  sound: string;
   uid: number;
   userLockedFields: number;
   userVisibleTaskShown: boolean;
-  blockableSystem: boolean;
-  allowBubbles: number;
-  importanceLockedDefaultApp: boolean;
-  originalImp: number;
-  conversationId?: string;
-  demoted: boolean;
-  importantConvo: boolean;
-  lastNotificationUpdateTimeMs: number;
+  vibrationEnabled: boolean;
+  vibrationPattern?: string;
 }
 
 interface NotificationChannelMiddleSideProps {
-  selectedPackage: string;
-  selectedNotificationChannel: string;
-  onNotificationChannelSelect: (channel: string) => void;
   channels: NotificationChannel[];
+  onNotificationChannelSelect: (channel: string) => void;
+  selectedNotificationChannel: string;
+  selectedPackage: string;
 }
 
-export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSideProps> = ({
+export const NotificationChannelMiddleSide: React.FC<
+  NotificationChannelMiddleSideProps
+> = ({
   selectedPackage,
   selectedNotificationChannel,
   onNotificationChannelSelect,
   channels,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filteredChannels, setFilteredChannels] = useState<NotificationChannel[]>([]);
+  const [filteredChannels, setFilteredChannels] = useState<
+    NotificationChannel[]
+  >([]);
   const [openingSettings, setOpeningSettings] = useState(false);
   const [settingsError, setSettingsError] = useState<string>("");
 
   const { selectedDevice } = useSelectedDevice();
 
   // Filter channels for selected package
-  const packageChannels = channels.filter(channel => channel.packageName === selectedPackage);
+  const packageChannels = channels.filter(
+    (channel) => channel.packageName === selectedPackage
+  );
 
   // Filter channels based on search
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredChannels(packageChannels);
-    } else {
-      const filtered = packageChannels.filter(channel =>
-        channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        channel.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (channel.description && channel.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    if (searchQuery.trim()) {
+      const filtered = packageChannels.filter(
+        (channel) =>
+          channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          channel.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (channel.description &&
+            channel.description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()))
       );
       setFilteredChannels(filtered);
+    } else {
+      setFilteredChannels(packageChannels);
     }
   }, [searchQuery, packageChannels]);
 
   // Open notification settings for the selected package
   const openNotificationSettings = async () => {
-    if (!selectedDevice || !selectedDevice.id?.trim() || !selectedPackage) {
+    if (!(selectedDevice && selectedDevice.id?.trim() && selectedPackage)) {
       setSettingsError("No device or package selected");
       return;
     }
 
     setOpeningSettings(true);
     setSettingsError("");
-    
+
     try {
       await ipc.client.adb.executeCommand({
         deviceId: selectedDevice.id,
@@ -95,7 +105,8 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
       });
     } catch (error) {
       console.error("Failed to open notification settings:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       setSettingsError(`Failed to open notification settings: ${errorMessage}`);
     } finally {
       setOpeningSettings(false);
@@ -125,15 +136,15 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
 
   return (
     <>
-      <div className="flex flex-col h-full border-l border-r border-border">
-      <div className="flex flex-col h-full min-h-0">
-        {/* Header */}
-        <div className="p-3 border-b border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium">
-              {selectedPackage} ({packageChannels.length})
-            </h3>
-            {/* Settings button temporarily hidden
+      <div className="flex h-full flex-col border-border border-r border-l">
+        <div className="flex h-full min-h-0 flex-col">
+          {/* Header */}
+          <div className="border-border border-b p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-medium text-sm">
+                {selectedPackage} ({packageChannels.length})
+              </h3>
+              {/* Settings button temporarily hidden
             <button
               onClick={openNotificationSettings}
               disabled={!selectedDevice || !selectedPackage || openingSettings}
@@ -143,116 +154,121 @@ export const NotificationChannelMiddleSide: React.FC<NotificationChannelMiddleSi
               <Settings className={`h-3.5 w-3.5 ${openingSettings ? 'animate-spin' : ''}`} />
             </button>
             */}
-          </div>
-          
-          {/* Search Input */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-3 w-3 text-muted-foreground" />
             </div>
-            <input
-              type="text"
-              placeholder={`Search in ${packageChannels.length} channels`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-1 text-xs border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
-              >
-                <X className="h-3 w-3 text-muted-foreground" />
-              </button>
+
+            {/* Search Input */}
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <Search className="h-3 w-3 text-muted-foreground" />
+              </div>
+              <input
+                className="w-full rounded-md border border-border py-1 pr-10 pl-10 text-xs focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search in ${packageChannels.length} channels`}
+                type="text"
+                value={searchQuery}
+              />
+              {searchQuery && (
+                <button
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 transition-colors hover:text-foreground"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-3 w-3 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Channels List */}
+          <div className="flex-1 overflow-auto">
+            {filteredChannels.length > 0 ? (
+              <div className="space-y-1 p-2">
+                {filteredChannels.map((channel) => {
+                  const channelKey = getChannelKey(channel);
+                  return (
+                    <div
+                      className={`cursor-pointer rounded border border-border p-2 transition-colors hover:bg-muted/50 ${
+                        selectedNotificationChannel === channelKey
+                          ? "border-primary bg-muted"
+                          : ""
+                      }`}
+                      key={channelKey}
+                      onClick={() => onNotificationChannelSelect(channelKey)}
+                    >
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="flex-1 truncate font-medium text-xs">
+                            {channel.name}
+                          </span>
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-xs ${
+                              channel.deleted
+                                ? "bg-destructive/20 text-destructive"
+                                : channel.showBadge
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {channel.deleted
+                              ? "Deleted"
+                              : channel.showBadge
+                                ? "Badge"
+                                : "No Badge"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex-1 truncate font-mono text-muted-foreground text-xs">
+                            {channel.id}
+                          </span>
+                          <div className="flex items-center space-x-1 text-muted-foreground text-xs">
+                            <span>{formatImportance(channel.importance)}</span>
+                            {channel.lights && <span>🔦</span>}
+                            {channel.vibrationEnabled && <span>📳</span>}
+                          </div>
+                        </div>
+                        {channel.group && (
+                          <div className="truncate text-muted-foreground text-xs">
+                            Group: {channel.group}
+                          </div>
+                        )}
+                        {channel.description && (
+                          <div className="truncate text-muted-foreground text-xs">
+                            {channel.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center p-8">
+                <p className="text-center text-muted-foreground text-xs">
+                  {searchQuery.trim()
+                    ? "No channels found matching your search"
+                    : "No channels found for this package"}
+                </p>
+              </div>
             )}
           </div>
         </div>
-
-        {/* Channels List */}
-        <div className="flex-1 overflow-auto">
-          {filteredChannels.length > 0 ? (
-            <div className="p-2 space-y-1">
-              {filteredChannels.map((channel) => {
-                const channelKey = getChannelKey(channel);
-                return (
-                  <div
-                    key={channelKey}
-                    className={`p-2 border border-border rounded cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedNotificationChannel === channelKey ? "bg-muted border-primary" : ""
-                    }`}
-                    onClick={() => onNotificationChannelSelect(channelKey)}
-                  >
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium truncate flex-1">
-                          {channel.name}
-                        </span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded ${
-                          channel.deleted 
-                            ? 'bg-destructive/20 text-destructive' 
-                            : channel.showBadge 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {channel.deleted ? 'Deleted' : channel.showBadge ? 'Badge' : 'No Badge'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground truncate flex-1 font-mono">
-                          {channel.id}
-                        </span>
-                        <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                          <span>{formatImportance(channel.importance)}</span>
-                          {channel.lights && <span>🔦</span>}
-                          {channel.vibrationEnabled && <span>📳</span>}
-                        </div>
-                      </div>
-                      {channel.group && (
-                        <div className="text-xs text-muted-foreground truncate">
-                          Group: {channel.group}
-                        </div>
-                      )}
-                      {channel.description && (
-                        <div className="text-xs text-muted-foreground truncate">
-                          {channel.description}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center p-8">
-              <p className="text-xs text-muted-foreground text-center">
-                {searchQuery.trim() 
-                  ? "No channels found matching your search" 
-                  : "No channels found for this package"
-                }
-              </p>
-            </div>
-          )}
-        </div>
       </div>
-    </div>
 
-    {/* Error Dialog */}
-    <Dialog open={!!settingsError} onOpenChange={closeErrorDialog}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-            Settings Error
-          </DialogTitle>
-          <DialogDescription>
-            {settingsError}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={closeErrorDialog}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  </>
+      {/* Error Dialog */}
+      <Dialog onOpenChange={closeErrorDialog} open={!!settingsError}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              Settings Error
+            </DialogTitle>
+            <DialogDescription>{settingsError}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={closeErrorDialog}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

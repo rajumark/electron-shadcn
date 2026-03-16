@@ -1,5 +1,23 @@
 import { useRouter } from "@tanstack/react-router";
-import { Code, FileText, Home, Settings, Terminal, Eye, Phone, Users, MessageSquare, Image, Activity, Calendar, Info, Battery, Bell, Cpu, Folder } from "lucide-react";
+import {
+  Activity,
+  Battery,
+  Bell,
+  Calendar,
+  Code,
+  Cpu,
+  Eye,
+  FileText,
+  Folder,
+  Home,
+  Image,
+  Info,
+  MessageSquare,
+  Phone,
+  Settings,
+  Terminal,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCurrentTheme, setTheme } from "@/actions/theme";
 import {

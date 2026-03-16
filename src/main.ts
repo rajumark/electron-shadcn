@@ -8,7 +8,7 @@ import {
 } from "electron-devtools-installer";
 import { UpdateSourceType, updateElectronApp } from "update-electron-app";
 import { ipcContext } from "@/ipc/context";
-import { IPC_CHANNELS } from "./constants"; 
+import { IPC_CHANNELS } from "./constants";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,16 +35,16 @@ function createWindow() {
 
   // Register DevTools shortcut
   if (inDevelopment) {
-    globalShortcut.register('F12', () => {
+    globalShortcut.register("F12", () => {
       if (mainWindow.webContents.isDevToolsOpened()) {
         mainWindow.webContents.closeDevTools();
       } else {
         mainWindow.webContents.openDevTools();
       }
     });
-    
+
     // Also register Cmd+Option+I for macOS
-    globalShortcut.register('CommandOrControl+Alt+I', () => {
+    globalShortcut.register("CommandOrControl+Alt+I", () => {
       if (mainWindow.webContents.isDevToolsOpened()) {
         mainWindow.webContents.closeDevTools();
       } else {
@@ -117,7 +117,7 @@ app.on("activate", () => {
   }
 });
 
-app.on('will-quit', () => {
+app.on("will-quit", () => {
   // Clean up shortcuts
   globalShortcut.unregisterAll();
 });

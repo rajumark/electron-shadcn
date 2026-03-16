@@ -1,16 +1,15 @@
 import { exec, spawn } from "node:child_process";
-import { createWriteStream } from "node:fs";
+import { createWriteStream, existsSync } from "node:fs";
 import { access, chmod, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { app } from "electron";
-import { existsSync } from "node:fs";
 
 const execAsync = promisify(exec);
 
 // Cache for ADB commands to avoid repeated calls
 const commandCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 30000; // 30 seconds
+const CACHE_DURATION = 30_000; // 30 seconds
 
 // Debounce function to prevent rapid successive calls
 function debounce<T extends (...args: any[]) => any>(
@@ -217,24 +216,24 @@ export const ADBHelper = {
   getADBPath(): string {
     const platform = process.platform;
     const adbExecutable = platform === "win32" ? "adb.exe" : "adb";
-    
+
     // First try the bundled platform-tools path
     const bundledPath = join(platformToolsPath, adbExecutable);
     if (existsSync(bundledPath)) {
       return bundledPath;
     }
-    
+
     // Fallback to system PATH (for development/testing)
     try {
-      const { execSync } = require('child_process');
-      const systemPath = execSync('which adb', { encoding: 'utf8' }).trim();
+      const { execSync } = require("child_process");
+      const systemPath = execSync("which adb", { encoding: "utf8" }).trim();
       if (systemPath && existsSync(systemPath)) {
         return systemPath;
       }
     } catch (error) {
       // ADB not found in PATH
     }
-    
+
     // Return bundled path as last resort (will show error if it doesn't exist)
     return bundledPath;
   },
@@ -243,7 +242,7 @@ export const ADBHelper = {
     args: string[],
     options?: {
       useCache?: boolean;
-    },
+    }
   ): Promise<string> {
     const useCache = options?.useCache ?? true;
     const cacheKey = JSON.stringify(args);
@@ -257,16 +256,16 @@ export const ADBHelper = {
     }
 
     const adbPath = this.getADBPath();
-    console.log('=== DEBUG: ADB Path exists:', existsSync(adbPath));
-    console.log('=== DEBUG: ADB Path:', adbPath);
+    console.log("=== DEBUG: ADB Path exists:", existsSync(adbPath));
+    console.log("=== DEBUG: ADB Path:", adbPath);
 
     return new Promise((resolve, reject) => {
-      const adb = spawn(adbPath, args, { 
+      const adb = spawn(adbPath, args, {
         stdio: "pipe",
         // Add timeout to prevent hanging
-        timeout: 30000 
+        timeout: 30_000,
       });
-      
+
       let stdout = "";
       let stderr = "";
 
@@ -279,8 +278,8 @@ export const ADBHelper = {
       });
 
       adb.on("close", (code) => {
-        console.log('=== DEBUG: ADB Process closed with code:', code);
-        console.log('=== DEBUG: ADB stderr:', stderr);
+        console.log("=== DEBUG: ADB Process closed with code:", code);
+        console.log("=== DEBUG: ADB stderr:", stderr);
         if (code === 0) {
           if (useCache) {
             commandCache.set(cacheKey, { data: stdout, timestamp: now });
@@ -302,13 +301,13 @@ export const ADBHelper = {
       });
 
       adb.on("error", (error) => {
-        console.error('=== DEBUG: ADB Process error:', error);
+        console.error("=== DEBUG: ADB Process error:", error);
         reject(new Error(`Failed to execute ADB command: ${error.message}`));
       });
 
       // Handle timeout
       adb.on("timeout", () => {
-        console.error('=== DEBUG: ADB Process timeout');
+        console.error("=== DEBUG: ADB Process timeout");
         adb.kill();
         reject(new Error("ADB command timed out after 30 seconds"));
       });
@@ -316,7 +315,7 @@ export const ADBHelper = {
   },
 
   // Debounced version for package listing to prevent rapid calls
-  executeADBCommandDebounced: debounce(function(this: any, args: string[]) {
+  executeADBCommandDebounced: debounce(function (this: any, args: string[]) {
     return this.executeADBCommand(args);
   }, 500),
 
