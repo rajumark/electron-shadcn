@@ -156,19 +156,9 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
   };
 
   const highlightSearchMatches = (text: string) => {
-    if (!searchQuery.trim()) {
-      return text;
-    }
-
-    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const parts = text.split(regex);
-    
-    return parts.map((part, index) => {
-      if (regex.test(part)) {
-        return `<mark class="bg-yellow-300 text-black">${part}</mark>`;
-      }
-      return part;
-    }).join('');
+    // Textarea doesn't support HTML highlighting, so we'll just return the text
+    // Search functionality will work through browser's built-in search (Ctrl+F)
+    return text;
   };
 
   const updateSearchMatches = () => {
@@ -298,7 +288,7 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
       </div>
 
       {/* Output area with controls */}
-      <div className="flex-1 flex flex-col p-4 overflow-hidden">
+      <div className="flex-1 flex flex-col p-4 min-h-0">
         {/* Output controls */}
         <div className="flex items-center gap-2 mb-4 flex-shrink-0">
           <Button
@@ -321,56 +311,16 @@ export function ADBTerminal({ className }: ADBTerminalProps) {
           </Button>
           
           <div className="flex-1" />
-          
-          {/* Search controls */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in output"
-              className="w-48 h-6 text-xs"
-            />
-            {totalMatches > 0 && (
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                ({currentMatchIndex + 1}/{totalMatches})
-              </span>
-            )}
-            <Button
-              onClick={handlePrevMatch}
-              variant="outline"
-              size="sm"
-              disabled={totalMatches === 0}
-            >
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={handleNextMatch}
-              variant="outline"
-              size="sm"
-              disabled={totalMatches === 0}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
 
         {/* Output display */}
-        <div className="flex-1 bg-muted/50 rounded-md p-3 font-mono text-xs overflow-auto">
-          {output ? (
-            <div
-              ref={outputRef}
-              className="whitespace-pre-wrap break-words"
-              dangerouslySetInnerHTML={{
-                __html: highlightSearchMatches(output)
-              }}
-            />
-          ) : (
-            <div className="text-muted-foreground italic">
-              Command output will appear here...
-            </div>
-          )}
-        </div>
+        <textarea
+          ref={outputRef}
+          value={output}
+          readOnly
+          className="flex-1 bg-muted/50 rounded-md p-3 font-mono text-xs overflow-auto min-h-0 resize-none border-none focus:outline-none"
+          placeholder="Command output will appear here..."
+        />
       </div>
     </div>
   );
