@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import LunaPerformanceMonitor from "luna-performance-monitor/react";
-import { Battery, Cpu, MemoryStick, Zap, Thermometer, Volt } from "lucide-react";
+import { Battery, Cpu, MemoryStick, Zap, Thermometer, Power } from "lucide-react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
 import { Button } from "@/components/ui/button";
@@ -277,7 +277,10 @@ function PerformancePage() {
     return () => Math.round(dataRef.current.cpuLoads[idx] || 0);
   }, []);
 
-  const fpsData = useCallback(() => fps, [fps]);
+  const fpsData = useCallback(() => {
+    // Return actual FPS value or 0 if not available
+    return fps > 0 ? fps : 0;
+  }, [fps]);
 
   const formatDuration = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
@@ -351,7 +354,7 @@ function PerformancePage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-3 text-sm">
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Volt className="h-3 w-3" />
+              <Power className="h-3 w-3" />
               <span>{batteryVoltage}</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
@@ -400,7 +403,7 @@ function PerformancePage() {
                 )}
               </svg>
             </div>
-            <span className={`text-sm font-medium ${batteryColor}`}>
+            <span className="text-sm font-medium">
               {batteryLevel}
             </span>
           </div>
