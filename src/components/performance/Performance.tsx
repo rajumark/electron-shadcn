@@ -121,15 +121,20 @@ function PerformancePage() {
     let voltage = 0;
 
     for (const line of lines) {
-      if (line.includes('level:')) {
-        level = parseInt(line.split(':')[1].trim());
-      } else if (line.includes('temperature:')) {
-        temperature = parseInt(line.split(':')[1].trim());
-      } else if (line.includes('voltage:')) {
-        voltage = parseInt(line.split(':')[1].trim());
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('level:')) {
+        const value = parseInt(trimmedLine.split(':')[1].trim());
+        level = isNaN(value) || value < 0 ? 0 : Math.min(value, 100); // Clamp between 0-100
+      } else if (trimmedLine.startsWith('temperature:')) {
+        const value = parseInt(trimmedLine.split(':')[1].trim());
+        temperature = isNaN(value) || value < 0 ? 0 : value;
+      } else if (trimmedLine.startsWith('voltage:')) {
+        const value = parseInt(trimmedLine.split(':')[1].trim());
+        voltage = isNaN(value) || value < 0 ? 0 : value;
       }
     }
 
+    console.log('=== DEBUG: Battery parsed:', { level, temperature, voltage, sampleLine: lines.find(l => l.includes('level:')) });
     return { level, temperature, voltage };
   };
 
@@ -291,9 +296,9 @@ function PerformancePage() {
     }
   };
 
-  const batteryLevel = `${performanceData.batteryLevel}%`;
-  const batteryVoltage = `${(performanceData.batteryVoltage / 1000).toFixed(2)}V`;
-  const batteryTemperature = `${(performanceData.batteryTemperature / 10).toFixed(1)}°C`;
+  const batteryLevel = performanceData.batteryLevel > 0 ? `${performanceData.batteryLevel}%` : 'N/A';
+  const batteryVoltage = performanceData.batteryVoltage > 0 ? `${(performanceData.batteryVoltage / 1000).toFixed(2)}V` : 'N/A';
+  const batteryTemperature = performanceData.batteryTemperature > 0 ? `${(performanceData.batteryTemperature / 10).toFixed(1)}°C` : 'N/A';
 
   if (!selectedDevice) {
     return (
