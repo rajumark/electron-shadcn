@@ -1,22 +1,39 @@
 import type React from "react";
+import { useState } from "react";
+import { Menu } from "lucide-react";
 import DragWindowRegion from "@/components/drag-window-region";
-import { MenubarDemo } from "@/components/menubar-demo";
 import { RightSideQuickPanel } from "@/components/right-side-quick-panel";
 import { SimpleDeviceList } from "@/components/simple-device-list";
 import { LeftSidebar } from "@/components/left-sidebar";
+import { Button } from "@/components/ui/button";
 
 export default function BaseLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarVisible(!isSidebarVisible);
+  };
+
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
       <DragWindowRegion title="Pilotfish" />
-      <MenubarDemo />
+      <div className="flex items-center gap-2 px-2 py-1 border-b">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="h-8 w-8"
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+      </div>
       <SimpleDeviceList />
       <div className="relative flex-1 overflow-hidden flex">
-        <LeftSidebar />
+        {isSidebarVisible && <LeftSidebar />}
         <div className="flex-1 overflow-hidden">
           {children}
         </div>

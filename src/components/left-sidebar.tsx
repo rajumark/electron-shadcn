@@ -41,7 +41,6 @@ export function LeftSidebar() {
   return (
     <div className="w-48 bg-background border-r border-border flex flex-col">
       <div className="p-2 flex-1 overflow-y-auto">
-        <h2 className="text-sm font-semibold text-muted-foreground mb-2 sticky top-0 bg-background">Navigation</h2>
         <nav className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -54,10 +53,14 @@ export function LeftSidebar() {
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.35 text-sm rounded-sm transition-colors",
                   "hover:bg-accent hover:text-accent-foreground",
-                  isActive && "bg-accent text-accent-foreground font-medium"
+                  "text-[rgba(0,0,0,0.8)]",
+                  isActive && "bg-accent text-accent-foreground font-medium text-black"
                 )}
               >
-                <Icon className="h-[14px] w-[14px]" />
+                <Icon className={cn(
+                  "h-[14px] w-[14px] text-[rgba(0,0,0,0.7)]",
+                  isActive && "text-black"
+                )} />
                 <span className="truncate text-sm">{item.label}</span>
               </button>
             );

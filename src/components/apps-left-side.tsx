@@ -40,7 +40,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Filter state
-  const [filterType, setFilterType] = useState<string>("all"); // all, user, system, disabled
+  const [filterType, setFilterType] = useState<string>("user"); // all, user, system, disabled
 
   // Filter options
   const filterOptions = [
