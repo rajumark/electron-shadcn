@@ -1,0 +1,18 @@
+<libraries>
+  <library
+      name="org.jetbrains.kotlin:kotlin-stdlib:2.1.0@jar"
+      jars="/Users/raju/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.1.0/85f8b81009cda5890e54ba67d64b5e599c645020/kotlin-stdlib-2.1.0.jar"
+      resolved="org.jetbrains.kotlin:kotlin-stdlib:2.1.0"/>
+  <library
+      name="com.google.protobuf:protobuf-java:3.22.3@jar"
+      jars="/Users/raju/.gradle/caches/modules-2/files-2.1/com.google.protobuf/protobuf-java/3.22.3/fdee98b8f6abab73f146a4edb4c09e56f8278d03/protobuf-java-3.22.3.jar"
+      resolved="com.google.protobuf:protobuf-java:3.22.3"/>
+  <library
+      name="org.nanohttpd:nanohttpd:2.3.1@jar"
+      jars="/Users/raju/.gradle/caches/modules-2/files-2.1/org.nanohttpd/nanohttpd/2.3.1/a8d54d1ca554a77f377eff6bf9e16ca8383c8f6c/nanohttpd-2.3.1.jar"
+      resolved="org.nanohttpd:nanohttpd:2.3.1"/>
+  <library
+      name="org.jetbrains:annotations:13.0@jar"
+      jars="/Users/raju/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar"
+      resolved="org.jetbrains:annotations:13.0"/>
+</libraries>

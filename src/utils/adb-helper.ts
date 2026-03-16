@@ -4,6 +4,7 @@ import { access, chmod, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { app } from "electron";
+import adbkit, { Adb } from "@devicefarmer/adbkit";
 
 const execAsync = promisify(exec);
 
@@ -327,5 +328,13 @@ export const ADBHelper = {
   // Get cache size for monitoring
   getCacheSize(): number {
     return commandCache.size;
+  },
+
+  // Get ADB client instance
+  async getClient() {
+    const adbPath = this.getADBPath();
+    return Adb.createClient({
+      bin: adbPath,
+    });
   },
 };

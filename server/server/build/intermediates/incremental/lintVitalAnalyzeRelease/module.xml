@@ -1,0 +1,18 @@
+<lint-module
+    format="1"
+    dir="/Users/raju/Documents/ele/electron-shadcn/server/server"
+    name=":server"
+    type="APP"
+    maven="server:server:"
+    gradle="7.4.2"
+    buildFolder="build"
+    bootClassPath="/usr/local/share/android-commandlinetools/platforms/android-34/android.jar:/usr/local/share/android-commandlinetools/build-tools/30.0.3/core-lambda-stubs.jar"
+    javaSourceLevel="1.8"
+    compileTarget="android-34">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

@@ -1,0 +1,8 @@
+io.liriliri.aya.server-pngs-0 /Users/raju/Documents/ele/electron-shadcn/server/server/build/generated/res/pngs/release
+io.liriliri.aya.server-resValues-1 /Users/raju/Documents/ele/electron-shadcn/server/server/build/generated/res/resValues/release
+io.liriliri.aya.server-rs-2 /Users/raju/Documents/ele/electron-shadcn/server/server/build/generated/res/rs/release
+io.liriliri.aya.server-mergeReleaseResources-3 /Users/raju/Documents/ele/electron-shadcn/server/server/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+io.liriliri.aya.server-mergeReleaseResources-4 /Users/raju/Documents/ele/electron-shadcn/server/server/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+io.liriliri.aya.server-merged_res-5 /Users/raju/Documents/ele/electron-shadcn/server/server/build/intermediates/merged_res/release
+io.liriliri.aya.server-main-6 /Users/raju/Documents/ele/electron-shadcn/server/server/src/main/res
+io.liriliri.aya.server-release-7 /Users/raju/Documents/ele/electron-shadcn/server/server/src/release/res

@@ -13,6 +13,7 @@ interface PackageListProps {
   packages: string[];
   pinnedPackages: string[];
   selectedPackage: string;
+  packageIcons?: Record<string, string>;
 }
 
 const ITEM_HEIGHT = 28; // Height of each package item
@@ -32,17 +33,19 @@ const PackageListItem = React.memo(
     onClick,
     onContextMenuAction,
     isPinned,
+    icon,
   }: {
     pkg: string;
     isSelected: boolean;
     onClick: () => void;
     onContextMenuAction: (action: string, pkg: string) => void;
     isPinned: boolean;
+    icon?: string;
   }) => (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
-          className={`cursor-pointer truncate border-border/50 border-b p-2 font-mono text-xs last:border-b-0 ${
+          className={`cursor-pointer truncate border-border/50 border-b p-2 font-mono text-xs last:border-b-0 flex items-center gap-2 ${
             isSelected
               ? "bg-primary text-primary-foreground"
               : "bg-background hover:bg-muted"
@@ -54,7 +57,17 @@ const PackageListItem = React.memo(
           }}
           title={pkg}
         >
-          {pkg}
+          {icon && (
+            <img 
+              src={icon} 
+              alt="" 
+              className="w-4 h-4 flex-shrink-0"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
+          <span className="truncate flex-1">{pkg}</span>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
@@ -139,6 +152,7 @@ export const PackageList = React.memo(
       onPackageClick,
       onContextMenuAction,
       pinnedPackages,
+      packageIcons = {},
     }: PackageListProps,
     ref
   ) {
@@ -224,6 +238,7 @@ export const PackageList = React.memo(
               onClick={() => onPackageClick(item.data!)}
               onContextMenuAction={onContextMenuAction}
               pkg={item.data!}
+              icon={packageIcons[item.data!]}
             />
           );
         });
@@ -233,6 +248,8 @@ export const PackageList = React.memo(
       selectedPackage,
       onPackageClick,
       onContextMenuAction,
+      packageIcons,
+      pinnedPackages,
     ]);
 
     const totalHeight = allItems.length * ITEM_HEIGHT;

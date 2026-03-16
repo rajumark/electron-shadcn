@@ -8,6 +8,9 @@ import { files } from "./files";
 
 const execAsync = promisify(exec);
 
+// Cache Aya server instances per device
+const serverCache = new Map<string, any>();
+
 export const checkADB = os.handler(async () => {
   return await ADBHelper.checkADBReady();
 });
@@ -521,6 +524,161 @@ export const executeCustomADBCommand = os
     }
   });
 
+export const getAppIcon = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+      packageName: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    console.log(`[ICON-EXTRACTION] Getting icon for package: ${input.packageName} on device: ${input.deviceId}`)
+    
+    try {
+      // Direct ADB approach - multiple methods to extract icon
+      console.log(`[ICON-EXTRACTION] Using direct ADB approach...`)
+      
+      // Method 1: Get APK path
+      const apkPathCommand = [
+        "-s",
+        input.deviceId,
+        "shell",
+        `pm path ${input.packageName} | cut -d: -f2`,
+      ];
+
+      console.log(`[ICON-EXTRACTION] Getting APK path...`)
+      const apkPath = (await ADBHelper.executeADBCommand(apkPathCommand)).trim();
+      console.log(`[ICON-EXTRACTION] APK path: ${apkPath}`)
+      
+      if (!apkPath) {
+        throw new Error("APK not found");
+      }
+
+      // Method 2: Try using dumpsys to get icon info
+      try {
+        console.log(`[ICON-EXTRACTION] Trying dumpsys method...`)
+        const dumpsysCommand = [
+          "-s",
+          input.deviceId,
+          "shell",
+          `dumpsys package ${input.packageName} | grep -A 5 -B 5 "application-icon" | head -10`,
+        ];
+
+        const dumpsysResult = await ADBHelper.executeADBCommand(dumpsysCommand);
+        console.log(`[ICON-EXTRACTION] Dumpsys result: ${dumpsysResult}`)
+        
+        // Look for icon path in dumpsys output
+        const iconMatch = dumpsysResult.match(/application-icon.*?:\s*([^\s]+)/);
+        if (iconMatch && iconMatch[1]) {
+          const iconPath = iconMatch[1];
+          console.log(`[ICON-EXTRACTION] Found icon path: ${iconPath}`)
+          
+          // Convert to base64
+          const base64Command = [
+            "-s",
+            input.deviceId,
+            "shell",
+            `base64 "${iconPath}" 2>/dev/null`,
+          ];
+
+          const base64Result = await ADBHelper.executeADBCommand(base64Command);
+          if (base64Result.trim() && !base64Result.includes("base64:")) {
+            const iconData = `data:image/png;base64,${base64Result.trim()}`
+            console.log(`[ICON-EXTRACTION] Successfully extracted icon via dumpsys, length: ${iconData.length}`)
+            return { 
+              success: true, 
+              icon: iconData
+            };
+          }
+        }
+      } catch (dumpsysError) {
+        console.log(`[ICON-EXTRACTION] Dumpsys method failed: ${dumpsysError}`)
+      }
+
+      // Method 3: Try to extract any PNG from APK (handle split APKs)
+      try {
+        console.log(`[ICON-EXTRACTION] Trying APK extraction method...`)
+        
+        // For split APKs, try the base APK first, then others
+        const apkFiles = apkPath.includes('\n') ? apkPath.split('\n') : [apkPath]
+        
+        for (const apkFile of apkFiles) {
+          if (!apkFile.trim()) continue
+          
+          console.log(`[ICON-EXTRACTION] Trying APK: ${apkFile}`)
+          const extractCommand = [
+            "-s",
+            input.deviceId,
+            "shell",
+            `unzip -l "${apkFile}" | grep -i "\\.png$" | grep -v ".9.png" | head -1 | awk '{print $4}'`,
+          ];
+
+          const iconFile = (await ADBHelper.executeADBCommand(extractCommand)).trim();
+          console.log(`[ICON-EXTRACTION] Found icon file in APK: ${iconFile}`)
+          
+          if (iconFile && iconFile !== "") {
+            const extractAndBase64Command = [
+              "-s",
+              input.deviceId,
+              "shell",
+              `unzip -p "${apkFile}" "${iconFile}" | base64 2>/dev/null`,
+            ];
+
+            const base64Result = await ADBHelper.executeADBCommand(extractAndBase64Command);
+            if (base64Result.trim() && !base64Result.includes("base64:")) {
+              const iconData = `data:image/png;base64,${base64Result.trim()}`
+              console.log(`[ICON-EXTRACTION] Successfully extracted icon via APK, length: ${iconData.length}`)
+              return { 
+                success: true, 
+                icon: iconData
+              };
+            }
+          }
+        }
+      } catch (extractError) {
+        console.log(`[ICON-EXTRACTION] APK extraction method failed: ${extractError}`)
+      }
+
+      // Fallback: Generate colored icon based on package name
+      console.log(`[ICON-EXTRACTION] Using fallback generated icon...`)
+      const hashCode = (str: string) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return Math.abs(hash);
+      };
+
+      const hash = hashCode(input.packageName);
+      const hue = hash % 360;
+      const initial = input.packageName.charAt(0).toUpperCase();
+      
+      const svgIcon = `<svg width="48" height="48" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" fill="hsl(${hue}, 70%, 60%)"/>
+          <text x="24" y="32" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">${initial}</text>
+        </svg>`;
+
+      const svgBase64 = Buffer.from(svgIcon).toString('base64');
+      const fallbackIcon = `data:image/svg+xml;base64,${svgBase64}`
+      
+      console.log(`[ICON-EXTRACTION] Generated fallback icon, length: ${fallbackIcon.length}`)
+      return { 
+        success: true, 
+        icon: fallbackIcon
+      };
+
+    } catch (error) {
+      console.error(`[ICON-EXTRACTION] Failed to get icon for ${input.packageName}:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        icon: null,
+      };
+    }
+  });
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -542,6 +700,7 @@ export const adb = {
   executeCommand,
   getBatteryInfo,
   executeCustomADBCommand,
+  getAppIcon,
   performance,
   files,
 };

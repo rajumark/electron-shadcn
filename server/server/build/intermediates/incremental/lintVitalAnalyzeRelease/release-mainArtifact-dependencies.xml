@@ -1,0 +1,32 @@
+<dependencies>
+  <compile
+      roots="org.jetbrains.kotlin:kotlin-stdlib:2.1.0@jar,com.google.protobuf:protobuf-java:3.22.3@jar,org.nanohttpd:nanohttpd:2.3.1@jar,org.jetbrains:annotations:13.0@jar">
+    <dependency
+        name="org.jetbrains.kotlin:kotlin-stdlib:2.1.0@jar"
+        simpleName="org.jetbrains.kotlin:kotlin-stdlib"/>
+    <dependency
+        name="com.google.protobuf:protobuf-java:3.22.3@jar"
+        simpleName="com.google.protobuf:protobuf-java"/>
+    <dependency
+        name="org.nanohttpd:nanohttpd:2.3.1@jar"
+        simpleName="org.nanohttpd:nanohttpd"/>
+    <dependency
+        name="org.jetbrains:annotations:13.0@jar"
+        simpleName="org.jetbrains:annotations"/>
+  </compile>
+  <package
+      roots="org.jetbrains.kotlin:kotlin-stdlib:2.1.0@jar,com.google.protobuf:protobuf-java:3.22.3@jar,org.nanohttpd:nanohttpd:2.3.1@jar,org.jetbrains:annotations:13.0@jar">
+    <dependency
+        name="org.jetbrains.kotlin:kotlin-stdlib:2.1.0@jar"
+        simpleName="org.jetbrains.kotlin:kotlin-stdlib"/>
+    <dependency
+        name="com.google.protobuf:protobuf-java:3.22.3@jar"
+        simpleName="com.google.protobuf:protobuf-java"/>
+    <dependency
+        name="org.nanohttpd:nanohttpd:2.3.1@jar"
+        simpleName="org.nanohttpd:nanohttpd"/>
+    <dependency
+        name="org.jetbrains:annotations:13.0@jar"
+        simpleName="org.jetbrains:annotations"/>
+  </package>
+</dependencies>
