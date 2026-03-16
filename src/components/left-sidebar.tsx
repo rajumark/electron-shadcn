@@ -52,13 +52,13 @@ export function LeftSidebar() {
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm transition-colors",
+                  "w-full flex items-center gap-2 px-2 py-1.35 text-sm rounded-sm transition-colors",
                   "hover:bg-accent hover:text-accent-foreground",
                   isActive && "bg-accent text-accent-foreground font-medium"
                 )}
               >
-                <Icon className="h-4 w-4" />
-                <span className="truncate">{item.label}</span>
+                <Icon className="h-[14px] w-[14px]" />
+                <span className="truncate text-sm">{item.label}</span>
               </button>
             );
           })}
