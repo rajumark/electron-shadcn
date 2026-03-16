@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import LunaPerformanceMonitor from "luna-performance-monitor/react";
-import { Battery, Cpu, MemoryStick, Zap } from "lucide-react";
+import { Battery, Cpu, MemoryStick, Zap, Thermometer, Volt } from "lucide-react";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
 import { Button } from "@/components/ui/button";
@@ -300,6 +300,15 @@ function PerformancePage() {
   const batteryVoltage = performanceData.batteryVoltage > 0 ? `${(performanceData.batteryVoltage / 1000).toFixed(2)}V` : 'N/A';
   const batteryTemperature = performanceData.batteryTemperature > 0 ? `${(performanceData.batteryTemperature / 10).toFixed(1)}°C` : 'N/A';
 
+  // Battery color based on level
+  const getBatteryColor = (level: number) => {
+    if (level <= 15) return 'text-red-500';
+    if (level <= 40) return 'text-orange-500';
+    return 'text-green-500';
+  };
+
+  const batteryColor = getBatteryColor(performanceData.batteryLevel);
+
   if (!selectedDevice) {
     return (
       <div className="flex h-full flex-col">
@@ -340,13 +349,60 @@ function PerformancePage() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{batteryVoltage}</span>
-            <span className="text-sm">{batteryTemperature}</span>
+          <div className="flex items-center gap-3 text-sm">
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Volt className="h-3 w-3" />
+              <span>{batteryVoltage}</span>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Thermometer className="h-3 w-3" />
+              <span>{batteryTemperature}</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <Battery className="h-4 w-4" />
-            <span className="text-sm font-medium">{batteryLevel}</span>
+            <div className="relative h-5 w-8">
+              {/* Battery outline */}
+              <svg
+                viewBox="0 0 24 12"
+                className="h-full w-full"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Battery body */}
+                <rect
+                  x="1"
+                  y="2"
+                  width="20"
+                  height="8"
+                  rx="1"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                {/* Battery terminal */}
+                <rect
+                  x="21"
+                  y="4"
+                  width="2"
+                  height="4"
+                  rx="0.5"
+                  fill="currentColor"
+                />
+                {/* Battery fill */}
+                {performanceData.batteryLevel > 0 && (
+                  <rect
+                    x="2.5"
+                    y="3.5"
+                    width={`${(performanceData.batteryLevel / 100) * 17}`}
+                    height="5"
+                    rx="0.5"
+                    className={batteryColor.replace('text-', 'fill-')}
+                  />
+                )}
+              </svg>
+            </div>
+            <span className={`text-sm font-medium ${batteryColor}`}>
+              {batteryLevel}
+            </span>
           </div>
           <Button disabled={isLoading} onClick={fetchPerformanceData} size="sm" variant="ghost">
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
