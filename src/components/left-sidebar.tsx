@@ -23,6 +23,7 @@ const navigationItems = [
   { path: "/notifications", label: "Notifications", icon: Bell },
   { path: "/cpu-usage", label: "CPU Usage", icon: Cpu },
   { path: "/file-explorer", label: "File Explorer", icon: Folder },
+  { path: "/pilotfish-settings", label: "Pilotfish Settings", icon: Settings },
 ];
 
 export function LeftSidebar() {
@@ -39,8 +40,8 @@ export function LeftSidebar() {
 
   return (
     <div className="w-48 bg-background border-r border-border flex flex-col">
-      <div className="p-2">
-        <h2 className="text-sm font-semibold text-muted-foreground mb-2">Navigation</h2>
+      <div className="p-2 flex-1 overflow-y-auto">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-2 sticky top-0 bg-background">Navigation</h2>
         <nav className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;

@@ -15,6 +15,7 @@ import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SecondRouteImport } from './routes/second'
 import { Route as PropertiesRouteImport } from './routes/properties'
+import { Route as PilotfishSettingsRouteImport } from './routes/pilotfish-settings'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MediasRouteImport } from './routes/medias'
@@ -57,6 +58,11 @@ const SecondRoute = SecondRouteImport.update({
 const PropertiesRoute = PropertiesRouteImport.update({
   id: '/properties',
   path: '/properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PilotfishSettingsRoute = PilotfishSettingsRouteImport.update({
+  id: '/pilotfish-settings',
+  path: '/pilotfish-settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/medias': typeof MediasRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
+  '/pilotfish-settings': typeof PilotfishSettingsRoute
   '/properties': typeof PropertiesRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/medias': typeof MediasRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
+  '/pilotfish-settings': typeof PilotfishSettingsRoute
   '/properties': typeof PropertiesRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/medias': typeof MediasRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
+  '/pilotfish-settings': typeof PilotfishSettingsRoute
   '/properties': typeof PropertiesRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/medias'
     | '/messages'
     | '/notifications'
+    | '/pilotfish-settings'
     | '/properties'
     | '/second'
     | '/settings'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/medias'
     | '/messages'
     | '/notifications'
+    | '/pilotfish-settings'
     | '/properties'
     | '/second'
     | '/settings'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/medias'
     | '/messages'
     | '/notifications'
+    | '/pilotfish-settings'
     | '/properties'
     | '/second'
     | '/settings'
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   MediasRoute: typeof MediasRoute
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
+  PilotfishSettingsRoute: typeof PilotfishSettingsRoute
   PropertiesRoute: typeof PropertiesRoute
   SecondRoute: typeof SecondRoute
   SettingsRoute: typeof SettingsRoute
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       path: '/properties'
       fullPath: '/properties'
       preLoaderRoute: typeof PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pilotfish-settings': {
+      id: '/pilotfish-settings'
+      path: '/pilotfish-settings'
+      fullPath: '/pilotfish-settings'
+      preLoaderRoute: typeof PilotfishSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -429,6 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   MediasRoute: MediasRoute,
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
+  PilotfishSettingsRoute: PilotfishSettingsRoute,
   PropertiesRoute: PropertiesRoute,
   SecondRoute: SecondRoute,
   SettingsRoute: SettingsRoute,
