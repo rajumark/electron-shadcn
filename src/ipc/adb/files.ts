@@ -71,11 +71,13 @@ async function executeShellCommand(
       }
       const pkg = segments[0];
       const fullCmd = `run-as ${pkg} ${cmd} "${path}"${dest ? ` "${dest}"` : ''}`;
+      console.log('=== DEBUG: Executing run-as command:', fullCmd);
       return await ADBHelper.executeADBCommand(["-s", deviceId, "shell", fullCmd]);
     }
   }
 
-  const fullCmd = `${cmd} "${path}"`;
+  const fullCmd = `${cmd} "${path}"${dest ? ` "${dest}"` : ''}`;
+  console.log('=== DEBUG: Executing shell command:', fullCmd);
   return await ADBHelper.executeADBCommand(["-s", deviceId, "shell", fullCmd]);
 }
 
@@ -358,9 +360,11 @@ export const createDir = os
   .handler(async ({ input }) => {
     try {
       const { deviceId, path } = input;
+      console.log('=== DEBUG: Creating folder with path:', path);
       await executeShellCommand(deviceId, 'mkdir -p', path);
       return { success: true };
     } catch (error) {
+      console.error('=== DEBUG: Create folder error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
