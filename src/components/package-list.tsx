@@ -14,6 +14,7 @@ interface PackageListProps {
   pinnedPackages: string[];
   selectedPackage: string;
   packageIcons?: Record<string, string>;
+  onPackageVisible?: (packageNames: string[]) => void;
 }
 
 const ITEM_HEIGHT = 28; // Height of each package item
@@ -153,11 +154,13 @@ export const PackageList = React.memo(
       onContextMenuAction,
       pinnedPackages,
       packageIcons = {},
+      onPackageVisible,
     }: PackageListProps,
     ref
   ) {
     const [scrollTop, setScrollTop] = React.useState(0);
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const visibleItemsRef = React.useRef<Set<string>>(new Set());
 
     // Use forwarded ref or local ref
     React.useImperativeHandle(ref, () => containerRef.current!);
@@ -209,10 +212,34 @@ export const PackageList = React.memo(
       return { startIndex, endIndex };
     }, [scrollTop, allItems.length]);
 
-    // Handle scroll events
+    // Handle scroll events with lazy loading
     const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-      setScrollTop(e.currentTarget.scrollTop);
-    }, []);
+      const newScrollTop = e.currentTarget.scrollTop;
+      setScrollTop(newScrollTop);
+      
+      // Lazy load icons for visible packages
+      if (onPackageVisible) {
+        const containerHeight = e.currentTarget.clientHeight;
+        const startIndex = Math.max(0, Math.floor(newScrollTop / ITEM_HEIGHT) - BUFFER_SIZE);
+        const endIndex = Math.min(allItems.length, startIndex + VISIBLE_ITEMS + BUFFER_SIZE * 2);
+        
+        const visiblePackages: string[] = [];
+        for (let i = startIndex; i < endIndex; i++) {
+          const item = allItems[i];
+          if (item.type === "item" && item.data) {
+            visiblePackages.push(item.data);
+          }
+        }
+        
+        // Only trigger if we have new visible packages
+        const newVisibleItems = new Set(visiblePackages);
+        if (newVisibleItems.size !== visibleItemsRef.current.size || 
+            !Array.from(newVisibleItems).every(pkg => visibleItemsRef.current.has(pkg))) {
+          visibleItemsRef.current = newVisibleItems;
+          onPackageVisible(visiblePackages);
+        }
+      }
+    }, [allItems, onPackageVisible]);
 
     // Render only visible items
     const visibleItems = useMemo(() => {

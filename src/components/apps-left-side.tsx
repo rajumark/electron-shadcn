@@ -82,6 +82,16 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     setPackageIcons(prev => ({ ...prev, ...newIcons }));
   }, [selectedDevice]);
 
+  // Fetch icons for packages that become visible (lazy loading)
+  const fetchIconsForVisiblePackages = useCallback(async (visiblePackageNames: string[]) => {
+    const packagesWithoutIcons = visiblePackageNames.filter(pkg => !packageIcons[pkg]);
+    
+    if (packagesWithoutIcons.length > 0) {
+      console.log(`[LAZY-LOAD] Fetching icons for ${packagesWithoutIcons.length} visible packages`);
+      await fetchPackageIcons(packagesWithoutIcons);
+    }
+  }, [packageIcons, fetchPackageIcons]);
+
   // Fetch packages when device is selected or refresh is triggered
   useEffect(() => {
     if (!(selectedDevice && selectedDevice.id?.trim())) {
@@ -124,8 +134,8 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
           setFilteredPackages(packageList);
           setHasLoadedOnce(true);
           
-          // Fetch icons for new packages (only first 20 to avoid overwhelming)
-          fetchPackageIcons(packageList.slice(0, 20));
+          // Fetch icons for initial packages (first 30 for better UX)
+          fetchPackageIcons(packageList.slice(0, 30));
         }
       } catch (error) {
         console.error("Failed to fetch packages:", error);
@@ -324,6 +334,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
               ref={packageListRef}
               selectedPackage={selectedPackage}
               packageIcons={packageIcons}
+              onPackageVisible={fetchIconsForVisiblePackages}
             />
           ) : selectedDevice ? (
             <div className="mx-2 flex flex-col items-center justify-center">
