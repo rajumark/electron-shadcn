@@ -1,7 +1,7 @@
 {
   "name": "pilotfish",
   "productName": "Pilotfish",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Pilotfish - Beautiful desktop application built with Electron and shadcn-ui",
   "main": ".vite/build/main.js",
   "private": true,

@@ -45,7 +45,7 @@ export function LeftSidebar() {
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentRoute === item.path;
-            
+             
             return (
               <button
                 key={item.path}
