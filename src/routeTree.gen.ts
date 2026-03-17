@@ -14,6 +14,7 @@ import { Route as UiInspectorRouteImport } from './routes/ui-inspector'
 import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SecondRouteImport } from './routes/second'
+import { Route as ScreenshotRouteImport } from './routes/screenshot'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as PilotfishSettingsRouteImport } from './routes/pilotfish-settings'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -53,6 +54,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SecondRoute = SecondRouteImport.update({
   id: '/second',
   path: '/second',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScreenshotRoute = ScreenshotRouteImport.update({
+  id: '/screenshot',
+  path: '/screenshot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertiesRoute = PropertiesRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/pilotfish-settings': typeof PilotfishSettingsRoute
   '/properties': typeof PropertiesRoute
+  '/screenshot': typeof ScreenshotRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/pilotfish-settings': typeof PilotfishSettingsRoute
   '/properties': typeof PropertiesRoute
+  '/screenshot': typeof ScreenshotRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/pilotfish-settings': typeof PilotfishSettingsRoute
   '/properties': typeof PropertiesRoute
+  '/screenshot': typeof ScreenshotRoute
   '/second': typeof SecondRoute
   '/settings': typeof SettingsRoute
   '/terminal': typeof TerminalRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/pilotfish-settings'
     | '/properties'
+    | '/screenshot'
     | '/second'
     | '/settings'
     | '/terminal'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/pilotfish-settings'
     | '/properties'
+    | '/screenshot'
     | '/second'
     | '/settings'
     | '/terminal'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/pilotfish-settings'
     | '/properties'
+    | '/screenshot'
     | '/second'
     | '/settings'
     | '/terminal'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   PilotfishSettingsRoute: typeof PilotfishSettingsRoute
   PropertiesRoute: typeof PropertiesRoute
+  ScreenshotRoute: typeof ScreenshotRoute
   SecondRoute: typeof SecondRoute
   SettingsRoute: typeof SettingsRoute
   TerminalRoute: typeof TerminalRoute
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/second'
       fullPath: '/second'
       preLoaderRoute: typeof SecondRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/screenshot': {
+      id: '/screenshot'
+      path: '/screenshot'
+      fullPath: '/screenshot'
+      preLoaderRoute: typeof ScreenshotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties': {
@@ -451,6 +471,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   PilotfishSettingsRoute: PilotfishSettingsRoute,
   PropertiesRoute: PropertiesRoute,
+  ScreenshotRoute: ScreenshotRoute,
   SecondRoute: SecondRoute,
   SettingsRoute: SettingsRoute,
   TerminalRoute: TerminalRoute,
