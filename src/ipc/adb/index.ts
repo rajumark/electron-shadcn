@@ -679,6 +679,192 @@ export const getAppIcon = os
     }
   });
 
+export const getDeviceOverview = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const overview: Record<string, string | number | boolean> = {};
+
+      // Get device properties
+      const properties = [
+        { key: 'name', command: 'getprop ro.product.name' },
+        { key: 'brand', command: 'getprop ro.product.manufacturer' },
+        { key: 'model', command: 'getprop ro.product.model' },
+        { key: 'serialno', command: 'getprop ro.serialno' },
+        { key: 'kernelVersion', command: 'uname -r' },
+        { key: 'processor', command: 'getprop ro.product.cpu.abilist' },
+        { key: 'abi', command: 'getprop ro.product.cpu.abi' },
+        { key: 'wifi', command: 'dumpsys wifi | grep "Wi-Fi is" | head -1' },
+        { key: 'ip', command: 'ip route get 1.1.1.1 | awk \'{print $7}\' | head -1' },
+        { key: 'mac', command: 'cat /sys/class/net/wlan0/address 2>/dev/null || ip link show | grep -m1 ether | awk \'{print $2}\'' },
+      ];
+
+      for (const prop of properties) {
+        try {
+          const result = await ADBHelper.executeADBCommand([
+            "-s", input.deviceId, "shell", prop.command
+          ]);
+          overview[prop.key] = result.trim();
+        } catch (error) {
+          overview[prop.key] = 'Unknown';
+        }
+      }
+
+      // Get CPU info
+      try {
+        const cpuResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "cat /proc/cpuinfo | grep 'processor' | wc -l"
+        ]);
+        overview.cpuNum = parseInt(cpuResult.trim()) || 1;
+      } catch (error) {
+        overview.cpuNum = 1;
+      }
+
+      // Get memory info
+      try {
+        const memResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "cat /proc/meminfo | grep MemTotal"
+        ]);
+        const memMatch = memResult.match(/(\d+)/);
+        overview.memTotal = memMatch ? parseInt(memMatch[1]) * 1024 : 0; // Convert KB to bytes
+      } catch (error) {
+        overview.memTotal = 0;
+      }
+
+      // Get storage info
+      try {
+        const storageResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "df /data | tail -1"
+        ]);
+        const storageParts = storageResult.trim().split(/\s+/);
+        if (storageParts.length >= 4) {
+          overview.storageTotal = parseInt(storageParts[1]) * 1024; // Convert KB to bytes
+          overview.storageUsed = parseInt(storageParts[2]) * 1024; // Convert KB to bytes
+        }
+      } catch (error) {
+        overview.storageTotal = 0;
+        overview.storageUsed = 0;
+      }
+
+      // Get display info
+      try {
+        const densityResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "wm density"
+        ]);
+        const densityMatch = densityResult.match(/Physical density: (\d+)/);
+        overview.density = densityMatch ? parseInt(densityMatch[1]) : 0;
+
+        const sizeResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "wm size"
+        ]);
+        const sizeMatch = sizeResult.match(/Physical size: (\d+x\d+)/);
+        overview.physicalResolution = sizeMatch ? sizeMatch[1] : 'Unknown';
+        overview.physicalDensity = overview.density;
+        overview.resolution = overview.physicalResolution;
+      } catch (error) {
+        overview.density = 0;
+        overview.physicalResolution = 'Unknown';
+        overview.physicalDensity = 0;
+        overview.resolution = 'Unknown';
+      }
+
+      // Get font scale
+      try {
+        const fontScaleResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "settings get system font_scale"
+        ]);
+        overview.fontScale = parseFloat(fontScaleResult.trim()) || 1.0;
+      } catch (error) {
+        overview.fontScale = 1.0;
+      }
+
+      // Get Android version info
+      try {
+        const versionResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "getprop ro.build.version.release"
+        ]);
+        const sdkResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "getprop ro.build.version.sdk"
+        ]);
+        overview.androidVersion = versionResult.trim();
+        overview.sdkVersion = parseInt(sdkResult.trim()) || 0;
+      } catch (error) {
+        overview.androidVersion = 'Unknown';
+        overview.sdkVersion = 0;
+      }
+
+      // Check root status
+      try {
+        const rootResult = await ADBHelper.executeADBCommand([
+          "-s", input.deviceId, "shell", "su -c 'echo root' 2>/dev/null"
+        ]);
+        overview.root = rootResult.trim() === 'root';
+      } catch (error) {
+        overview.root = false;
+      }
+
+      return { success: true, data: overview };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        data: null,
+      };
+    }
+  });
+
+export const root = os
+  .input(
+    z.object({
+      deviceId: z.string(),
+    })
+  )
+  .handler(async ({ input }) => {
+    try {
+      const result = await ADBHelper.executeADBCommand([
+        "-s", input.deviceId, "shell", "su -c 'echo root'"
+      ]);
+      return { success: true, rooted: result.trim() === 'root' };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        rooted: false,
+      };
+    }
+  });
+
+export const restartAdbServer = os.handler(async () => {
+  try {
+    await ADBHelper.executeADBCommand(["kill-server"]);
+    await ADBHelper.executeADBCommand(["start-server"]);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
+export const openAdbCli = os.handler(async () => {
+  try {
+    const adbPath = ADBHelper.getADBPath();
+    // This would need to be implemented based on the platform
+    // For now, just return the path
+    return { success: true, path: adbPath };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+});
+
 export const adb = {
   checkADB,
   downloadADB,
@@ -701,6 +887,10 @@ export const adb = {
   getBatteryInfo,
   executeCustomADBCommand,
   getAppIcon,
+  getDeviceOverview,
+  root,
+  restartAdbServer,
+  openAdbCli,
   performance,
   files,
 };
