@@ -36,7 +36,6 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
   const [refreshKey, setRefreshKey] = useState(0);
   const [pinnedPackages, setPinnedPackages] = useState<string[]>([]);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [packageIcons, setPackageIcons] = useState<Record<string, string>>({});
   const packageListRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -53,52 +52,12 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
 
   const { selectedDevice } = useSelectedDevice();
 
-  // Fetch package icons
-  const fetchPackageIcons = useCallback(async (packageNames: string[]) => {
-    if (!selectedDevice) return;
-
-    const iconPromises = packageNames.map(async (pkg) => {
-      try {
-        const result = await ipc.client.adb.getAppIcon({
-          deviceId: selectedDevice.id,
-          packageName: pkg,
-        });
-        return { pkg, icon: result.success ? result.icon : null };
-      } catch (error) {
-        console.warn(`Failed to get icon for ${pkg}:`, error);
-        return { pkg, icon: null };
-      }
-    });
-
-    const results = await Promise.all(iconPromises);
-    const newIcons: Record<string, string> = {};
-    
-    results.forEach(({ pkg, icon }) => {
-      if (icon) {
-        newIcons[pkg] = icon;
-      }
-    });
-
-    setPackageIcons(prev => ({ ...prev, ...newIcons }));
-  }, [selectedDevice]);
-
-  // Fetch icons for packages that become visible (lazy loading)
-  const fetchIconsForVisiblePackages = useCallback(async (visiblePackageNames: string[]) => {
-    const packagesWithoutIcons = visiblePackageNames.filter(pkg => !packageIcons[pkg]);
-    
-    if (packagesWithoutIcons.length > 0) {
-      console.log(`[LAZY-LOAD] Fetching icons for ${packagesWithoutIcons.length} visible packages`);
-      await fetchPackageIcons(packagesWithoutIcons);
-    }
-  }, [packageIcons, fetchPackageIcons]);
-
   // Fetch packages when device is selected or refresh is triggered
   useEffect(() => {
     if (!(selectedDevice && selectedDevice.id?.trim())) {
       setPackages([]);
       setFilteredPackages([]);
       setHasLoadedOnce(false);
-      setPackageIcons({});
       return;
     }
 
@@ -133,9 +92,6 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
           setPackages(packageList);
           setFilteredPackages(packageList);
           setHasLoadedOnce(true);
-          
-          // Fetch icons for initial packages (first 30 for better UX)
-          fetchPackageIcons(packageList.slice(0, 30));
         }
       } catch (error) {
         console.error("Failed to fetch packages:", error);
@@ -146,7 +102,6 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
         );
         setPackages([]);
         setFilteredPackages([]);
-        setPackageIcons({});
       } finally {
         if (!hasLoadedOnce) {
           setLoadingPackages(false);
@@ -155,7 +110,7 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
     };
 
     fetchPackages();
-  }, [selectedDevice, refreshKey, filterType, packages, hasLoadedOnce, fetchPackageIcons]);
+  }, [selectedDevice, refreshKey, filterType, packages, hasLoadedOnce]);
 
   // Debounced search to prevent UI lag
   useEffect(() => {
@@ -333,8 +288,6 @@ export const AppsLeftSide: React.FC<AppsLeftSideProps> = ({
               pinnedPackages={pinnedPackages}
               ref={packageListRef}
               selectedPackage={selectedPackage}
-              packageIcons={packageIcons}
-              onPackageVisible={fetchIconsForVisiblePackages}
             />
           ) : selectedDevice ? (
             <div className="mx-2 flex flex-col items-center justify-center">
