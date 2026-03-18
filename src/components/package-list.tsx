@@ -54,11 +54,6 @@ const PackageListItem = React.memo(
           }}
           title={pkg}
         >
-          <div className="w-4 h-4 flex-shrink-0 bg-blue-500 rounded flex items-center justify-center">
-            <span className="text-white text-xs font-bold">
-              {pkg.charAt(0).toUpperCase()}
-            </span>
-          </div>
           <span className="truncate flex-1">{pkg}</span>
         </div>
       </ContextMenuTrigger>
