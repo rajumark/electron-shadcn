@@ -55,7 +55,7 @@ const PackageListItem = React.memo(
           title={pkg}
         >
           <span className="truncate flex-1">{pkg}</span>
-        </div>
+        </div> 
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={() => onContextMenuAction("start", pkg)}>
