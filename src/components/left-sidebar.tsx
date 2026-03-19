@@ -59,7 +59,7 @@ export function LeftSidebar() {
                   isActive ? "text-primary" : "text-muted-foreground"
                 )} />
                 <span className={cn(
-                  "truncate text-sm transition-colors",
+                  "truncate text-sm transition-colors select-none",
                   isActive ? "text-primary font-medium" : "text-foreground"
                 )}>{item.label}</span>
               </button>

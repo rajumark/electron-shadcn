@@ -16,10 +16,21 @@ interface DisplayInfo {
   physicalDisplayInfo: string;
   refreshRate: string;
   colorMode: string;
-  hdrCapabilities: string;
   displayState: string;
   supportedModes: string;
-  displayCutout: string;
+  deviceInfo: string;
+  activeRefreshRate: string;
+  supportedRefreshRates: string;
+  brightnessRange: string;
+  roundedCorners: string;
+  deviceModel: string;
+  deviceManufacturer: string;
+  androidVersion: string;
+  sdkVersion: string;
+  density: string;
+  systemInsets: string;
+  navigationInfo: string;
+  dpiInfo: string;
 }
 
 export default function DisplayInfo() {
@@ -40,7 +51,31 @@ export default function DisplayInfo() {
 
     setIsLoading(true);
     try {
-      // Basic commands that should work
+      // Get additional device info
+      const [
+        modelResult,
+        manufacturerResult,
+        androidVersionResult,
+        sdkVersionResult
+      ] = await Promise.all([
+        ipc.client.adb.executeADBCommand({
+          args: ["-s", selectedDevice.id, "shell", "getprop", "ro.product.model"],
+          useCache: false
+        }),
+        ipc.client.adb.executeADBCommand({
+          args: ["-s", selectedDevice.id, "shell", "getprop", "ro.product.manufacturer"],
+          useCache: false
+        }),
+        ipc.client.adb.executeADBCommand({
+          args: ["-s", selectedDevice.id, "shell", "getprop", "ro.build.version.release"],
+          useCache: false
+        }),
+        ipc.client.adb.executeADBCommand({
+          args: ["-s", selectedDevice.id, "shell", "getprop", "ro.build.version.sdk"],
+          useCache: false
+        })
+      ]);
+
       const [
         displayInfoResult,
         screenSizeResult,
@@ -65,30 +100,117 @@ export default function DisplayInfo() {
         })
       ]);
 
-      // Parse    basic display info to extract specific details
+      // Parse display info to extract specific details
       const displayInfoText = displayInfoResult || "";
-      const orientation = displayInfoText.match(/orientation=\d+/)?.[0] || "Not found";
-      const refreshRate = displayInfoText.match(/refreshRate=[\d.]+/)?.[0] || "Not found";
-      const colorMode = displayInfoText.match(/colorMode=\d+/)?.[0] || "Not found";
-      const displayState = displayInfoText.match(/mState=\w+/)?.[0] || "Not found";
-      const physicalDisplayInfo = displayInfoText.match(/mBaseDisplayInfo[^=]+=[^{]+{[^}]+}/)?.[0] || "Not found";
-      const hdrCapabilities = displayInfoText.match(/hdr=[^,\s]+/)?.[0] || "Not found";
-      const supportedModes = displayInfoText.match(/supportedModes=[^,\s]+/)?.[0] || "Not found";
-      const displayCutout = displayInfoText.match(/cutout=[^,\s]+/)?.[0] || "Not found";
+      const displayMetricsText = displayMetricsResult || "";
+      
+      // Extract orientation from window displays
+      const orientationMatch = displayMetricsText.match(/mDisplayRotation=(ROTATION_\w+)/);
+      const currentAppOrientationMatch = displayMetricsText.match(/mCurrentAppOrientation=(SCREEN_ORIENTATION_\w+)/);
+      const orientation = orientationMatch ? orientationMatch[0] : 
+                         currentAppOrientationMatch ? currentAppOrientationMatch[0] : 
+                         "orientation=0 (PORTRAIT)";
+      
+      // Extract refresh rate info
+      const activeRefreshRateMatch = displayInfoText.match(/renderFrameRate ([\d.]+)/);
+      const activeRefreshRate = activeRefreshRateMatch ? `renderFrameRate ${activeRefreshRateMatch[1]}` : "Not found";
+      
+      const supportedRefreshRatesMatch = displayInfoText.match(/supportedRefreshRates \[([\d., ]+)\]/);
+      const supportedRefreshRates = supportedRefreshRatesMatch ? supportedRefreshRatesMatch[1] : "Not found";
+      
+      // Extract color mode
+      const colorModeMatch = displayInfoText.match(/colorMode (\d+)/);
+      const activeColorModeMatch = displayInfoText.match(/mActiveColorMode=(\d+)/);
+      const colorMode = colorModeMatch ? `colorMode ${colorModeMatch[1]}` : "Not found";
+      const activeColorMode = activeColorModeMatch ? `mActiveColorMode=${activeColorModeMatch[1]}` : "Not found";
+      
+      // Extract display state
+      const displayStateMatch = displayInfoText.match(/mState=(\w+)/);
+      const displayState = displayStateMatch ? displayStateMatch[0] : "Not found";
+      
+      // Extract HDR capabilities (removed from display but keeping for parsing)
+      const hdrCapabilitiesMatch = displayInfoText.match(/hdrCapabilities\{[^}]+\}/);
+      const hdrCapabilities = hdrCapabilitiesMatch ? hdrCapabilitiesMatch[0] : "Not found";
+      
+      // Extract supported modes from DisplayDeviceInfo
+      const supportedModesMatch = displayInfoText.match(/supportedModes\s*\[([^\]]+)\]/);
+      const supportedModes = supportedModesMatch ? supportedModesMatch[0] : "Not found";
+      
+      // Extract brightness range
+      const brightnessMinMatch = displayInfoText.match(/brightnessMinimum ([\d.]+)/);
+      const brightnessMaxMatch = displayInfoText.match(/brightnessMaximum ([\d.]+)/);
+      const brightnessRange = (brightnessMinMatch && brightnessMaxMatch) ? 
+        `brightnessMinimum ${brightnessMinMatch[1]}, brightnessMaximum ${brightnessMaxMatch[1]}` : "Not found";
+      
+      // Extract rounded corners
+      const roundedCornersMatch = displayInfoText.match(/roundedCorners RoundedCorners\{[^}]+\}/);
+      const roundedCorners = roundedCornersMatch ? roundedCornersMatch[0] : "Not found";
+      
+      // Extract device info
+      const deviceInfoMatch = displayInfoText.match(/DisplayDeviceInfo\{"[^"]+"[^,]+, [\d x \d]+/);
+      const deviceInfo = deviceInfoMatch ? deviceInfoMatch[0] : "Not found";
+      
+      // Physical display info
+      const deviceWidthMatch = displayInfoText.match(/deviceWidth=(\d+)/);
+      const deviceHeightMatch = displayInfoText.match(/deviceHeight=(\d+)/);
+      const physicalDisplayInfo = (deviceWidthMatch && deviceHeightMatch) ? 
+        `deviceWidth=${deviceWidthMatch[1]}, deviceHeight=${deviceHeightMatch[1]}` : "Not found";
+      
+      // Extract additional useful info
+      const densityMatch = displayInfoText.match(/density (\d+)/);
+      const density = densityMatch ? densityMatch[1] : "Not found";
+      
+      const aspectRatioMatch = displayInfoText.match(/mMinAspectRatio=([\d.]+).*mMaxAspectRatio=([\d.]+)/);
+      const aspectRatio = aspectRatioMatch ? 
+        `Min: ${aspectRatioMatch[1]}, Max: ${aspectRatioMatch[2]}` : "Not found";
+
+      // Extract system insets and navigation info
+      const statusBarHeightMatch = displayMetricsText.match(/statusBars.*frame=\[0,0-\[\d+,(\d+)\]/) ||
+                                       displayInfoText.match(/type=statusBars.*frame=\[0,0-\[\d+,(\d+)\]/);
+      const navigationBarHeightMatch = displayMetricsText.match(/navigationBars.*frame=\[0,(\d+)-\[\d+,\d+\]/) ||
+                                           displayInfoText.match(/type=navigationBars.*frame=\[0,(\d+)-\[\d+,\d+\]/);
+      const statusBarHeight = statusBarHeightMatch ? statusBarHeightMatch[1] : "115"; // Default fallback
+      const navigationBarHeight = navigationBarHeightMatch ? navigationBarHeightMatch[1] : "59"; // Default fallback
+      const systemInsets = `Status Bar: ${statusBarHeight}px, Navigation Bar: ${navigationBarHeight}px`;
+      
+      const navigationTypeMatch = displayMetricsText.match(/mHasBottomNavigationBar=(true|false)/);
+      const navigationType = navigationTypeMatch ? 
+        (navigationTypeMatch[1] === 'true' ? 'Bottom Navigation' : 'Side Navigation') : 'Bottom Navigation';
+      const gestureNavigation = displayMetricsText.includes('mSystemGestureExclusion') || displayInfoText.includes('systemGestures');
+      const navigationInfo = `${navigationType} (Gesture Navigation: ${gestureNavigation ? 'Yes' : 'No'})`;
+      
+      // Extract display cutout bounds for better UI development info (removed from display)
+      const cutoutBoundsMatch = displayInfoText.match(/boundingRect=\{Bounds=\[Rect\([^\)]+\)\]/);
+      const cutoutBounds = cutoutBoundsMatch ? cutoutBoundsMatch[0] : "No cutout";
+      
+      // Extract pixel density info
+      const dpiMatch = displayInfoText.match(/(\d+\.\d+) x (\d+\.\d+) dpi/);
+      const dpiInfo = dpiMatch ? `X: ${dpiMatch[1]}, Y: ${dpiMatch[2]}` : "Not found";
 
       const displayInfo: DisplayInfo = {
         displayInfo: displayInfoText || "Failed to fetch",
         screenSize: screenSizeResult || "Failed to fetch",
         screenDensity: screenDensityResult || "Failed to fetch",
-        displayMetrics: displayMetricsResult || "Failed to fetch",
+        displayMetrics: displayMetricsText || "Failed to fetch",
         orientation,
         physicalDisplayInfo,
-        refreshRate,
-        colorMode,
-        hdrCapabilities,
+        refreshRate: activeRefreshRate,
+        colorMode: `${colorMode} (${activeColorMode})`,
         displayState,
         supportedModes,
-        displayCutout
+        deviceInfo,
+        activeRefreshRate,
+        supportedRefreshRates: supportedRefreshRates ? `supportedRefreshRates=[${supportedRefreshRates}]` : "Not found",
+        brightnessRange,
+        roundedCorners,
+        deviceModel: modelResult || "Not found",
+        deviceManufacturer: manufacturerResult || "Not found",
+        androidVersion: androidVersionResult || "Not found",
+        sdkVersion: sdkVersionResult || "Not found",
+        density: density ? `density ${density}` : "Not found",
+        systemInsets,
+        navigationInfo,
+        dpiInfo
       };
 
       setDisplayData(displayInfo);
@@ -206,22 +328,6 @@ export default function DisplayInfo() {
             </CardContent>
           </Card>
 
-          {/* Display Metrics */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Display Metrics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre 
-                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80 max-h-32 overflow-y-auto" 
-                onClick={() => copyToClipboard(displayData?.displayMetrics || "")}
-                title="Click to copy"
-              >
-                {displayData?.displayMetrics || "No data"}
-              </pre>
-            </CardContent>
-          </Card>
-
           {/* Orientation */}
           <Card>
             <CardHeader className="pb-2">
@@ -286,22 +392,6 @@ export default function DisplayInfo() {
             </CardContent>
           </Card>
 
-          {/* HDR Capabilities */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">HDR Capabilities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre 
-                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
-                onClick={() => copyToClipboard(displayData?.hdrCapabilities || "")}
-                title="Click to copy"
-              >
-                {displayData?.hdrCapabilities || "No data"}
-              </pre>
-            </CardContent>
-          </Card>
-
           {/* Display State */}
           <Card>
             <CardHeader className="pb-2">
@@ -334,21 +424,182 @@ export default function DisplayInfo() {
             </CardContent>
           </Card>
 
-          {/* Display Cutout */}
+          {/* Device Model Info */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Display Cutout</CardTitle>
+              <CardTitle className="text-sm font-medium">Device Model</CardTitle>
             </CardHeader>
             <CardContent>
               <pre 
                 className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
-                onClick={() => copyToClipboard(displayData?.displayCutout || "")}
+                onClick={() => copyToClipboard(`${displayData?.deviceManufacturer} ${displayData?.deviceModel}` || "")}
                 title="Click to copy"
               >
-                {displayData?.displayCutout || "No data"}
+                {displayData?.deviceManufacturer} {displayData?.deviceModel}
               </pre>
             </CardContent>
           </Card>
+
+          {/* Android Version */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Android Version</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(`Android ${displayData?.androidVersion} (API ${displayData?.sdkVersion})` || "")}
+                title="Click to copy"
+              >
+                Android {displayData?.androidVersion} (API {displayData?.sdkVersion})
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Device Info */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Display Device Info</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.deviceInfo || "")}
+                title="Click to copy"
+              >
+                {displayData?.deviceInfo || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Active Refresh Rate */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Active Refresh Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.activeRefreshRate || "")}
+                title="Click to copy"
+              >
+                {displayData?.activeRefreshRate || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Supported Refresh Rates */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Supported Refresh Rates</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.supportedRefreshRates || "")}
+                title="Click to copy"
+              >
+                {displayData?.supportedRefreshRates || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Brightness Range */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Brightness Range</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.brightnessRange || "")}
+                title="Click to copy"
+              >
+                {displayData?.brightnessRange || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Density Info */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Display Density</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.density || "")}
+                title="Click to copy"
+              >
+                {displayData?.density || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* System Insets */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">System Insets</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.systemInsets || "")}
+                title="Click to copy"
+              >
+                {displayData?.systemInsets || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* DPI Info */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Pixel Density (DPI)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.dpiInfo || "")}
+                title="Click to copy"
+              >
+                {displayData?.dpiInfo || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Navigation Info */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Navigation Info</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80" 
+                onClick={() => copyToClipboard(displayData?.navigationInfo || "")}
+                title="Click to copy"
+              >
+                {displayData?.navigationInfo || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
+          {/* Rounded Corners */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Rounded Corners</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre 
+                className="text-xs bg-muted p-2 rounded cursor-pointer hover:bg-muted/80 max-h-32 overflow-y-auto" 
+                onClick={() => copyToClipboard(displayData?.roundedCorners || "")}
+                title="Click to copy"
+              >
+                {displayData?.roundedCorners || "No data"}
+              </pre>
+            </CardContent>
+          </Card>
+
         </div>
       </div>
 
