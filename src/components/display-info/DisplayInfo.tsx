@@ -40,9 +40,21 @@ export default function DisplayInfo() {
 
   useEffect(() => {
     if (selectedDevice) {
-      fetchDisplayInfo();
+      // Add a small delay to ensure device is ready
+      const timer = setTimeout(() => {
+        fetchDisplayInfo();
+      }, 500);
+      
+      return () => clearTimeout(timer);
     }
   }, [selectedDevice]);
+
+  // Also fetch when component mounts if device is already selected
+  useEffect(() => {
+    if (selectedDevice && !displayData) {
+      fetchDisplayInfo();
+    }
+  }, []); // Empty dependency array means this runs once on mount
 
   const fetchDisplayInfo = async () => {
     if (!selectedDevice || isLoading) {
@@ -51,13 +63,22 @@ export default function DisplayInfo() {
 
     setIsLoading(true);
     try {
+      // First ensure device is connected and responsive
+      const deviceCheck = await ipc.client.adb.executeADBCommand({
+        args: ["-s", selectedDevice.id, "shell", "echo", "device_ready"],
+        useCache: false
+      });
+      
+      if (!deviceCheck || !deviceCheck.includes("device_ready")) {
+        throw new Error("Device not responsive");
+      }
       // Get additional device info
       const [
         modelResult,
         manufacturerResult,
         androidVersionResult,
         sdkVersionResult
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         ipc.client.adb.executeADBCommand({
           args: ["-s", selectedDevice.id, "shell", "getprop", "ro.product.model"],
           useCache: false
@@ -81,7 +102,7 @@ export default function DisplayInfo() {
         screenSizeResult,
         screenDensityResult,
         displayMetricsResult
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         ipc.client.adb.executeADBCommand({
           args: ["-s", selectedDevice.id, "shell", "dumpsys", "display"],
           useCache: false
@@ -100,9 +121,20 @@ export default function DisplayInfo() {
         })
       ]);
 
+      // Parse results from Promise.allSettled
+      const modelValue = modelResult.status === 'fulfilled' ? modelResult.value : "Not found";
+      const manufacturerValue = manufacturerResult.status === 'fulfilled' ? manufacturerResult.value : "Not found";
+      const androidVersionValue = androidVersionResult.status === 'fulfilled' ? androidVersionResult.value : "Not found";
+      const sdkVersionValue = sdkVersionResult.status === 'fulfilled' ? sdkVersionResult.value : "Not found";
+      
+      const displayInfoValue = displayInfoResult.status === 'fulfilled' ? displayInfoResult.value : "";
+      const screenSizeValue = screenSizeResult.status === 'fulfilled' ? screenSizeResult.value : "Failed to fetch";
+      const screenDensityValue = screenDensityResult.status === 'fulfilled' ? screenDensityResult.value : "Failed to fetch";
+      const displayMetricsValue = displayMetricsResult.status === 'fulfilled' ? displayMetricsResult.value : "Failed to fetch";
+
       // Parse display info to extract specific details
-      const displayInfoText = displayInfoResult || "";
-      const displayMetricsText = displayMetricsResult || "";
+      const displayInfoText = displayInfoValue || "";
+      const displayMetricsText = displayMetricsValue || "";
       
       // Extract orientation from window displays
       const orientationMatch = displayMetricsText.match(/mDisplayRotation=(ROTATION_\w+)/);
@@ -189,9 +221,9 @@ export default function DisplayInfo() {
 
       const displayInfo: DisplayInfo = {
         displayInfo: displayInfoText || "Failed to fetch",
-        screenSize: screenSizeResult || "Failed to fetch",
-        screenDensity: screenDensityResult || "Failed to fetch",
-        displayMetrics: displayMetricsText || "Failed to fetch",
+        screenSize: screenSizeValue || "Failed to fetch",
+        screenDensity: screenDensityValue || "Failed to fetch",
+        displayMetrics: displayMetricsValue || "Failed to fetch",
         orientation,
         physicalDisplayInfo,
         refreshRate: activeRefreshRate,
@@ -203,10 +235,10 @@ export default function DisplayInfo() {
         supportedRefreshRates: supportedRefreshRates ? `supportedRefreshRates=[${supportedRefreshRates}]` : "Not found",
         brightnessRange,
         roundedCorners,
-        deviceModel: modelResult || "Not found",
-        deviceManufacturer: manufacturerResult || "Not found",
-        androidVersion: androidVersionResult || "Not found",
-        sdkVersion: sdkVersionResult || "Not found",
+        deviceModel: modelValue || "Not found",
+        deviceManufacturer: manufacturerValue || "Not found",
+        androidVersion: androidVersionValue || "Not found",
+        sdkVersion: sdkVersionValue || "Not found",
         density: density ? `density ${density}` : "Not found",
         systemInsets,
         navigationInfo,
@@ -216,7 +248,36 @@ export default function DisplayInfo() {
       setDisplayData(displayInfo);
     } catch (error) {
       console.error("Failed to fetch display info:", error);
-      toast.error("Failed to fetch display information");
+      toast.error(error instanceof Error ? error.message : "Failed to fetch display information");
+      
+      // Set partial data if available even on error
+      if (displayData === null) {
+        setDisplayData({
+          displayInfo: "Failed to fetch",
+          screenSize: "Failed to fetch",
+          screenDensity: "Failed to fetch",
+          displayMetrics: "Failed to fetch",
+          orientation: "Failed to fetch",
+          physicalDisplayInfo: "Failed to fetch",
+          refreshRate: "Failed to fetch",
+          colorMode: "Failed to fetch",
+          displayState: "Failed to fetch",
+          supportedModes: "Failed to fetch",
+          deviceInfo: "Failed to fetch",
+          activeRefreshRate: "Failed to fetch",
+          supportedRefreshRates: "Failed to fetch",
+          brightnessRange: "Failed to fetch",
+          roundedCorners: "Failed to fetch",
+          deviceModel: "Failed to fetch",
+          deviceManufacturer: "Failed to fetch",
+          androidVersion: "Failed to fetch",
+          sdkVersion: "Failed to fetch",
+          density: "Failed to fetch",
+          systemInsets: "Failed to fetch",
+          navigationInfo: "Failed to fetch",
+          dpiInfo: "Failed to fetch"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
