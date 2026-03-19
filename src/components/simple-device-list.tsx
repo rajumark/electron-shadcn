@@ -134,7 +134,7 @@ export function SimpleDeviceList() {
     return (
       <div className="flex items-center gap-2 border-b bg-muted px-4 py-2">
         <div className="flex animate-pulse items-center gap-2">
-          <Smartphone className="h-4 w-4" />
+          <Smartphone className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
           <span className="text-muted-foreground text-sm">
             Loading devices...
           </span>
@@ -146,7 +146,7 @@ export function SimpleDeviceList() {
   if (error) {
     return (
       <div className="flex items-center gap-2 border-b bg-muted px-4 py-2">
-        <X className="h-4 w-4 text-destructive" />
+        <X className="h-4 w-4 text-destructive hover:text-primary transition-colors" />
         <span className="text-destructive text-sm">{error}</span>
       </div>
     );
@@ -155,7 +155,7 @@ export function SimpleDeviceList() {
   if (devices.length === 0) {
     return (
       <div className="flex items-center gap-2 border-b bg-muted px-4 py-2">
-        <Smartphone className="h-4 w-4 text-muted-foreground" />
+        <Smartphone className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
         <span className="text-muted-foreground text-sm">
           No devices connected
         </span>

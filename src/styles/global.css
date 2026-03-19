@@ -181,7 +181,6 @@
 
 @layer base {
   * {
-    border-radius: 0 !important;
     @apply border-border outline-ring/50;
   }
 

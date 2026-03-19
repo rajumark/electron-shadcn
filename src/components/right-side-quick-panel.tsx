@@ -12,8 +12,9 @@ import {
   ArrowLeft,
   Home,
   Square,
-  VolumeUp,
-  VolumeDown,
+  Volume,
+  Volume1,
+  Volume2,
   VolumeX,
   Play,
   Pause,
@@ -174,7 +175,7 @@ export function RightSideQuickPanel() {
       title={tooltip}
       variant="ghost"
     >
-      {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : icon}
+      {isLoading ? <Loader2 className="h-3 w-3 animate-spin text-foreground hover:text-primary transition-colors" /> : icon}
     </Button>
   );
 
@@ -182,19 +183,19 @@ export function RightSideQuickPanel() {
     <div className="scrollbar-hide flex h-full w-[30px] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden border-gray-200 border-l bg-gray-100 py-1 dark:border-gray-700 dark:bg-gray-800">
       {/* Navigation */}
       <IconButton
-        icon={<ArrowLeft className="h-3 w-3" />}
+        icon={<ArrowLeft className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "back"}
         onClick={handleBack}
         tooltip="Back Key"
       />
       <IconButton
-        icon={<Home className="h-3 w-3" />}
+        icon={<Home className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "home"}
         onClick={handleHome}
         tooltip="Home Key"
       />
       <IconButton
-        icon={<Square className="h-3 w-3" />}
+        icon={<Square className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "recent"}
         onClick={handleRecent}
         tooltip="Recent Apps Key"
@@ -205,19 +206,19 @@ export function RightSideQuickPanel() {
 
       {/* Volume */}
       <IconButton
-        icon={<VolumeUp className="h-3 w-3" />}
+        icon={<Volume className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "volume_up"}
         onClick={handleVolumeUp}
         tooltip="Volume Up"
       />
       <IconButton
-        icon={<VolumeDown className="h-3 w-3" />}
+        icon={<Volume1 className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "volume_down"}
         onClick={handleVolumeDown}
         tooltip="Volume Down"
       />
       <IconButton
-        icon={<VolumeX className="h-3 w-3" />}
+        icon={<Volume2 className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "volume_mute"}
         onClick={handleVolumeMute}
         tooltip="Volume Mute"
@@ -225,13 +226,13 @@ export function RightSideQuickPanel() {
 
       {/* Media */}
       <IconButton
-        icon={<Play className="h-3 w-3" />}
+        icon={<Play className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "media_play"}
         onClick={handleMediaPlay}
         tooltip="Media Play"
       />
       <IconButton
-        icon={<Pause className="h-3 w-3" />}
+        icon={<Pause className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "media_pause"}
         onClick={handleMediaPause}
         tooltip="Media Pause"
@@ -242,19 +243,19 @@ export function RightSideQuickPanel() {
 
       {/* Power */}
       <IconButton
-        icon={<Battery className="h-3 w-3" />}
+        icon={<Battery className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "power"}
         onClick={handlePower}
         tooltip="Screen Lock/Unlock (Power)"
       />
       <IconButton
-        icon={<Settings className="h-3 w-3" />}
+        icon={<Settings className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "settings"}
         onClick={handleSettings}
         tooltip="Open Settings"
       />
       <IconButton
-        icon={<Camera className="h-3 w-3" />}
+        icon={<Camera className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "screenshot"}
         onClick={handleScreenshot}
         tooltip="Screenshot to Desktop"
@@ -265,25 +266,25 @@ export function RightSideQuickPanel() {
 
       {/* System */}
       <IconButton
-        icon={<Smartphone className="h-3 w-3" />}
+        icon={<Smartphone className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "quick_settings"}
         onClick={handleQuickSettings}
         tooltip="Quick Settings"
       />
       <IconButton
-        icon={<Bell className="h-3 w-3" />}
+        icon={<Bell className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "notifications"}
         onClick={handleNotifications}
         tooltip="Notifications"
       />
       <IconButton
-        icon={<ChevronDown className="h-3 w-3" />}
+        icon={<ChevronDown className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "collapse"}
         onClick={handleCollapseAll}
         tooltip="Collapse All"
       />
       <IconButton
-        icon={<Unlock className="h-3 w-3" />}
+        icon={<Unlock className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "unlock_menu"}
         onClick={handleUnlockMenu}
         tooltip="Unlock Menu"
@@ -294,7 +295,7 @@ export function RightSideQuickPanel() {
 
       {/* Advanced */}
       <IconButton
-        icon={<User className="h-3 w-3" />}
+        icon={<User className="h-3 w-3 text-foreground hover:text-primary transition-colors" />}
         isLoading={isLoading === "developer_settings"}
         onClick={handleDeveloperSettings}
         tooltip="Developer Settings"
@@ -310,7 +311,7 @@ export function RightSideQuickPanel() {
             title="Show Tap Options"
             variant="ghost"
           >
-            <Hand className="h-3 w-3" />
+            <Hand className="h-3 w-3 text-foreground hover:text-primary transition-colors" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="left">

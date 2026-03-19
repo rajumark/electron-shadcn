@@ -55,13 +55,13 @@ export function LeftSidebar() {
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.35 text-sm rounded-sm transition-colors",
                   "hover:bg-accent hover:text-accent-foreground",
-                  "text-[rgba(0,0,0,0.8)]",
-                  isActive && "bg-accent text-accent-foreground font-medium text-black"
+                  "text-foreground",
+                  isActive && "bg-accent text-accent-foreground font-medium"
                 )}
               >
                 <Icon className={cn(
-                  "h-[14px] w-[14px] text-[rgba(0,0,0,0.7)]",
-                  isActive && "text-black"
+                  "h-[14px] w-[14px] text-muted-foreground hover:text-primary transition-colors",
+                  isActive && "text-primary"
                 )} />
                 <span className="truncate text-sm">{item.label}</span>
               </button>

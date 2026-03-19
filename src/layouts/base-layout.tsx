@@ -29,7 +29,7 @@ export default function BaseLayout({
             onClick={toggleSidebar}
             className="h-8 w-8"
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-4 w-4 text-foreground hover:text-primary transition-colors" />
           </Button>
           <span className="text-sm font-medium text-foreground">Pilotfish</span>
         </div>
