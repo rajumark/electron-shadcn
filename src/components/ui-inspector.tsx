@@ -1,4 +1,4 @@
-import { RefreshCw, TreePine } from "lucide-react";
+import { RefreshCw, TreePine, Square } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -398,7 +398,7 @@ export const UIInspector: React.FC = () => {
             </button>
           )}
 
-          {hasBounds && <span className="ml-2 text-green-600 text-xs">📐</span>}
+          {hasBounds && <Square className="ml-2 h-3 w-3 text-green-600" />}
         </div>
 
         {hasChildren && isExpanded && (

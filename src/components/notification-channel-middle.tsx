@@ -1,4 +1,4 @@
-import { AlertCircle, Search, X } from "lucide-react";
+import { AlertCircle, Search, X, Lightbulb, Vibrate } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -222,8 +222,8 @@ export const NotificationChannelMiddleSide: React.FC<
                           </span>
                           <div className="flex items-center space-x-1 text-muted-foreground text-xs">
                             <span>{formatImportance(channel.importance)}</span>
-                            {channel.lights && <span>🔦</span>}
-                            {channel.vibrationEnabled && <span>📳</span>}
+                            {channel.lights && <Lightbulb className="h-3 w-3" />}
+                            {channel.vibrationEnabled && <Vibrate className="h-3 w-3" />}
                           </div>
                         </div>
                         {channel.group && (

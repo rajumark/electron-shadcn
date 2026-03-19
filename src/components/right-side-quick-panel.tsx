@@ -8,6 +8,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSelectedDevice } from "@/hooks/use-selected-device";
 import { ipc } from "@/ipc/manager";
+import {
+  ArrowLeft,
+  Home,
+  Square,
+  VolumeUp,
+  VolumeDown,
+  VolumeX,
+  Play,
+  Pause,
+  Battery,
+  Settings,
+  Camera,
+  Smartphone,
+  Bell,
+  ChevronDown,
+  Unlock,
+  User,
+  Hand,
+  Loader2,
+} from "lucide-react";
 
 export function RightSideQuickPanel() {
   const { selectedDevice } = useSelectedDevice();
@@ -134,13 +154,13 @@ export function RightSideQuickPanel() {
     ]);
 
   const IconButton = ({
-    emoji,
+    icon,
     tooltip,
     onClick,
     isLoading = false,
     disabled = !selectedDevice?.id,
   }: {
-    emoji: string;
+    icon: React.ReactNode;
     tooltip: string;
     onClick: () => void;
     isLoading?: boolean;
@@ -154,7 +174,7 @@ export function RightSideQuickPanel() {
       title={tooltip}
       variant="ghost"
     >
-      <span className="text-sm">{isLoading ? "⏳" : emoji}</span>
+      {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : icon}
     </Button>
   );
 
@@ -162,19 +182,19 @@ export function RightSideQuickPanel() {
     <div className="scrollbar-hide flex h-full w-[30px] flex-col items-center gap-1 overflow-y-auto overflow-x-hidden border-gray-200 border-l bg-gray-100 py-1 dark:border-gray-700 dark:bg-gray-800">
       {/* Navigation */}
       <IconButton
-        emoji="⬅️"
+        icon={<ArrowLeft className="h-3 w-3" />}
         isLoading={isLoading === "back"}
         onClick={handleBack}
         tooltip="Back Key"
       />
       <IconButton
-        emoji="🏠"
+        icon={<Home className="h-3 w-3" />}
         isLoading={isLoading === "home"}
         onClick={handleHome}
         tooltip="Home Key"
       />
       <IconButton
-        emoji="⬜"
+        icon={<Square className="h-3 w-3" />}
         isLoading={isLoading === "recent"}
         onClick={handleRecent}
         tooltip="Recent Apps Key"
@@ -185,19 +205,19 @@ export function RightSideQuickPanel() {
 
       {/* Volume */}
       <IconButton
-        emoji="🔊"
+        icon={<VolumeUp className="h-3 w-3" />}
         isLoading={isLoading === "volume_up"}
         onClick={handleVolumeUp}
         tooltip="Volume Up"
       />
       <IconButton
-        emoji="🔉"
+        icon={<VolumeDown className="h-3 w-3" />}
         isLoading={isLoading === "volume_down"}
         onClick={handleVolumeDown}
         tooltip="Volume Down"
       />
       <IconButton
-        emoji="🔇"
+        icon={<VolumeX className="h-3 w-3" />}
         isLoading={isLoading === "volume_mute"}
         onClick={handleVolumeMute}
         tooltip="Volume Mute"
@@ -205,13 +225,13 @@ export function RightSideQuickPanel() {
 
       {/* Media */}
       <IconButton
-        emoji="▶️"
+        icon={<Play className="h-3 w-3" />}
         isLoading={isLoading === "media_play"}
         onClick={handleMediaPlay}
         tooltip="Media Play"
       />
       <IconButton
-        emoji="⏸️"
+        icon={<Pause className="h-3 w-3" />}
         isLoading={isLoading === "media_pause"}
         onClick={handleMediaPause}
         tooltip="Media Pause"
@@ -222,19 +242,19 @@ export function RightSideQuickPanel() {
 
       {/* Power */}
       <IconButton
-        emoji="🔋"
+        icon={<Battery className="h-3 w-3" />}
         isLoading={isLoading === "power"}
         onClick={handlePower}
         tooltip="Screen Lock/Unlock (Power)"
       />
       <IconButton
-        emoji="⚙️"
+        icon={<Settings className="h-3 w-3" />}
         isLoading={isLoading === "settings"}
         onClick={handleSettings}
         tooltip="Open Settings"
       />
       <IconButton
-        emoji="📸"
+        icon={<Camera className="h-3 w-3" />}
         isLoading={isLoading === "screenshot"}
         onClick={handleScreenshot}
         tooltip="Screenshot to Desktop"
@@ -245,25 +265,25 @@ export function RightSideQuickPanel() {
 
       {/* System */}
       <IconButton
-        emoji="📱"
+        icon={<Smartphone className="h-3 w-3" />}
         isLoading={isLoading === "quick_settings"}
         onClick={handleQuickSettings}
         tooltip="Quick Settings"
       />
       <IconButton
-        emoji="🔔"
+        icon={<Bell className="h-3 w-3" />}
         isLoading={isLoading === "notifications"}
         onClick={handleNotifications}
         tooltip="Notifications"
       />
       <IconButton
-        emoji="📉"
+        icon={<ChevronDown className="h-3 w-3" />}
         isLoading={isLoading === "collapse"}
         onClick={handleCollapseAll}
         tooltip="Collapse All"
       />
       <IconButton
-        emoji="🔓"
+        icon={<Unlock className="h-3 w-3" />}
         isLoading={isLoading === "unlock_menu"}
         onClick={handleUnlockMenu}
         tooltip="Unlock Menu"
@@ -274,7 +294,7 @@ export function RightSideQuickPanel() {
 
       {/* Advanced */}
       <IconButton
-        emoji="👨‍💻"
+        icon={<User className="h-3 w-3" />}
         isLoading={isLoading === "developer_settings"}
         onClick={handleDeveloperSettings}
         tooltip="Developer Settings"
@@ -290,7 +310,7 @@ export function RightSideQuickPanel() {
             title="Show Tap Options"
             variant="ghost"
           >
-            <span className="text-sm">👆</span>
+            <Hand className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="left">
