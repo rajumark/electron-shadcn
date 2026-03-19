@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { Code, FileText, Home, Settings, Terminal, Eye, Phone, Users, MessageSquare, Image, Activity, Calendar, Info, Battery, Bell, Cpu, Folder, Camera, Smartphone } from "lucide-react";
+import { Code, FileText, Home, Settings, Terminal, Eye, Phone, Users, MessageSquare, Image, Activity, Calendar, Info, Battery, Bell, Cpu, Folder, Camera, Smartphone, Monitor } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ const navigationItems = [
   { path: "/file-explorer", label: "File Explorer", icon: Folder },
   { path: "/screenshot", label: "Screenshot", icon: Camera },
   { path: "/device-info", label: "Device Info", icon: Smartphone },
+  { path: "/display-info", label: "Display Info", icon: Monitor },
   { path: "/pilotfish-settings", label: "Pilotfish Settings", icon: Settings },
 ];
 

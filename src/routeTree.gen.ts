@@ -23,6 +23,7 @@ import { Route as MediasRouteImport } from './routes/medias'
 import { Route as LifecycleRouteImport } from './routes/lifecycle'
 import { Route as FordevRouteImport } from './routes/fordev'
 import { Route as FileExplorerRouteImport } from './routes/file-explorer'
+import { Route as DisplayInfoRouteImport } from './routes/display-info'
 import { Route as DeviceInfoRouteImport } from './routes/device-info'
 import { Route as CpuUsageRouteImport } from './routes/cpu-usage'
 import { Route as ContactsRouteImport } from './routes/contacts'
@@ -102,6 +103,11 @@ const FileExplorerRoute = FileExplorerRouteImport.update({
   path: '/file-explorer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DisplayInfoRoute = DisplayInfoRouteImport.update({
+  id: '/display-info',
+  path: '/display-info',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeviceInfoRoute = DeviceInfoRouteImport.update({
   id: '/device-info',
   path: '/device-info',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/contacts': typeof ContactsRoute
   '/cpu-usage': typeof CpuUsageRoute
   '/device-info': typeof DeviceInfoRoute
+  '/display-info': typeof DisplayInfoRoute
   '/file-explorer': typeof FileExplorerRoute
   '/fordev': typeof FordevRoute
   '/lifecycle': typeof LifecycleRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof ContactsRoute
   '/cpu-usage': typeof CpuUsageRoute
   '/device-info': typeof DeviceInfoRoute
+  '/display-info': typeof DisplayInfoRoute
   '/file-explorer': typeof FileExplorerRoute
   '/fordev': typeof FordevRoute
   '/lifecycle': typeof LifecycleRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/contacts': typeof ContactsRoute
   '/cpu-usage': typeof CpuUsageRoute
   '/device-info': typeof DeviceInfoRoute
+  '/display-info': typeof DisplayInfoRoute
   '/file-explorer': typeof FileExplorerRoute
   '/fordev': typeof FordevRoute
   '/lifecycle': typeof LifecycleRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/cpu-usage'
     | '/device-info'
+    | '/display-info'
     | '/file-explorer'
     | '/fordev'
     | '/lifecycle'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/cpu-usage'
     | '/device-info'
+    | '/display-info'
     | '/file-explorer'
     | '/fordev'
     | '/lifecycle'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/cpu-usage'
     | '/device-info'
+    | '/display-info'
     | '/file-explorer'
     | '/fordev'
     | '/lifecycle'
@@ -300,6 +312,7 @@ export interface RootRouteChildren {
   ContactsRoute: typeof ContactsRoute
   CpuUsageRoute: typeof CpuUsageRoute
   DeviceInfoRoute: typeof DeviceInfoRoute
+  DisplayInfoRoute: typeof DisplayInfoRoute
   FileExplorerRoute: typeof FileExplorerRoute
   FordevRoute: typeof FordevRoute
   LifecycleRoute: typeof LifecycleRoute
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FileExplorerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/display-info': {
+      id: '/display-info'
+      path: '/display-info'
+      fullPath: '/display-info'
+      preLoaderRoute: typeof DisplayInfoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/device-info': {
       id: '/device-info'
       path: '/device-info'
@@ -484,6 +504,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactsRoute: ContactsRoute,
   CpuUsageRoute: CpuUsageRoute,
   DeviceInfoRoute: DeviceInfoRoute,
+  DisplayInfoRoute: DisplayInfoRoute,
   FileExplorerRoute: FileExplorerRoute,
   FordevRoute: FordevRoute,
   LifecycleRoute: LifecycleRoute,
