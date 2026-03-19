@@ -1,0 +1,12 @@
+[
+  {
+    "key": "cmd+r",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Start App"
+  },
+  {
+    "key": "cmd+shift+r",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Stop App"
+  }
+]
