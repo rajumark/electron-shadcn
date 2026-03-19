@@ -1,6 +1,5 @@
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useLocation } from "@tanstack/react-router";
 import { Code, FileText, Home, Settings, Terminal, Eye, Phone, Users, MessageSquare, Image, Activity, Calendar, Info, Battery, Bell, Cpu, Folder, Camera, Smartphone, Monitor } from "lucide-react";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -31,11 +30,7 @@ const navigationItems = [
 
 export function LeftSidebar() {
   const router = useRouter();
-  const [currentRoute, setCurrentRoute] = useState("/");
-
-  useEffect(() => {
-    setCurrentRoute(router.state.location.pathname);
-  }, [router.state.location.pathname]);
+  const location = useLocation();
 
   const handleNavigation = (path: string) => {
     router.navigate({ to: path });
@@ -47,7 +42,7 @@ export function LeftSidebar() {
         <nav className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentRoute === item.path;
+            const isActive = location.pathname === item.path;
              
             return (
               <button
@@ -55,16 +50,18 @@ export function LeftSidebar() {
                 onClick={() => handleNavigation(item.path)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.35 text-sm rounded-sm transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  "text-foreground",
-                  isActive && "bg-accent text-accent-foreground font-medium"
+                  "hover:bg-accent",
+                  isActive && "bg-accent"
                 )}
               >
                 <Icon className={cn(
-                  "h-[14px] w-[14px] text-muted-foreground hover:text-primary transition-colors",
-                  isActive && "text-primary"
+                  "h-[14px] w-[14px] transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
                 )} />
-                <span className="truncate text-sm">{item.label}</span>
+                <span className={cn(
+                  "truncate text-sm transition-colors",
+                  isActive ? "text-primary font-medium" : "text-foreground"
+                )}>{item.label}</span>
               </button>
             );
           })}
