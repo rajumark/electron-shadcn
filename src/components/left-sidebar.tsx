@@ -50,8 +50,8 @@ export function LeftSidebar() {
                 onClick={() => handleNavigation(item.path)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-1.35 text-sm rounded-sm transition-colors",
-                  "hover:bg-accent",
-                  isActive && "bg-accent"
+                  "hover:bg-accent/80",
+                  isActive && "bg-primary/10 border-l-2 border-primary"
                 )}
               >
                 <Icon className={cn(
