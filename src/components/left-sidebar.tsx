@@ -38,7 +38,7 @@ export function LeftSidebar() {
 
   return (
     <div className="w-48 bg-background border-r border-border flex flex-col">
-      <div className="p-2 flex-1 overflow-y-auto">
+      <div className="p-0 flex-1 overflow-y-auto">
         <nav className="space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
